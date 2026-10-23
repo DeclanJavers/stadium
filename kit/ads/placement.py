@@ -18,6 +18,7 @@ from ..stands.geometry import StraightRun
 BOARD_SIDE_OFFSET = 4.0
 BOARD_END_OFFSET = 5.5
 BOARD_HEIGHT = 0.9
+CARPET_HEIGHT = 1.0     # virtual board height of a broadcast 3D carpet
 
 
 def main_camera(pitch, stands=None):
@@ -113,6 +114,22 @@ def place_carpet(cam, base, width, height, pitch, limit_x, margin=0.3):
         if side > 0:
             base[1] -= np.sign(base[1]) * side
     return base, h
+
+
+def end_board_offset(cam, pitch, carpet_width, max_offset, target=CARPET_HEIGHT, step=0.25):
+    """How far behind the goal line the end boards go when there are 3D carpets: the smallest
+    distance (from the 5.5 m default, in `step`s) at which every carpet reaches `target` height,
+    capped at `max_offset` (in front of the stands)."""
+    L = pitch["length"]
+    max_offset = max(BOARD_END_OFFSET, max_offset)
+    n = int(np.ceil((max_offset - BOARD_END_OFFSET) / step))
+    for k in range(n + 1):
+        off = min(BOARD_END_OFFSET + k * step, max_offset)
+        limit = L / 2 + off - 0.4
+        h = min(place_carpet(cam, b, carpet_width, 1.1, pitch, limit)[1] for _, _, b in carpet_spots(pitch, carpet_width))
+        if h >= target - 1e-6:
+            return off
+    return max_offset
 
 
 def fit_carpet_height(cam, base, width, height, limit_x):

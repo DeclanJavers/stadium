@@ -985,7 +985,22 @@ impl Editor {
         let a = obj(&mut self.layout, "ads");
         let per = obj(a, "perimeter");
         c |= combo(ui, "per", "Perimeter boards", per, "type", "led", &opts(&["led", "static", "none"]));
-        let mut carpets = a.get("carpets").is_some_and(|v| v.as_bool() != Some(false) && !v.is_null());
+        // end boards: further back with carpets so they get a ~1 m virtual board
+        let per = obj(a, "perimeter");
+        let manual = per.get("end_offset").is_some_and(|v| v.is_number());
+        let mut sel = json!({"v": if manual { "manual" } else { "auto" }});
+        if combo(ui, "endoff", "End boards", &mut sel, "v", "auto", &[("auto".into(), "auto (room for carpets)".into()), ("manual".into(), "set distance".into())]) {
+            if sel["v"] == "manual" {
+                per["end_offset"] = json!(5.5);
+            } else if let Some(o) = per.as_object_mut() {
+                o.shift_remove("end_offset");
+            }
+            c = true;
+        }
+        if per.get("end_offset").is_some_and(|v| v.is_number()) {
+            c |= num(ui, "Behind goal line", per, "end_offset", 5.5, 3.0..=12.0, 0.25, " m");
+        }
+        let mut carpets = a.get("carpets").is_some_and(|v| v.as_bool() != Some(false) && !v.is_null() && v.as_object().is_none_or(|o| !o.is_empty()));
         if ui.checkbox(&mut carpets, "3D carpets behind the goals").changed() {
             a["carpets"] = json!(carpets);
             c = true;
@@ -1135,6 +1150,9 @@ impl Editor {
             for (k, t) in &r.ad_totals {
                 ui.label(format!("{}: {} slots, {:.0} m², TV-weighted {:.0} m²", k.replace('_', " "), t.slots, t.area_m2, t.tv_weighted_m2));
                 total_w += t.tv_weighted_m2;
+            }
+            if r.end_boards_m > 0.0 {
+                ui.weak(format!("End boards {:.2} m behind the goal line", r.end_boards_m));
             }
             if total_w > 0.0 {
                 ui.weak(format!("TV-weighted total {total_w:.0} m² (input for the revenue model)"));

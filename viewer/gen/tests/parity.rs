@@ -354,6 +354,9 @@ fn placement() {
     let uu: Vec<f64> = uv.iter().flat_map(|q| [q.x, q.y]).collect();
     close_v(&uu, &Value::Array(flat(&r["carpet"]["UV"]).into_iter().map(|v| json!(v)).collect()), 1e-12, "carpet UV");
     close(placement::fit_carpet_height(cam, DVec3::new(53.3, 8.0, 0.0), 5.0, 1.1, p.length / 2.0 + 5.1), &r["fit"], 1e-12, "fit");
+    for (k, (c, m)) in [(cam, 9.7), (DVec3::new(0.0, -60.85, 14.93), 9.7), (DVec3::new(0.0, -76.05, 23.05), 9.7), (DVec3::new(0.0, -60.85, 14.93), 7.0)].into_iter().enumerate() {
+        close(placement::end_board_offset(c, &p, 5.0, m, placement::CARPET_HEIGHT), &r["end_offset"][k], 1e-12, "end board offset");
+    }
     // carpets end up entirely behind the goal line, in front of the end boards
     for (k, (_, _, b)) in placement::carpet_spots(&p, 5.0, 0.8).iter().enumerate() {
         let (base, h) = placement::place_carpet(cam, *b, 5.0, 1.1, &p, p.length / 2.0 + 5.1);
@@ -449,5 +452,27 @@ fn layout_capacities() {
         let layout: Value = serde_json::from_str(&std::fs::read_to_string(root().join("layouts").join(format!("{name}.json"))).unwrap()).unwrap();
         let st = stadium::build(&layout, &c).unwrap_or_else(|e| panic!("{name}: {e}"));
         assert_eq!(st.report.capacity.total, seated_total, "{name} capacity");
+    }
+}
+
+/// With carpets on, the end boards move back far enough for ~1 m carpets, and stay in front of
+/// the stands.
+#[test]
+fn carpets_get_room_behind_the_goal() {
+    let c = cat();
+    for name in ["premier", "mega", "classic"] {
+        let mut layout: Value = serde_json::from_str(&std::fs::read_to_string(root().join("layouts").join(format!("{name}.json"))).unwrap()).unwrap();
+        layout["ads"]["carpets"] = json!(true);
+        let st = stadium::build(&layout, &c).unwrap();
+        let carpets: Vec<&stadium::AdSlot> = st.report.ads.iter().filter(|s| s.kind == "carpet_3d").collect();
+        assert_eq!(carpets.len(), 4, "{name}");
+        for s in carpets {
+            assert!(s.area_m2 >= 5.0 * stadium_gen::placement::CARPET_HEIGHT - 0.05, "{name}: {} m²", s.area_m2);
+        }
+        let front = st.report.footprint.0 - st.pitch.length / 2.0;
+        assert!(st.report.end_boards_m > 5.5 && st.report.end_boards_m <= front - 0.8 + 1e-9, "{name}: end boards {} m, stand front {front} m", st.report.end_boards_m);
+        // without carpets the boards stay at the 5.5 m default
+        layout["ads"]["carpets"] = json!(false);
+        assert_eq!(stadium::build(&layout, &c).unwrap().report.end_boards_m, 5.5);
     }
 }

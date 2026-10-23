@@ -162,7 +162,7 @@ Capacities from the bundled profiles as full bowls on a 105 x 68 pitch: `single_
 
 | item | value used |
 |---|---|
-| Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line ✓ |
+| Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line; with 3D carpets the end boards move back (typically 7.75–8.75 m, never closer than 0.8 m to the stand front) so each carpet gets a 1 m virtual board ✓ |
 | LED board face | tilted ~10° back; one LED per texel (128 px per metre of height) |
 | 3D carpet | projection of a ~1 m virtual board from the main camera, beside the goal; the whole footprint stays off the field of play (≥ 0.3 m behind the goal line, inside the touchline extended) and ≥ 0.4 m clear of the end boards ✓ |
 | Dugouts | front 4.3 m behind the touchline (clear of the run-off) and in front of the stand ✓; 2 rows |

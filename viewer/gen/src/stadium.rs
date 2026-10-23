@@ -166,6 +166,8 @@ pub struct Report {
     pub lights: Option<Design>,
     pub screens: usize,
     pub footprint: (f64, f64),
+    /// end boards: metres behind the goal line
+    pub end_boards_m: f64,
     pub grass: Value,
 }
 
@@ -191,6 +193,18 @@ struct StandsOut {
     roofs: Vec<(String, roofs::RoofOut)>,
     facade_lines: Vec<(String, f64)>,
     camera_mount: Option<DVec3>,
+}
+
+/// Python truthiness of a JSON value (`if cfg.get("carpets"):` in the Blender code).
+fn truthy(v: &Value) -> bool {
+    match v {
+        Value::Null => false,
+        Value::Bool(b) => *b,
+        Value::Number(n) => n.as_f64() != Some(0.0),
+        Value::String(s) => !s.is_empty(),
+        Value::Array(a) => !a.is_empty(),
+        Value::Object(o) => !o.is_empty(),
+    }
 }
 
 fn hexv(v: &Value, key: &str, default: &str) -> String {
@@ -782,10 +796,23 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
         slots.push(AdSlot { kind, id, area_m2: round_to(area, 2), tv_weight: w, brand });
     };
     let led_mat = |key: &str, s: f64| Mat { key: key.into(), color: None, emission: Some((DVec3::ONE, s)), texture: Some(Tex::BoardAtlas(keys.clone())) };
+    // with 3D carpets the end boards stand further back so the carpets have room for a ~1 m
+    // virtual board ("end_offset": metres behind the goal line, or "auto")
     let per = cfg.get("perimeter").cloned().unwrap_or(json!({"type": "led"}));
     let kind = text(&per, "type", "led").to_string();
+    let carpets_on = cfg.get("carpets").is_some_and(truthy);
+    let carpet_width = cfg.get("carpets").map(|c| num(c, "width", 5.0)).unwrap_or(5.0);
+    let end_off = match per.get("end_offset") {
+        Some(Value::Number(n)) => n.as_f64().unwrap_or(placement::BOARD_END_OFFSET),
+        _ if carpets_on => {
+            let reach = stands.map(|s| s.a - p.length / 2.0 - 0.8).unwrap_or(p.runoff_end + 3.0);
+            placement::end_board_offset(cam, &p, carpet_width, reach, placement::CARPET_HEIGHT)
+        }
+        _ => placement::BOARD_END_OFFSET,
+    };
+    st.report.end_boards_m = end_off;
     if kind != "none" {
-        let runs = placement::board_runs(&p, gap, placement::BOARD_SIDE_OFFSET, placement::BOARD_END_OFFSET);
+        let runs = placement::board_runs(&p, gap, placement::BOARD_SIDE_OFFSET, end_off);
         if kind == "led" {
             let mut housing = MeshAcc::new();
             let mut faces = MeshAcc::new();
@@ -841,10 +868,10 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
             st.parts.push(Part { name: "BoardBacks".into(), mesh: backs, mats: vec![Mat::named("Board_Housing")], smooth_deg: 0.0 });
         }
     }
-    if let Some(cp) = cfg.get("carpets").filter(|v| !v.is_null() && v.as_bool() != Some(false)) {
+    if let Some(cp) = cfg.get("carpets").filter(|v| truthy(v)) {
         let width = num(cp, "width", 5.0);
         let ckeys: Vec<String> = cp.get("brands").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect()).filter(|v: &Vec<String>| !v.is_empty()).unwrap_or_else(|| keys.clone());
-        let limit = p.length / 2.0 + placement::BOARD_END_OFFSET - 0.4;
+        let limit = p.length / 2.0 + end_off - 0.4;
         for (k, (_, _, base)) in placement::carpet_spots(&p, width, 0.8).into_iter().enumerate() {
             let bk = ckeys[k % ckeys.len()].clone();
             let (base, h) = placement::place_carpet(cam, base, width, 1.1, &p, limit);

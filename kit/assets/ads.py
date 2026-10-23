@@ -120,12 +120,24 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         socket("ad_slot", ident, tuple(float(v) for v in centre), yaw, parent=root, col=col, ad_kind=kind,
                area_m2=round(area, 2), tv_weight=w, brand=brand)
 
-    # -- perimeter boards
+    # -- perimeter boards; with 3D carpets the end boards stand further back so the carpets have
+    # room for a ~1 m virtual board ("end_offset": metres behind the goal line, or "auto")
     per = cfg.get("perimeter", {"type": "led"})
     kind = per.get("type", "led")
+    cp = cfg.get("carpets")
+    carpet_width = cp.get("width", 5.0) if isinstance(cp, dict) else 5.0
+    end_cfg = per.get("end_offset", "auto")
+    if isinstance(end_cfg, (int, float)) and not isinstance(end_cfg, bool):
+        end_off = float(end_cfg)
+    elif cp:
+        reach = (stands["A"] - pitch["length"] / 2 - 0.8) if stands else pitch["runoff_end"] + 3.0
+        end_off = PL.end_board_offset(cam, pitch, carpet_width, reach)
+    else:
+        end_off = PL.BOARD_END_OFFSET
+    root["end_board_offset"] = round(end_off, 2)
     housing = painted("Board_Housing", "#111214", 0.5)
     if kind != "none":
-        runs = PL.board_runs(pitch, gap)
+        runs = PL.board_runs(pitch, gap, end_offset=end_off)
         if kind == "led":
             mat = led_material("Ads_LED", atlas, strength, (atlas.size[0], atlas.size[1]))
             for run in runs:
@@ -177,13 +189,12 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
             _recalc(o)
 
     # -- 3D carpets
-    cp = cfg.get("carpets")
     if cp:
         cp = cp if isinstance(cp, dict) else {}
         width = cp.get("width", 5.0)
         ckeys = cp.get("brands") or keys
         images = STUDIO.render_carpets()
-        limit = pitch["length"] / 2 + PL.BOARD_END_OFFSET - 0.4
+        limit = pitch["length"] / 2 + end_off - 0.4
         from .pitch import crown_fn
         zf = crown_fn(pitch)
         for k, (s, side, base) in enumerate(PL.carpet_spots(pitch, width)):
@@ -222,4 +233,4 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         k["tv_weighted_m2"] = round(k["tv_weighted_m2"] + s["area_m2"] * s["tv_weight"], 1)
     root["inventory"] = str(totals)
     print(f"[ads] inventory {totals}", flush=True)
-    return {"root": root, "inventory": inventory, "totals": totals, "camera": cam}
+    return {"root": root, "inventory": inventory, "totals": totals, "camera": cam, "end_offset": end_off}

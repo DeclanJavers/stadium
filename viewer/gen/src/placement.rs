@@ -9,6 +9,26 @@ use glam::{DVec2, DVec3};
 pub const BOARD_SIDE_OFFSET: f64 = 4.0;
 pub const BOARD_END_OFFSET: f64 = 5.5;
 pub const BOARD_HEIGHT: f64 = 0.9;
+/// virtual board height of a broadcast 3D carpet
+pub const CARPET_HEIGHT: f64 = 1.0;
+
+/// How far behind the goal line the end boards go when there are 3D carpets (see
+/// placement.end_board_offset): the smallest distance from the 5.5 m default, in 0.25 m steps, at
+/// which every carpet reaches `target` height, capped at `max_offset` (in front of the stands).
+pub fn end_board_offset(cam: DVec3, p: &Pitch, carpet_width: f64, max_offset: f64, target: f64) -> f64 {
+    let step = 0.25;
+    let max_offset = BOARD_END_OFFSET.max(max_offset);
+    let n = ((max_offset - BOARD_END_OFFSET) / step).ceil() as usize;
+    for k in 0..=n {
+        let off = (BOARD_END_OFFSET + k as f64 * step).min(max_offset);
+        let limit = p.length / 2.0 + off - 0.4;
+        let h = carpet_spots(p, carpet_width, 0.8).iter().map(|s| place_carpet(cam, s.2, carpet_width, 1.1, p, limit).1).fold(f64::MAX, f64::min);
+        if h >= target - 1e-6 {
+            return off;
+        }
+    }
+    max_offset
+}
 
 /// (camera position, look-at target)
 pub fn main_camera(p: &Pitch, mount: Option<DVec3>) -> (DVec3, DVec3) {
