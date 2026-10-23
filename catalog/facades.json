@@ -1,0 +1,9 @@
+{
+  "_doc": "Facade presets (kit/stands/facades.py). color = main tone, accent = second tone, glow = night emission for ETFE.",
+  "concrete_frame": {"label": "Exposed concrete frame, dark glazing", "type": "concrete_frame", "color": "#b8b3a8"},
+  "brick_heritage": {"label": "Heritage red brick with stone dressings", "type": "brick", "color": "#8a3b2a", "cores_every": 0},
+  "metal_bands": {"label": "Two-tone metal cladding bands", "type": "metal_bands", "color": "#c8102e", "accent": "#9e0c24"},
+  "glass_curtain": {"label": "Glass curtain wall", "type": "glass", "color": "#2f3e46"},
+  "etfe_cushions": {"label": "ETFE cushions (glow at night)", "type": "etfe", "color": "#f2f2f0", "glow": "#d0102b"},
+  "metal_fins": {"label": "Vertical metal fins", "type": "fins", "color": "#c7c9c9", "fin_spacing": 1.1}
+}

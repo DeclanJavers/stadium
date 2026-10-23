@@ -1,0 +1,40 @@
+{
+  "_doc": "Floodlight presets (kit/stands/floodlights.py). lux = target average horizontal illuminance on the pitch. UEFA elite broadcast ~2000, televised lower leagues ~800-1200, grassroots training 75-200.",
+  "roof_ribbon": {
+    "label": "LED ribbon on the roof edge",
+    "type": "roof",
+    "lux": 2000,
+    "fixture": "led",
+    "kelvin": 5700
+  },
+  "corner_pylons": {
+    "label": "Four lattice corner pylons (metal halide)",
+    "type": "corner_pylons",
+    "lux": 1000,
+    "fixture": "halide",
+    "kelvin": 4300,
+    "mast": "lattice"
+  },
+  "tube_pylons": {
+    "label": "Four tubular corner masts (LED)",
+    "type": "corner_pylons",
+    "lux": 1400,
+    "fixture": "led",
+    "kelvin": 5700,
+    "mast": "tube"
+  },
+  "grassroots_poles": {
+    "label": "Six 20 m grassroots poles (EN 12193 class III)",
+    "type": "poles",
+    "lux": 150,
+    "per_side": 3,
+    "height": 20,
+    "lamps": 4,
+    "fixture": "led",
+    "kelvin": 5000,
+    "beams": [
+      90,
+      120
+    ]
+  }
+}

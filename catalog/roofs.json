@@ -1,0 +1,14 @@
+{
+  "_doc": "Roof presets. See kit/stands/roofs.py for the solver parameters.",
+  "modern_cantilever": {"label": "Steel cantilever, translucent leading edge", "type": "cantilever", "rise_deg": 5,
+                        "translucent": 0.25, "color": "#d9dbdc", "fascia_color": "#1b1d20"},
+  "full_translucent": {"label": "Cantilever, fully translucent sheeting", "type": "cantilever", "rise_deg": 7,
+                       "translucent": 1.0, "color": "#d9dbdc", "fascia_color": "#e9eaea"},
+  "membrane_cantilever": {"label": "Cantilever with white PTFE membrane", "type": "cantilever", "rise_deg": 9,
+                          "translucent": 0.0, "deck": "membrane", "color": "#f4f3ef", "fascia_color": "#f4f3ef"},
+  "goalpost_classic": {"label": "Classic goalpost roof (front posts, clad girder)", "type": "goalpost",
+                       "post_every": 3, "color": "#8b8f92", "fascia_color": "#14306e", "steel_color": "#e6e7e5"},
+  "shed_cover": {"label": "Small covered stand (post every bay)", "type": "goalpost", "post_every": 1,
+                 "girder_depth": 0.45, "slope_deg": 6, "back_clearance": 2.3, "cover": 0.4, "clad_girder": false,
+                 "color": "#6e7a6a", "steel_color": "#2f4a2a"}
+}

@@ -1,0 +1,81 @@
+"""Roof objects for a stand run: deck (profiled steel, translucent strip), fascia, steelwork.
+
+Roof layout section (stands.roof, overridable per side):
+  {"preset": "modern_cantilever"} or {"type": "cantilever"|"goalpost", ...solver params,
+   "color": "#e3e4e2", "fascia_color": "#1b1d20", "steel_color": "#eef0f0", "deck": "metal|membrane"}
+"""
+import bpy
+
+from .. import catalog
+from ..core import materials as MAT
+from ..core.nodes import material, srgb
+from ..core.scene import mesh_object
+from ..core.sockets import socket
+from ..stands import roofs as RF
+from .stand import _recalc, _tubes_mesh, painted, smooth_by_angle
+
+
+def resolve(spec):
+    if spec is None or spec is False:
+        return None
+    spec = dict(spec)
+    if "preset" in spec:
+        spec = catalog.merge(catalog.preset("roofs", spec.pop("preset")), spec)
+    return spec
+
+
+def deck_material(color, membrane=False):
+    name = f"TINT_roof{'_membrane' if membrane else ''}"
+    if bpy.data.materials.get(name):
+        return bpy.data.materials[name]
+    m, nb = material(name)
+    uv = nb.sep(nb.node("ShaderNodeUVMap", uv_map="UVMap").outputs[0])
+    pos = nb.geometry()["Position"]
+    if membrane:
+        weave = nb.noise(pos, 300.0, detail=1)
+        bsdf = nb.principled(Base_Color=srgb(color), Roughness=0.55, Transmission_Weight=0.35, Sheen_Weight=0.3,
+                             Normal=nb.bump(weave, 0.05, 0.001))
+    else:
+        # trapezoidal profiled sheet: ribs every 250 mm across the run
+        rib = nb.smooth(0.25, 0.4, nb.math("PINGPONG", nb.div(uv[0], 0.25), 0.5))
+        streak = nb.smooth(0.55, 0.8, nb.noise(nb.vmath("MULTIPLY", pos, (1.0, 1.0, 0.2)), 0.6, detail=3))
+        col = nb.mix(nb.mul(streak, 0.25), srgb(color), srgb("#8f9192"))
+        bsdf = nb.principled(Base_Color=col, Roughness=nb.madd(streak, 0.15, 0.32), Metallic=0.15,
+                             Normal=nb.bump(rib, 0.6, 0.03))
+    nb.output(bsdf)
+    return m
+
+
+def translucent_material():
+    name = "Roof_Polycarbonate"
+    if bpy.data.materials.get(name):
+        return bpy.data.materials[name]
+    m, nb = material(name)
+    uv = nb.sep(nb.node("ShaderNodeUVMap", uv_map="UVMap").outputs[0])
+    rib = nb.smooth(0.25, 0.4, nb.math("PINGPONG", nb.div(uv[0], 0.25), 0.5))
+    nb.output(nb.principled(Base_Color=srgb("#e9f1f2"), Roughness=0.22, Transmission_Weight=0.85, IOR=1.58,
+                            Normal=nb.bump(rib, 0.5, 0.03)))
+    return m
+
+
+def build(run, tiers, bay_list, spec, d_focal, far_width, col, parent, include_ends=True):
+    spec = resolve(spec)
+    if not spec:
+        return None
+    roof = RF.solve(tiers, spec, d_focal, far_width)
+    out = RF.build(run, roof, bay_list, include_ends)
+    mats = [deck_material(spec.get("color", "#e3e4e2"), spec.get("deck") == "membrane"),
+            translucent_material(),
+            painted("TINT_roof_fascia", spec.get("fascia_color", "#1b1d20"), 0.45),
+            painted("Roof_Underside", spec.get("underside_color", "#d8d8d4"), 0.65)]
+    V, F, tags, UV = out["mesh"]
+    if len(F):
+        o = mesh_object(f"Roof_{run.name}", V, F, col, parent, materials=mats, mat_index=tags, uvs=UV)
+        _recalc(o)
+        smooth_by_angle(o)
+    steel = MAT.painted_metal("Roof_Steel", spec.get("steel_color", "#eceeee"), rough=0.4, dirt=0.0, scuffs=0.1)
+    _tubes_mesh(f"RoofSteel_{run.name}", out["tubes"], col, parent, steel, sides=8)
+    import math
+    for kind, ident, loc, n, props in out["sockets"]:
+        socket(kind, ident, loc, math.degrees(math.atan2(n[0], -n[1])), parent=parent, col=col, **props)
+    return {"roof": roof, "edge_line": out["edge_line"], "tail_s": out["tail_s"], "tail_top": out["tail_top"]}
