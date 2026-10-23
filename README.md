@@ -14,9 +14,13 @@ $B -b --factory-startup -P tests/run_tests.py                      # pitch-level
 $B -b --factory-startup -P tests/test_stands.py                    # stand, seat and export tests
 $B -b --factory-startup -P tests/test_roofs_lights.py              # roof, facade and floodlight tests
 $B -b --factory-startup -P tests/test_signage.py                   # ads, carpets, screens, dugouts, tunnel
+$B -b --factory-startup -P tests/test_game.py                      # game export, LODs, lights, Rust viewer
 $B -b --factory-startup -P tools/build.py                          # every variant -> out/assets/*.glb + out/manifest.json
 $B -b --factory-startup -P tools/review.py -- all --layout layouts/premier.json   # Cycles review renders -> out/review/
-$B -b --factory-startup -P tools/export_stadium.py -- layouts/mega.json          # whole stadium -> out/stadiums/*.glb
+$B -b --factory-startup -P tools/export_stadium.py -- layouts/mega.json          # whole stadium (render quality) -> out/stadiums/*.glb
+$B -b --factory-startup -P tools/export_stadium.py -- layouts/mega.json --game   # game-ready: baked PBR, LODs, lights -> *.game.glb
+$B -b --factory-startup -P tools/preview_game.py -- out/stadiums/mega.game.glb  # what an engine receives, rendered on its own
+viewer/build.sh --offline && viewer/target/release/stadium-viewer out/stadiums/mega.game.glb   # real-time viewer (see viewer/README.md)
 ```
 
 Review shots: `broadcast`, `behind_goal`, `goalmouth`, `goal_side`, `grass_macro`, `corner_flag`,
@@ -63,6 +67,8 @@ kit/stands/    sightlines.py, geometry.py, patterns.py, roofs.py, facades.py, fl
 kit/assembler.py   layout JSON -> scene, by snapping assets onto sockets
 catalog/       variant presets (data, shared with the game)
 layouts/       example stadiums
-tools/         build.py, review.py, export_stadium.py
-tests/         run_tests.py, test_stands.py, test_roofs_lights.py, test_signage.py
+kit/core/game.py, bake.py   game export: baked PBR, tint split, metric UVs, light conversion
+tools/         build.py, review.py, export_stadium.py, preview_game.py
+tests/         run_tests.py, test_stands.py, test_roofs_lights.py, test_signage.py, test_game.py
+viewer/        Rust (wgpu/Metal) real-time viewer for game exports
 ```

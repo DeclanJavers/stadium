@@ -152,6 +152,31 @@ Placement maths is pure numpy (`kit/ads/placement.py`); Blender wrappers live in
   weight (how squarely and how closely it faces the main camera, 0–1). Totals are summed per kind
   for the revenue model.
 
+## Game export (`tools/export_stadium.py --game`)
+
+The render path keeps everything procedural; the game path converts the assembled stadium into
+plain glTF that any engine draws correctly (`kit/core/game.py`, `kit/core/bake.py`):
+
+- **Materials.** Every procedural material becomes standard PBR. Large surfaces (concrete, brick,
+  paving, roof sheeting, facade cladding) get tileable albedo/roughness/normal sets baked with
+  Cycles from a lone plane in a scene of its own, made seamless by cross-fading with a half-offset
+  copy (or baked as an exact multiple of the pattern for bricks and paving) and mapped in metres
+  through KHR_texture_transform. `TINT_` surfaces get a greyscale detail texture times a colour
+  factor plus `tint_gain` in extras, so engines recolour them at runtime. The pitch gets a
+  full-surface albedo bake (wear and variation) plus a tiling blade normal; mowing stripes stay an
+  engine shader (docs/SPECS.md). Small props get their measured average albedo and roughness.
+  Bakes are cached by a fingerprint of each material's node values.
+- **LODs.** Seats ship at LOD1 (18% of the hero mesh) with an LOD2 (5%) linked through
+  `MSFT_lod`; the LOD nodes are detached from the scene graph so engines without the extension
+  never draw them. Nets ship as `Net_LOD1` cards: the simulated net surface textured with a
+  generated cord pattern (alpha mask), about 1.3% of the cord geometry.
+- **Lights.** Floodlights export as `KHR_lights_punctual` spots (candela from the designed power).
+  Bowl house lights, which glTF cannot express as area lights, become wide spots of equal intensity.
+- **Templates** (models that exist only to be instanced) never ship.
+
+`tools/preview_game.py` renders a game `.glb` imported into an empty Blender scene, and the Rust
+viewer (`viewer/`) renders it in real time, so both prove what an engine actually receives.
+
 ## Layout file
 
 A stadium is one JSON document (`schema: stadium-layout/1`), e.g. `layouts/sunday_league.json`.
@@ -185,4 +210,6 @@ The game saves and edits this; the assembler turns it into a scene. Sections:
 4. **Matchday dressing:** generated ad creatives, LED and printed perimeter boards, projected 3D
    carpets, LED ribbons, four screen mountings, three dugout styles, technical areas, tunnel,
    ad inventory with TV weights. *(done)*
-5. Material baking, LODs, game export pass; Rust demo viewer.
+5. **Game-ready export:** baked PBR materials, seat and net LODs, exported lights, and a Rust
+   real-time viewer with LOD switching and a floodlight irradiance volume. *(done)*
+
