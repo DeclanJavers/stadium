@@ -119,6 +119,9 @@ struct SceneGpu {
     shadow_draws: Vec<Draw>,
     inst_bufs: Vec<InstBuf>,
     lod_sets: Vec<LodSet>,
+    /// non-LOD meshes: (instance buffer, original instances), for selection highlights
+    plain: HashMap<usize, (usize, Vec<InstanceRaw>)>,
+    highlighted: Vec<usize>,
     _light_buf: wgpu::Buffer,
     _grid: Vec<wgpu::TextureView>,
     _sky: Vec<wgpu::TextureView>,
@@ -133,6 +136,7 @@ pub struct Renderer {
     pipe_prepass: wgpu::RenderPipeline,
     pipe_opaque: wgpu::RenderPipeline,
     pipe_blend: wgpu::RenderPipeline,
+    pipe_highlight: wgpu::RenderPipeline,
     pipe_sky: wgpu::RenderPipeline,
     pipe_shadow: wgpu::RenderPipeline,
     pipe_tonemap: wgpu::RenderPipeline,
@@ -149,6 +153,8 @@ pub struct Renderer {
     white: wgpu::TextureView,
     flat: wgpu::TextureView,
     textures: HashMap<(u64, bool), wgpu::TextureView>,
+    /// alpha cutoff per image id for textures that alpha-test (coverage-preserving mips)
+    cutoffs: HashMap<u64, f32>,
     scene: Option<SceneGpu>,
     /// (origin xyz + cell size, extent xyz) of the floodlight irradiance volume; cell 0 = none
     pub grid: ([f32; 4], [f32; 4]),
@@ -156,13 +162,33 @@ pub struct Renderer {
     pub sky: ([f32; 4], [f32; 4]),
 }
 
-fn mips(img: &Image) -> Vec<(u32, u32, Vec<u8>)> {
+/// Mip chain. For alpha-tested textures (`cutoff`), each level's alpha is rescaled so the same
+/// fraction of texels passes the test as at full size: thin features such as net cords then fade
+/// to a sparse mesh at a distance instead of vanishing (coverage-preserving mipmaps).
+fn mips(img: &Image, cutoff: Option<f32>) -> Vec<(u32, u32, Vec<u8>)> {
+    let coverage = |px: &[u8], scale: f32, c: f32| px.chunks(4).filter(|p| p[3] as f32 * scale >= c * 255.0).count() as f32 / (px.len() / 4).max(1) as f32;
+    let target = cutoff.map(|c| coverage(&img.rgba, 1.0, c));
     let mut out = vec![(img.width, img.height, img.rgba.clone())];
     let mut cur = image::RgbaImage::from_raw(img.width, img.height, img.rgba.clone()).unwrap();
     while cur.width() > 1 || cur.height() > 1 {
         let (w, h) = ((cur.width() / 2).max(1), (cur.height() / 2).max(1));
         cur = image::imageops::resize(&cur, w, h, image::imageops::FilterType::Triangle);
-        out.push((w, h, cur.as_raw().clone()));
+        let mut data = cur.as_raw().clone();
+        if let (Some(c), Some(t)) = (cutoff, target) {
+            let (mut lo, mut hi) = (0.0f32, 16.0f32);
+            for _ in 0..14 {
+                let mid = 0.5 * (lo + hi);
+                if coverage(&data, mid, c) < t {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            for p in data.chunks_mut(4) {
+                p[3] = (p[3] as f32 * hi).min(255.0) as u8;
+            }
+        }
+        out.push((w, h, data));
     }
     out
 }
@@ -302,7 +328,9 @@ impl Renderer {
         let pipe_prepass = make("prepass", "fs_prepass", pre_t, depth_state(true, C::LessEqual, Default::default()));
         // after the pre-pass, only the exact front-most surface passes (and no shader discard)
         let pipe_opaque = make("opaque", "fs_opaque", opaque_t.clone(), depth_state(false, C::Equal, Default::default()));
-        let pipe_blend = make("blend", "fs_main", blend_t, depth_state(false, C::LessEqual, Default::default()));
+        let pipe_blend = make("blend", "fs_main", blend_t.clone(), depth_state(false, C::LessEqual, Default::default()));
+        // editor selection: the selected parts glow through whatever covers them (seats, roofs)
+        let pipe_highlight = make("highlight", "fs_highlight", blend_t, depth_state(false, C::Always, Default::default()));
         let shadow_pipe = |label: &str, size_bias: wgpu::DepthBiasState| {
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some(label),
@@ -353,9 +381,9 @@ impl Renderer {
         let exposure_buf = device.create_buffer(&wgpu::BufferDescriptor { label: None, size: 16, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let linear_sampler = device.create_sampler(&wgpu::SamplerDescriptor { mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         Renderer {
-            globals_buf, shadow_view, dummy_depth, mat_layout, glob_layout, pipe_prepass, pipe_opaque, pipe_blend, pipe_sky, pipe_shadow,
+            globals_buf, shadow_view, dummy_depth, mat_layout, glob_layout, pipe_prepass, pipe_opaque, pipe_blend, pipe_highlight, pipe_sky, pipe_shadow,
             pipe_tonemap, pipe_grid, pipe_skyvis, pipe_skydepth, tonemap_layout, exposure_buf, linear_sampler, s_repeat, s_clamp, shadow_sampler, grid_sampler,
-            white, flat, textures: HashMap::new(), scene: None, grid: ([0.0; 4], [1.0; 4]), sky: ([0.0; 4], [1.0; 4]),
+            white, flat, textures: HashMap::new(), cutoffs: HashMap::new(), scene: None, grid: ([0.0; 4], [1.0; 4]), sky: ([0.0; 4], [1.0; 4]),
         }
     }
 
@@ -364,7 +392,7 @@ impl Renderer {
             return;
         }
         let max_dim = device.limits().max_texture_dimension_2d;
-        let mut levels = mips(img);
+        let mut levels = mips(img, if srgb { self.cutoffs.get(&img.id).copied() } else { None });
         while levels[0].0 > max_dim || levels[0].1 > max_dim {
             levels.remove(0);
         }
@@ -399,6 +427,11 @@ impl Renderer {
                 srgb[t.image] = true;
             }
         }
+        for m in &scene.materials {
+            if let (Alpha::Mask, Some(t), false) = (m.alpha, m.base_tex, m.name.contains("net_card")) {
+                self.cutoffs.insert(scene.images[t.image].id, m.cutoff);
+            }
+        }
         let used: std::collections::HashSet<(u64, bool)> = scene.images.iter().zip(&srgb).map(|(i, s)| (i.id, *s)).collect();
         self.textures.retain(|k, _| used.contains(k));
         for (img, s) in scene.images.iter().zip(&srgb) {
@@ -422,6 +455,7 @@ impl Renderer {
                 flags: [m.base_tex.is_some() as u8 as f32, m.mr_tex.is_some() as u8 as f32, m.normal_tex.is_some() as u8 as f32, m.emissive_tex.is_some() as u8 as f32],
                 flags2: [
                     match (m.alpha, m.transmission > 0.0) {
+                        (Alpha::Mask, _) if m.name.contains("net_card") => 2.0,
                         (Alpha::Mask, _) => 1.0,
                         (Alpha::Blend, _) | (_, true) => 2.0,
                         _ => 0.0,
@@ -455,7 +489,10 @@ impl Renderer {
                     wgpu::BindGroupEntry { binding: 8, resource: wgpu::BindingResource::Sampler(samp(&m.emissive_tex)) },
                 ],
             }));
-            material_alpha.push(if m.transmission > 0.0 { Alpha::Blend } else { m.alpha });
+            // net cards are cords a few millimetres thick: blended, their mipmapped alpha fades to
+            // faint continuous lines with distance (an alpha test breaks them into dots)
+            let net = m.name.contains("net_card");
+            material_alpha.push(if m.transmission > 0.0 || net { Alpha::Blend } else { m.alpha });
         }
 
         // geometry and instances (meshes with a coarse LOD get near/far buffers per frame)
@@ -463,6 +500,7 @@ impl Renderer {
         let mut draws = Vec::new();
         let mut shadow_draws = Vec::new();
         let mut lod_sets = Vec::new();
+        let mut plain = HashMap::new();
         let nmat = scene.materials.len();
         let geom: Vec<Vec<(Rc<wgpu::Buffer>, Rc<wgpu::Buffer>, u32, usize)>> = scene
             .meshes
@@ -515,9 +553,10 @@ impl Renderer {
                     lod_sets.push(LodSet { pos: raw.iter().map(|r| Vec3::new(r.model[3][0], r.model[3][1], r.model[3][2])).collect(), all: raw, near, far });
                 }
                 None => {
-                    let b = push_inst(&raw, false);
+                    let b = push_inst(&raw, true);
                     add(&mut draws, mi, b);
                     add(&mut shadow_draws, mi, b);
+                    plain.insert(mi, (b, raw));
                 }
             }
         }
@@ -559,8 +598,27 @@ impl Renderer {
         let globals_bg_shadow = globals_with(&self.dummy_depth);
         self.scene = Some(SceneGpu {
             globals_bg, globals_bg_shadow, material_bgs, material_alpha, draws, shadow_draws, inst_bufs, lod_sets,
+            plain, highlighted: Vec::new(),
             _light_buf: light_buf, _grid: grid_views, _sky: sky_views,
         });
+    }
+
+    /// Highlight these meshes (selection): their instances get colour `rgb` with w = 2, which the
+    /// shader draws as a rim glow. An empty list clears the highlight.
+    pub fn set_highlight(&mut self, queue: &wgpu::Queue, meshes: &[usize], rgb: [f32; 3]) {
+        let Some(sc) = self.scene.as_mut() else { return };
+        for m in std::mem::take(&mut sc.highlighted) {
+            if let Some((b, raw)) = sc.plain.get(&m) {
+                queue.write_buffer(&sc.inst_bufs[*b].buf, 0, bytemuck::cast_slice(raw));
+            }
+        }
+        for &m in meshes {
+            if let Some((b, raw)) = sc.plain.get(&m) {
+                let lit: Vec<InstanceRaw> = raw.iter().map(|r| InstanceRaw { model: r.model, color: [rgb[0], rgb[1], rgb[2], 2.0] }).collect();
+                queue.write_buffer(&sc.inst_bufs[*b].buf, 0, bytemuck::cast_slice(&lit));
+                sc.highlighted.push(m);
+            }
+        }
     }
 
     /// Split every LOD set into near (fine mesh) and far (coarse mesh) instances for this camera.
@@ -657,6 +715,19 @@ impl Renderer {
                 pass.draw(0..3, 0..1);
                 pass.set_pipeline(&self.pipe_blend);
                 draw_list(&mut pass, sc, &sc.draws, |a| a == Alpha::Blend);
+                if !sc.highlighted.is_empty() {
+                    let bufs: Vec<usize> = sc.highlighted.iter().filter_map(|m| sc.plain.get(m).map(|p| p.0)).collect();
+                    let lit: Vec<&Draw> = sc.draws.iter().filter(|d| bufs.contains(&d.inst)).collect();
+                    pass.set_pipeline(&self.pipe_highlight);
+                    for d in lit {
+                        let ib = &sc.inst_bufs[d.inst];
+                        pass.set_bind_group(1, &sc.material_bgs[d.material], &[]);
+                        pass.set_vertex_buffer(0, d.vbuf.slice(..));
+                        pass.set_vertex_buffer(1, ib.buf.slice(..));
+                        pass.set_index_buffer(d.ibuf.slice(..), wgpu::IndexFormat::Uint32);
+                        pass.draw_indexed(0..d.count, 0, 0..ib.count);
+                    }
+                }
             }
         }
         {

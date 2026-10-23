@@ -22,14 +22,27 @@ target/release/stadium-viewer ../layouts/mega.json --camera aerial --screenshot 
 target/release/stadium-viewer ../layouts/classic.json --ui --screenshot ui.png             # with the editor UI
 ```
 
-Options: `--night`, `--camera broadcast|aerial|pitch|goal|grass`, `--screenshot out.png`
-(headless), `--ui` (draw the editor panels into the screenshot), `--size 1600x900`,
+Options: `--night`, `--camera broadcast|aerial|pitch|goal|grass|goalmouth`, `--screenshot out.png`
+(headless), `--ui` (draw the editor panels into the screenshot), `--select <part>` (draw the
+selection highlight, e.g. `Stand_north`), `--size 1600x900`,
 `--exact-lights` (per-pixel floodlight loop instead of the irradiance volume), `--max-lights N`.
 `STADIUM_SNAPSHOT=out.png` saves the live window once the stadium has been on screen a few seconds.
 
-Interactive: drag to orbit, right-drag to pan, scroll to zoom, `1`–`5` camera presets, `N`
+Interactive: drag to orbit, right-drag to pan, scroll to zoom, `1`–`6` camera presets, `N`
 day/night. In the editor the left panel edits the layout, the right panel shows the readouts, the
-top bar has File (new from template, open, save, save as), day/night, cameras and exposure.
+top bar has File (new from template, open, save, save as), undo/redo, day/night, cameras and
+exposure.
+
+- **Undo/redo**: Cmd+Z / Cmd+Shift+Z (or the buttons). A slider drag is one step.
+- **Click to select**: click a stand, roof, facade, the pitch, a goal, the boards, a screen, a
+  dugout or a floodlight; its editor section opens and scrolls into view, and the object glows
+  through whatever covers it. Esc clears the selection.
+- **Image mosaics**: in Seat colours & mosaics switch a mosaic to Image and pick a PNG/JPG. The
+  editor keeps a master copy and a version a chosen number of pixels tall in
+  `layouts/mosaics/` (one pixel = a block of seats; transparent pixels keep the stand's colours) and
+  shows how many rows the tier has. The Blender pipeline reads the same files.
+- **Nets**: pattern (solid, bands, checker), two colours, band width, hex or square mesh, mesh
+  size and cord thickness. The game's net card texture is regenerated from these.
 
 ## How the editor builds a stadium
 
@@ -65,6 +78,8 @@ material was baked with (`base_hex`).
   opposition hotspot, light through the blades, a faint waxy sheen instead of a specular sheet, and
   within ~15 m a parallax ray march through the blade layer. Line paint lets the grass show through.
 - Depth pre-pass, then shading with depth EQUAL and no `discard`, so every pixel is shaded once.
+- Alpha-tested textures get coverage-preserving mipmaps; net cards are blended, so cords fade to
+  faint lines with distance instead of breaking up or vanishing.
 - Seats: every frame each instance is assigned the fine mesh (< 45 m) or its coarse mesh; shadows
   always use the coarse mesh. Only the seat shell takes the per-seat colour.
 - Floodlights at night: a compute shader bakes all spots into an irradiance volume (an "ambient

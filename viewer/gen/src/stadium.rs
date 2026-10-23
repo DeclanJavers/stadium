@@ -37,6 +37,23 @@ pub enum Tex {
     BoardAtlas(Vec<String>),
     Carpet(String),
     Scoreboard,
+    /// goal net card: cord pattern regenerated at runtime
+    Net(NetSpec),
+}
+
+/// Net options for the game's net card (the hero net's cords are a Blender render asset).
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct NetSpec {
+    /// "hex" or "square"
+    pub mesh: String,
+    pub mesh_size_mm: u32,
+    /// cord diameter in tenths of a millimetre
+    pub cord_tenths_mm: u32,
+    /// "solid", "bands" or "checker"
+    pub pattern: String,
+    pub band_cells: u32,
+    /// sRGB 0-255
+    pub colors: Vec<[u8; 3]>,
 }
 
 /// Material reference: a library material by name, optionally recoloured / emissive / textured.
@@ -98,6 +115,8 @@ pub struct PropSet {
     pub items: Vec<Placement>,
     /// material recolours for this asset: (material name, sRGB)
     pub tints: Vec<(String, DVec3)>,
+    /// goal nets: the card's cord pattern
+    pub net: Option<NetSpec>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -247,8 +266,15 @@ fn tubes_part(name: &str, lines: &[Polyline], sides: usize, mat: Mat) -> Option<
     Some(Part { name: name.into(), mesh: m, mats: vec![mat], smooth_deg: 60.0 })
 }
 
-/// Build a stadium from a layout (stadium-layout/1).
+/// Build a stadium from a layout (stadium-layout/1). Image mosaics need `build_with_images`.
 pub fn build(layout: &Value, cat: &Catalog) -> Result<Stadium, String> {
+    build_with_images(layout, cat, &|_| None)
+}
+
+/// Loads a mosaic image ("image" path in the layout, relative to the repository root).
+pub type ImageLoader<'a> = dyn Fn(&str) -> Option<Picture> + 'a;
+
+pub fn build_with_images(layout: &Value, cat: &Catalog, images: &ImageLoader) -> Result<Stadium, String> {
     let night = layout.get("lighting").and_then(|v| v.as_str()) == Some("night");
     let pitch = Pitch::resolve(layout.get("pitch").unwrap_or(&Value::Null), Some(cat));
     let mut st = Stadium {
@@ -265,7 +291,7 @@ pub fn build(layout: &Value, cat: &Catalog) -> Result<Stadium, String> {
     build_pitch(&mut st);
     build_goals_and_flags(&mut st, layout, cat)?;
     let stands = match layout.get("stands") {
-        Some(cfg) if cfg.is_object() => Some(build_stands(&mut st, cfg, cat)?),
+        Some(cfg) if cfg.is_object() => Some(build_stands(&mut st, cfg, cat, images)?),
         _ => None,
     };
     if let Some(s) = &stands {
@@ -321,8 +347,20 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
             tints.push(("TINT_net_card".into(), patterns::hex_rgb(c)));
             tints.push(("TINT_net_a".into(), patterns::hex_rgb(c)));
         }
+        let to8 = |c: &str| {
+            let v = patterns::hex_rgb(c) * 255.0;
+            [v.x.round() as u8, v.y.round() as u8, v.z.round() as u8]
+        };
+        let net = NetSpec {
+            mesh: text(&goals, "mesh", "hex").to_string(),
+            mesh_size_mm: (num(&goals, "mesh_size", 0.12) * 1000.0).round() as u32,
+            cord_tenths_mm: (num(&goals, "cord_mm", 4.0) * 10.0).round() as u32,
+            pattern: text(&goals, "net_pattern", "solid").to_string(),
+            band_cells: num(&goals, "band_cells", 3.0).max(1.0) as u32,
+            colors: nets.iter().map(|c| to8(c)).collect(),
+        };
         let items = pitch::sockets(&st.pitch).into_iter().filter(|s| s.0 == "goal").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
-        st.props.push(PropSet { key: format!("goal.{style}"), items, tints });
+        st.props.push(PropSet { key: format!("goal.{style}"), items, tints, net: Some(net) });
     }
     let flags = layout.get("corner_flags").cloned().unwrap_or(json!({"preset": "pro_spring"}));
     if !flags.is_null() {
@@ -334,7 +372,7 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
             tints.push(("TINT_pole_a".to_string(), patterns::hex_rgb(c)));
         }
         let items = pitch::sockets(&st.pitch).into_iter().filter(|s| s.0 == "corner_flag").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
-        st.props.push(PropSet { key: format!("corner_flag.{preset}"), items, tints });
+        st.props.push(PropSet { key: format!("corner_flag.{preset}"), items, tints, net: None });
     }
     Ok(())
 }
@@ -408,7 +446,7 @@ fn facade_mats(spec: &Value, night: bool) -> Vec<Mat> {
     vec![main, Mat::tint("TINT_facade_b", &accent), Mat::named("Facade_DarkGlass"), trim, etfe, Mat::named("Facade_Core")]
 }
 
-fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOut, String> {
+fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoader) -> Result<StandsOut, String> {
     let p = st.pitch.clone();
     let mut sides: Vec<Side> = Vec::new();
     if let Some(obj) = cfg.get("sides").and_then(|v| v.as_object()) {
@@ -447,8 +485,6 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOu
     let mut vom_top: Vec<Vec<Option<usize>>> = Vec::new();
     let mut standing = 0.0;
     let mut out = StandsOut { a, b, runs: Vec::new(), roofs: Vec::new(), facade_lines: Vec::new(), camera_mount: None };
-    let mut rails_all: Vec<Polyline> = Vec::new();
-    let mut nosings_all: Vec<(DVec3, DVec3)> = Vec::new();
     let mut warnings: Vec<String> = Vec::new();
     for (ri, run) in run_defs.iter().enumerate() {
         let sc = sides.iter().find(|s| s.name == run.name).unwrap_or(&sides[0]);
@@ -519,9 +555,14 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOu
         if !glass.faces.is_empty() {
             st.parts.push(Part { name: format!("Glass_{}", run.name), mesh: glass, mats: vec![Mat::named("Balustrade_Glass")], smooth_deg: 35.0 });
         }
-        rails_all.extend(o.rails.iter().cloned());
-        rails_all.extend(barrier_lines(&o.barriers));
-        nosings_all.extend(o.nosings.iter().cloned());
+        let mut rails = o.rails.clone();
+        rails.extend(barrier_lines(&o.barriers));
+        if let Some(t) = tubes_part(&format!("Rails_{}", run.name), &rails, 8, Mat::named("Galvanised")) {
+            st.parts.push(t);
+        }
+        if !o.nosings.is_empty() {
+            st.parts.push(Part { name: format!("Nosings_{}", run.name), mesh: nosings_mesh(&o.nosings), mats: vec![Mat::named("Step_Nosing")], smooth_deg: 0.0 });
+        }
         st.sockets.extend(o.sockets.iter().cloned());
         for a_ in &o.anchors {
             styles.push(tier_styles[a_.tier].clone());
@@ -545,12 +586,6 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOu
             st.sockets.push(Socket { kind: "camera", id: "main".into(), loc: m, n: DVec2::new(0.0, -1.0), props: vec![] });
         }
         out.runs.push((run.clone(), tiers));
-    }
-    if let Some(t) = tubes_part("Rails", &rails_all, 8, Mat::named("Galvanised")) {
-        st.parts.push(t);
-    }
-    if !nosings_all.is_empty() {
-        st.parts.push(Part { name: "Nosings".into(), mesh: nosings_mesh(&nosings_all), mats: vec![Mat::named("Step_Nosing")], smooth_deg: 0.0 });
     }
 
     // seat colours: base pattern per run, mosaics, finish
@@ -589,7 +624,16 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOu
                 }
             }
         }
-        let pic = mz.get("pixels").and_then(picture_from_json);
+        let pic = match mz.get("image").and_then(|v| v.as_str()) {
+            Some(path) => match images(path) {
+                Some(p) => Some(p),
+                None => {
+                    warnings.push(format!("mosaic image {path:?} could not be read"));
+                    continue;
+                }
+            },
+            None => mz.get("pixels").and_then(picture_from_json),
+        };
         patterns::apply_mosaic(&mut colors, &all, &mz, ri, run_lengths[ri], &tier_rows[ri], pic.as_ref());
     }
     let finished = patterns::finish(&colors, num(cfg, "seat_fade", 0.0), 0);
@@ -610,7 +654,7 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<StandsOu
         });
     }
     for (key, items) in groups {
-        st.props.push(PropSet { key, items, tints: vec![] });
+        st.props.push(PropSet { key, items, tints: vec![], net: None });
     }
 
     // apron between the run-off and the stand fronts, and the plaza outside
@@ -1082,7 +1126,7 @@ fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<(), Str
         }
         match st.props.iter_mut().find(|p| p.key == key) {
             Some(ps) => ps.items.extend(items),
-            None => st.props.push(PropSet { key, items, tints: vec![] }),
+            None => st.props.push(PropSet { key, items, tints: vec![], net: None }),
         }
     }
     // technical areas: dashed lines 1 m beyond the seats each side, to 1 m from the touchline
@@ -1181,7 +1225,7 @@ fn build_floodlights(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Optio
     let d = floodlights::design(&spec, p.length, p.width, p.runoff_side, info.as_ref())?;
     let fixture_key = format!("floodlight_fixture.{}", d.fixture);
     let items = d.fixtures.iter().map(|(pos, t)| Placement::aim(*pos, *t - *pos)).collect();
-    st.props.push(PropSet { key: fixture_key, items, tints: vec![] });
+    st.props.push(PropSet { key: fixture_key, items, tints: vec![], net: None });
     if let Some(t) = tubes_part("FloodlightSteel", &d.steel, 6, Mat::named("Galvanised")) {
         st.parts.push(t);
     }

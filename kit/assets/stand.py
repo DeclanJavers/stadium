@@ -440,5 +440,9 @@ def _load_image(path):
     from ..core.scene import ROOT
     img = bpy.data.images.load(str(ROOT / path))
     w, h = img.size
-    # byte images expose their stored (sRGB) values; flip so row 0 is the top
-    return np.array(img.pixels[:]).reshape(h, w, 4)[::-1, :, :3]
+    # byte images expose their stored (sRGB) values; flip so row 0 is the top. Transparent pixels
+    # become NaN: apply_mosaic leaves those seats in their base colour.
+    px = np.array(img.pixels[:]).reshape(h, w, 4)[::-1]
+    rgb = px[..., :3].copy()
+    rgb[px[..., 3] < 0.5] = np.nan
+    return rgb

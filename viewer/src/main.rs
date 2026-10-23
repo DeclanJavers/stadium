@@ -4,7 +4,7 @@
 //!   stadium-viewer <layout.json>             edit a layout live (stands, seats, roofs, ads, …)
 //!   stadium-viewer                           the editor with layouts/premier.json
 //!
-//! Options: --night, --camera broadcast|aerial|pitch|goal, --screenshot out.png (headless),
+//! Options: --night, --camera broadcast|aerial|pitch|goal|grass|goalmouth, --screenshot out.png (headless),
 //! --size 1600x900, --exact-lights, --max-lights N.
 //! Interactive: drag to orbit, right-drag to pan, scroll to zoom, 1-4 camera presets, N day/night.
 
@@ -12,6 +12,8 @@ mod build;
 mod editor;
 mod glb;
 mod library;
+mod net;
+mod pick;
 mod render;
 
 use glam::{Mat4, Vec3};
@@ -55,6 +57,11 @@ impl Camera {
             "pitch" => Camera::look(Vec3::new(-28.0, 1.7, 18.0), Vec3::new(30.0, 4.0, -10.0), 60.0),
             "goal" => Camera::look(Vec3::new(-80.0, 14.0, 6.0), Vec3::new(0.0, 0.0, 0.0), 50.0),
             "grass" => Camera::look(Vec3::new(-8.0, 1.6, 6.0), Vec3::new(10.0, 0.0, -4.0), 55.0),
+            // standing in the east penalty area, looking at the goal and its net
+            "goalmouth" => {
+                let gx = scene.pitch.as_ref().map(|p| p.half.x).unwrap_or(52.5);
+                Camera::look(Vec3::new(gx - 9.0, 1.6, 5.5), Vec3::new(gx + 0.8, 1.0, 0.0), 50.0)
+            }
             _ => match scene.main_camera {
                 // the stadium's own camera gantry (front of the main stand's tier nearest 16 m)
                 Some(p) => Camera::look(p, Vec3::new(0.0, 0.0, -6.0), 72.0),
@@ -143,7 +150,7 @@ fn args() -> Args {
             Some((w.parse().ok()?, h.parse().ok()?))
         })
         .unwrap_or((1600, 900));
-    let flag_values = ["--camera", "--screenshot", "--size", "--max-lights"];
+    let flag_values = ["--camera", "--screenshot", "--size", "--max-lights", "--select"];
     let positional = a.iter().enumerate().find(|(i, x)| !x.starts_with("--") && !(*i > 0 && flag_values.contains(&a[i - 1].as_str()))).map(|(_, x)| PathBuf::from(x));
     let path = positional.unwrap_or_else(|| repo_root(&std::env::current_dir().unwrap()).map(|r| r.join("layouts/premier.json")).unwrap_or_else(|| PathBuf::from("layouts/premier.json")));
     Args { path, night: a.iter().any(|x| x == "--night"), camera: get("--camera").unwrap_or_else(|| "broadcast".into()), screenshot: get("--screenshot").map(PathBuf::from), size }
@@ -181,10 +188,22 @@ fn is_layout(p: &Path) -> bool {
     p.extension().is_some_and(|e| e == "json")
 }
 
+/// A mosaic image (path relative to the repository root) as sRGB pixels; transparent ones skip.
+pub fn load_mosaic(root: &Path, path: &str) -> Option<stadium_gen::patterns::Picture> {
+    let p = if Path::new(path).is_absolute() { PathBuf::from(path) } else { root.join(path) };
+    let img = image::open(&p).ok()?.to_rgba8();
+    let px = img
+        .pixels()
+        .map(|q| (q[3] >= 128).then(|| glam::DVec3::new(q[0] as f64, q[1] as f64, q[2] as f64) / 255.0))
+        .collect();
+    Some(stadium_gen::patterns::Picture { w: img.width() as usize, h: img.height() as usize, px })
+}
+
 /// Generate a stadium from a layout and turn it into a render scene.
 fn build_layout(layout: &Value, cat: &Catalog, lib: &library::Library) -> Result<(stadium_gen::stadium::Report, glb::Scene, Vec<String>, f32, f32), String> {
     let t = Instant::now();
-    let st = stadium_gen::stadium::build(layout, cat)?;
+    let root = lib.root.clone();
+    let st = stadium_gen::stadium::build_with_images(layout, cat, &move |path: &str| load_mosaic(&root, path))?;
     let gen_ms = t.elapsed().as_secs_f32() * 1000.0;
     let t = Instant::now();
     let (scene, warnings) = build::scene(&st, lib);
@@ -220,6 +239,12 @@ fn screenshot(a: &Args, scene: &glb::Scene, mut overlay: Option<Overlay>) {
     let t0 = Instant::now();
     let mut r = Renderer::new(&device, &queue, fmt);
     r.set_scene(&device, &queue, scene);
+    // --select <part>: draw the editor's selection highlight on that part's group
+    let argv: Vec<String> = std::env::args().collect();
+    if let Some(f) = argv.iter().position(|x| x == "--select").and_then(|i| argv.get(i + 1)).and_then(|n| editor::focus_for(n)) {
+        let meshes: Vec<usize> = scene.nodes.iter().filter(|n| editor::focus_for(&n.0).is_some_and(|g| g.section == f.section && g.side == f.side)).map(|n| n.2).collect();
+        r.set_highlight(&queue, &meshes, [1.0, 0.62, 0.15]);
+    }
     let (w, h) = a.size;
     let targets = r.targets(&device, w, h);
     let out = device.create_texture(&wgpu::TextureDescriptor {
@@ -292,6 +317,17 @@ fn screenshot(a: &Args, scene: &glb::Scene, mut overlay: Option<Overlay>) {
     );
 }
 
+/// World-space ray (origin, direction) through a pixel of the view (glTF coordinates).
+fn camera_ray(cam: &Camera, size: (f32, f32), px: (f32, f32)) -> (Vec3, Vec3) {
+    let view = Mat4::look_at_rh(cam.eye(), cam.target, Vec3::Y);
+    let proj = Mat4::perspective_rh(cam.fov, size.0 / size.1.max(1.0), 0.3, 5000.0);
+    let inv = (proj * view).inverse();
+    let ndc = glam::Vec2::new(2.0 * px.0 / size.0 - 1.0, 1.0 - 2.0 * px.1 / size.1);
+    let a = inv.project_point3(ndc.extend(0.0));
+    let b = inv.project_point3(ndc.extend(1.0));
+    (a, (b - a).normalize())
+}
+
 /// Read back a texture (RGBA8 or BGRA8) and save it as PNG.
 fn save_texture(device: &wgpu::Device, queue: &wgpu::Queue, tex: &wgpu::Texture, size: (u32, u32), path: &Path) {
     let (w, h) = size;
@@ -358,6 +394,11 @@ struct Live {
     start: Instant,
     frames: u32,
     snapshot_done: bool,
+    /// cursor position, and where the left button went down (a click is a press without a drag)
+    cursor: (f64, f64),
+    press: Option<(f64, f64)>,
+    /// selection highlight currently applied, and for which scene build
+    applied: (Option<editor::Focus>, u64),
     egui_ctx: egui::Context,
     egui_state: egui_winit::State,
     egui_renderer: egui_wgpu::Renderer,
@@ -456,6 +497,9 @@ impl winit::application::ApplicationHandler for App {
             start: Instant::now(),
             frames: 0,
             snapshot_done: false,
+            cursor: (0.0, 0.0),
+            press: None,
+            applied: (None, 0),
             egui_ctx,
             egui_state,
             egui_renderer,
@@ -479,6 +523,11 @@ impl winit::application::ApplicationHandler for App {
             }
             WindowEvent::KeyboardInput { event, .. } if event.state == ElementState::Pressed && !ui_has_keys => match event.logical_key {
                 Key::Named(NamedKey::Escape) if self.edit.is_none() => el.exit(),
+                Key::Named(NamedKey::Escape) => {
+                    if let Some(e) = self.edit.as_mut() {
+                        e.editor.select(None);
+                    }
+                }
                 Key::Character(c) => {
                     let preset = match c.as_str() {
                         "1" => Some("broadcast"),
@@ -486,6 +535,7 @@ impl winit::application::ApplicationHandler for App {
                         "3" => Some("pitch"),
                         "4" => Some("goal"),
                         "5" => Some("grass"),
+                        "6" => Some("goalmouth"),
                         _ => None,
                     };
                     if let Some(p) = preset {
@@ -510,8 +560,25 @@ impl winit::application::ApplicationHandler for App {
             },
             WindowEvent::MouseInput { state, button, .. } => {
                 s.drag = if state == ElementState::Pressed && !ui_has_pointer { Some((button, (f64::NAN, f64::NAN))) } else { None };
+                if button == winit::event::MouseButton::Left {
+                    if state == ElementState::Pressed && !ui_has_pointer {
+                        s.press = Some(s.cursor);
+                    } else if state == ElementState::Released {
+                        let moved = s.press.map(|p| (p.0 - s.cursor.0).hypot(p.1 - s.cursor.1)).unwrap_or(f64::MAX);
+                        if moved < 4.0 && !ui_has_pointer {
+                            if let (Some(e), Some(scene)) = (self.edit.as_mut(), &self.scene) {
+                                let (w, h) = (s.config.width as f32, s.config.height as f32);
+                                let (o, d) = camera_ray(&s.cam, (w, h), (s.cursor.0 as f32, s.cursor.1 as f32));
+                                let hit = pick::pick(scene, o, d).and_then(|(name, _)| editor::focus_for(&name));
+                                e.editor.select(hit);
+                            }
+                        }
+                        s.press = None;
+                    }
+                }
             }
             WindowEvent::CursorMoved { position, .. } => {
+                s.cursor = (position.x, position.y);
                 if let Some((button, last)) = s.drag.as_mut() {
                     if !last.0.is_nan() {
                         let (dx, dy) = ((position.x - last.0) as f32, (position.y - last.1) as f32);
@@ -613,6 +680,7 @@ impl App {
         let scene_ref = &self.scene;
         let full = s.egui_ctx.run_ui(raw, |ui| match edit.as_mut() {
             Some(e) => {
+                e.editor.shortcuts(ui.ctx());
                 egui::Panel::top("top").show(ui, |ui| e.editor.top_bar(ui));
                 egui::Panel::left("layout").resizable(true).default_size(330.0).show(ui, |ui| e.editor.controls(ui));
                 egui::Panel::right("readouts").resizable(true).default_size(300.0).show(ui, |ui| e.editor.readouts(ui));
@@ -625,6 +693,24 @@ impl App {
             }
         });
         s.egui_state.handle_platform_output(&s.window, full.platform_output);
+        if let Some(e) = self.edit.as_mut() {
+            e.editor.track_history();
+            // keep the selection highlighted, also across rebuilds (mesh indices change)
+            let want = (e.editor.focus.clone(), e.shown);
+            if want != s.applied {
+                let meshes: Vec<usize> = match (&want.0, &self.scene) {
+                    (Some(f), Some(scene)) => scene
+                        .nodes
+                        .iter()
+                        .filter(|n| editor::focus_for(&n.0).is_some_and(|g| g.section == f.section && g.side == f.side))
+                        .map(|n| n.2)
+                        .collect(),
+                    _ => Vec::new(),
+                };
+                s.renderer.set_highlight(&s.queue, &meshes, [1.0, 0.62, 0.15]);
+                s.applied = want;
+            }
+        }
         let tris = s.egui_ctx.tessellate(full.shapes, full.pixels_per_point);
         for (id, deltas) in &full.textures_delta.set {
             for delta in deltas {
@@ -793,5 +879,127 @@ mod tests {
         let _ = std::fs::remove_file(&tmp);
         assert_eq!(ed.layout, layout);
         assert_eq!(ed.revision, ed.saved_revision);
+    }
+}
+
+#[cfg(test)]
+mod editor_tests {
+    use super::*;
+    use serde_json::json;
+
+    fn root() -> PathBuf {
+        repo_root(Path::new(env!("CARGO_MANIFEST_DIR"))).unwrap()
+    }
+
+    fn ed(layout: Value) -> editor::Editor {
+        let cat = Arc::new(Catalog::load(&root().join("catalog")).unwrap());
+        editor::Editor::new(layout, cat, None, root().join("layouts"))
+    }
+
+    #[test]
+    fn undo_redo_coalesces_gestures() {
+        let mut e = ed(json!({"pitch": {"wear": 0.1}}));
+        e.track_history();
+        assert!(!e.can_undo());
+        // a slider drag: several changes in quick succession are one step
+        for w in [0.2, 0.3, 0.4] {
+            e.layout["pitch"]["wear"] = json!(w);
+            e.track_history();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(550));
+        e.track_history();
+        e.layout["pitch"]["wear"] = json!(0.9);
+        e.track_history();
+        e.undo();
+        assert_eq!(e.layout["pitch"]["wear"], json!(0.4));
+        e.undo();
+        assert_eq!(e.layout["pitch"]["wear"], json!(0.1));
+        assert!(!e.can_undo());
+        e.redo();
+        e.redo();
+        assert_eq!(e.layout["pitch"]["wear"], json!(0.9));
+        // a new edit after undo drops the redo branch
+        e.undo();
+        e.layout["pitch"]["wear"] = json!(0.5);
+        e.track_history();
+        assert!(!e.can_redo());
+    }
+
+    #[test]
+    fn picked_names_map_to_sections() {
+        use editor::{focus_for, Section};
+        let f = focus_for("Stand_north").unwrap();
+        assert_eq!((f.section, f.side.as_deref()), (Section::Stands, Some("north")));
+        assert_eq!(focus_for("RoofSteel_NE").unwrap().side.as_deref(), Some("NE"));
+        assert_eq!(focus_for("Facade_west").unwrap().section, Section::RoofFacade);
+        assert_eq!(focus_for("goal.box").unwrap().section, Section::Goals);
+        assert_eq!(focus_for("Carpet_2").unwrap().section, Section::Ads);
+        assert_eq!(focus_for("floodlight_fixture.led").unwrap().section, Section::Lights);
+        assert!(focus_for("seat.bench.plank").is_none());
+    }
+
+    /// A ray from the broadcast camera through the middle of the frame lands on the pitch, and
+    /// one aimed at the north stand's seating picks that stand.
+    #[test]
+    fn clicks_pick_the_right_part() {
+        let cat = Catalog::load(&root().join("catalog")).unwrap();
+        let Ok(lib) = library::Library::load(&root()) else { return };
+        let layout: Value = serde_json::from_str(&std::fs::read_to_string(root().join("layouts/classic.json")).unwrap()).unwrap();
+        let (_, scene, _, _, _) = build_layout(&layout, &cat, &lib).unwrap();
+        let cam = Camera::preset("broadcast", &scene);
+        let (o, d) = camera_ray(&cam, (1600.0, 900.0), (800.0, 650.0));
+        let hit = pick::pick(&scene, o, d).unwrap();
+        assert_eq!(editor::focus_for(&hit.0).unwrap().section, editor::Section::Pitch, "{hit:?}");
+        // north stand seating in kit coords (0, 52, 5) -> glTF (0, 5, -52)
+        let target = Vec3::new(0.0, 5.0, -52.0);
+        let hit = pick::pick(&scene, cam.eye(), (target - cam.eye()).normalize()).unwrap();
+        let f = editor::focus_for(&hit.0).unwrap();
+        assert_eq!(f.side.as_deref(), Some("north"), "{hit:?}");
+    }
+
+    #[test]
+    fn image_mosaics_are_resampled_and_used() {
+        let tmp = std::env::temp_dir().join(format!("stadium_mosaic_{}", std::process::id()));
+        std::fs::create_dir_all(tmp.join("layouts")).unwrap();
+        // a 40x20 picture: red disc on transparent
+        let mut img = image::RgbaImage::new(40, 20);
+        for (x, y, p) in img.enumerate_pixels_mut() {
+            let inside = ((x as f32 - 20.0).powi(2) + ((y as f32 - 10.0) * 2.0).powi(2)) < 81.0;
+            *p = if inside { image::Rgba([200, 16, 46, 255]) } else { image::Rgba([0, 0, 0, 0]) };
+        }
+        let src = tmp.join("crest.png");
+        img.save(&src).unwrap();
+        let (master, sized) = editor::mosaic_from_file(&tmp, &src, 8).unwrap();
+        assert_eq!(master, "layouts/mosaics/crest.png");
+        assert_eq!(sized, "layouts/mosaics/crest_8.png");
+        let pic = load_mosaic(&tmp, &sized).unwrap();
+        assert_eq!((pic.w, pic.h), (16, 8));
+        assert!(pic.px.iter().any(|p| p.is_none()) && pic.px.iter().any(|p| p.is_some()));
+        // the generator paints only the opaque pixels
+        let cat = Catalog::load(&root().join("catalog")).unwrap();
+        let mut layout: Value = serde_json::from_str(&std::fs::read_to_string(root().join("layouts/classic.json")).unwrap()).unwrap();
+        layout["stands"]["mosaics"] = json!([{"run": "north", "tier": 0, "image": sized}]);
+        let t = tmp.clone();
+        let st = stadium_gen::stadium::build_with_images(&layout, &cat, &move |p: &str| load_mosaic(&t, p)).unwrap();
+        assert!(st.report.warnings.iter().all(|w| !w.contains("mosaic")), "{:?}", st.report.warnings);
+        let red = st.props.iter().flat_map(|p| p.items.iter()).filter(|i| i.color.is_some_and(|c| c.x > 0.4 && c.y < 0.05)).count();
+        assert!(red > 15, "{red} red seats");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn net_textures_follow_the_options() {
+        use stadium_gen::stadium::NetSpec;
+        let spec = |mesh: &str, pattern: &str| NetSpec { mesh: mesh.into(), mesh_size_mm: 120, cord_tenths_mm: 40, pattern: pattern.into(), band_cells: 3, colors: vec![[247, 247, 245], [200, 16, 46]] };
+        let (hex, s) = net::texture(&spec("hex", "solid"));
+        assert!((s[0] - 1.0).abs() < 1e-5 && (s[1] - 1.0).abs() < 1e-5, "the default net keeps the library UVs: {s:?}");
+        let alpha: Vec<u8> = hex.rgba.chunks(4).map(|p| p[3]).collect();
+        let open = alpha.iter().filter(|a| **a == 0).count() as f32 / alpha.len() as f32;
+        assert!((0.6..0.97).contains(&open), "mostly holes between cords: {open}");
+        let (sq, s2) = net::texture(&spec("square", "checker"));
+        assert!(s2[1] < 1.0 && sq.width > hex.width, "a checker tile spans several cells");
+        let reds = sq.rgba.chunks(4).filter(|p| p[3] > 0 && p[0] == 200).count();
+        let whites = sq.rgba.chunks(4).filter(|p| p[3] > 0 && p[0] == 247).count();
+        assert!(reds > 0 && whites > 0);
     }
 }

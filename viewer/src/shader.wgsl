@@ -387,7 +387,7 @@ fn shade(i: VOut) -> vec4<f32> {
     let fp = max(length(dp1), length(dp2));
 
     var base = m.base_color;
-    if (i.icolor.w > 0.5 && m.flags2.w > 0.5) { base = vec4<f32>(i.icolor.rgb, 1.0); }
+    if (i.icolor.w > 0.5 && i.icolor.w < 1.5 && m.flags2.w > 0.5) { base = vec4<f32>(i.icolor.rgb, 1.0); }
     base *= mix(vec4<f32>(1.0), tb, m.flags.x);
     let alpha_mode = m.flags2.x;
     let metallic = m.params.x * mix(1.0, tmr.b, m.flags.y);
@@ -499,6 +499,11 @@ fn shade(i: VOut) -> vec4<f32> {
     }
 
     color += m.emissive.rgb * mix(vec3<f32>(1.0), tem, m.flags.w);
+    if (i.icolor.w > 1.5) {
+        // editor selection: a warm tint and a rim that keeps the outline readable
+        let rim = pow(1.0 - clamp(abs(dot(n_geo, v)), 0.0, 1.0), 2.0);
+        color = color * 0.75 + i.icolor.rgb * (0.08 + 0.5 * rim);
+    }
 
     var a = 1.0;
     if (alpha_mode > 1.5) {
@@ -558,6 +563,15 @@ fn vs_shadow(v: VIn) -> SOut {
 fn fs_shadow(i: SOut) {
     let a = m.base_color.a * mix(1.0, textureSample(t_base, s_base, xform(i.uv, m.xf_base, m.rot.x)).a, m.flags.x);
     if (m.flags2.x > 0.5 && a < max(m.params.z, 0.35)) { discard; }
+}
+
+// editor selection overlay, drawn through everything (no depth test), additively faint
+@fragment
+fn fs_highlight(i: VOut) -> @location(0) vec4<f32> {
+    let n = normalize(i.normal);
+    let v = normalize(g.cam_pos.xyz - i.world);
+    let rim = pow(1.0 - abs(dot(n, v)), 1.5);
+    return vec4<f32>(i.icolor.rgb * 0.9, 0.10 + 0.25 * rim);
 }
 
 // depth pre-pass: lay down depth (alpha-tested) so the expensive shading runs once per pixel

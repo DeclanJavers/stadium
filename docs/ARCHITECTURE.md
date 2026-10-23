@@ -203,6 +203,9 @@ The game saves and edits this; the Blender assembler and the Rust editor both tu
 stadium. Sections: `name`, `lighting` (`day`/`night`), `pitch`, `goals`, `corner_flags`, `stands`
 (sides, corners, colours, mosaics, roof, facade), `floodlights`, `ads`, `screens`, `dugouts`,
 `tunnel`. A missing section means "none", except goals and corner flags, which default to on.
+A mosaic is text (`"text"`) or a picture (`"image": "layouts/mosaics/crest_12.png"`, a path from
+the repository root, one pixel per block of seats, transparent pixels left alone); the editor
+writes such images under `layouts/mosaics/` with an `image_master` copy for resizing.
 
 ## Game-readiness
 

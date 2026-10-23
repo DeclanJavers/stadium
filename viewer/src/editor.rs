@@ -31,6 +31,76 @@ pub struct Editor {
     pub fps: f32,
     /// open every section (headless UI screenshots)
     pub expand_all: bool,
+    /// undo history: layouts before each edit gesture (slider drags coalesce into one step)
+    undo: Vec<Value>,
+    redo: Vec<Value>,
+    committed: Value,
+    gesture: Option<std::time::Instant>,
+    /// what a click in the 3D view selected, and whether its section still has to be revealed
+    pub focus: Option<Focus>,
+    reveal: bool,
+    previews: std::collections::HashMap<String, egui::TextureHandle>,
+}
+
+/// Editor sections a click can jump to.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Section {
+    Pitch,
+    Goals,
+    Stands,
+    Colours,
+    RoofFacade,
+    Lights,
+    Ads,
+    Furniture,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Focus {
+    pub section: Section,
+    /// a stand side or corner ("north", "NE"), when the object belongs to one
+    pub side: Option<String>,
+    pub label: String,
+}
+
+const UNDO_DEPTH: usize = 200;
+
+/// What a generated part or prop belongs to, by its name (see build.rs / stadium.rs).
+pub fn focus_for(name: &str) -> Option<Focus> {
+    let side_of = |prefix: &str| name.strip_prefix(prefix).map(|s| s.to_string());
+    let corner = |s: &str| s.len() == 2;
+    let f = |section, side: Option<String>, label: String| Some(Focus { section, side, label });
+    for (prefix, section, what) in [
+        ("Stand_", Section::Stands, "stand"),
+        ("Glass_", Section::Stands, "stand"),
+        ("Rails_", Section::Stands, "stand"),
+        ("Nosings_", Section::Stands, "stand"),
+        ("Roof_", Section::RoofFacade, "roof"),
+        ("RoofSteel_", Section::RoofFacade, "roof"),
+        ("Facade_", Section::RoofFacade, "facade"),
+        ("FacadeFrame_", Section::RoofFacade, "facade"),
+    ] {
+        if let Some(side) = side_of(prefix) {
+            let label = if corner(&side) { format!("{side} corner {what}") } else { format!("{side} {what}") };
+            return f(section, Some(side), label);
+        }
+    }
+    match name {
+        "PitchSurface" | "PitchLines" => f(Section::Pitch, None, "pitch".into()),
+        "Apron" | "Plaza" => f(Section::Stands, None, "stands".into()),
+        "BoardHousing" | "BoardLED" | "Boards" | "BoardBacks" | "BoardLegs" => f(Section::Ads, None, "perimeter boards".into()),
+        "Ribbons" => f(Section::Ads, None, "LED ribbons".into()),
+        "FloodlightSteel" | "FloodlightMasts" => f(Section::Lights, None, "floodlights".into()),
+        "TechnicalAreas" => f(Section::Furniture, None, "technical areas".into()),
+        n if n.starts_with("Carpet_") => f(Section::Ads, None, "3D carpet".into()),
+        n if n.starts_with("Screen") => f(Section::Furniture, None, "big screen".into()),
+        n if n.starts_with("Dugout") => f(Section::Furniture, None, "dugouts".into()),
+        n if n.starts_with("Tunnel") => f(Section::Furniture, None, "players' tunnel".into()),
+        n if n.starts_with("goal.") => f(Section::Goals, None, "goals".into()),
+        n if n.starts_with("corner_flag.") => f(Section::Goals, None, "corner flags".into()),
+        n if n.starts_with("floodlight_fixture.") => f(Section::Lights, None, "floodlights".into()),
+        _ => None,
+    }
 }
 
 fn hex_to_rgb(h: &str) -> [u8; 3] {
@@ -137,6 +207,7 @@ fn cat_opts(entries: &serde_json::Map<String, Value>) -> Vec<(String, String)> {
 impl Editor {
     pub fn new(layout: Value, cat: Arc<Catalog>, path: Option<PathBuf>, layouts_dir: PathBuf) -> Self {
         Editor {
+            committed: layout.clone(),
             layout,
             cat,
             path,
@@ -152,6 +223,76 @@ impl Editor {
             exposure: 1.0,
             fps: 0.0,
             expand_all: false,
+            undo: Vec::new(),
+            redo: Vec::new(),
+            gesture: None,
+            focus: None,
+            reveal: false,
+            previews: Default::default(),
+        }
+    }
+
+    /// Record undo steps: call once per frame after the UI ran. A gesture (consecutive changes
+    /// less than half a second apart, e.g. dragging a slider) becomes one undo step.
+    pub fn track_history(&mut self) {
+        let now = std::time::Instant::now();
+        if self.layout != self.committed {
+            if self.gesture.is_none() {
+                self.undo.push(std::mem::replace(&mut self.committed, Value::Null));
+                if self.undo.len() > UNDO_DEPTH {
+                    self.undo.remove(0);
+                }
+                self.redo.clear();
+            }
+            self.committed = self.layout.clone();
+            self.gesture = Some(now);
+        } else if self.gesture.is_some_and(|t| now.duration_since(t).as_millis() > 500) {
+            self.gesture = None;
+        }
+    }
+
+    pub fn can_undo(&self) -> bool {
+        !self.undo.is_empty()
+    }
+
+    pub fn can_redo(&self) -> bool {
+        !self.redo.is_empty()
+    }
+
+    pub fn undo(&mut self) {
+        if let Some(prev) = self.undo.pop() {
+            self.redo.push(std::mem::replace(&mut self.layout, prev));
+            self.committed = self.layout.clone();
+            self.gesture = None;
+            self.revision += 1;
+        }
+    }
+
+    pub fn redo(&mut self) {
+        if let Some(next) = self.redo.pop() {
+            self.undo.push(std::mem::replace(&mut self.layout, next));
+            self.committed = self.layout.clone();
+            self.gesture = None;
+            self.revision += 1;
+        }
+    }
+
+    /// Select what a click hit; None clears the selection.
+    pub fn select(&mut self, focus: Option<Focus>) {
+        self.reveal = focus.is_some();
+        self.focus = focus;
+    }
+
+    /// Undo/redo keys (Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Cmd/Ctrl+Y) unless a text field has focus.
+    pub fn shortcuts(&mut self, ctx: &egui::Context) {
+        if ctx.egui_wants_keyboard_input() {
+            return;
+        }
+        let (z, y, shift, cmd) = ctx.input(|i| (i.key_pressed(egui::Key::Z), i.key_pressed(egui::Key::Y), i.modifiers.shift, i.modifiers.command));
+        if cmd && z && !shift {
+            self.undo();
+        } else if cmd && ((z && shift) || y) {
+            self.redo();
         }
     }
 
@@ -191,6 +332,11 @@ impl Editor {
         match std::fs::read_to_string(&path).map_err(|e| e.to_string()).and_then(|t| serde_json::from_str::<Value>(&t).map_err(|e| e.to_string())) {
             Ok(v) if v.is_object() => {
                 self.layout = v;
+                self.committed = self.layout.clone();
+                self.undo.clear();
+                self.redo.clear();
+                self.gesture = None;
+                self.focus = None;
                 self.path = Some(path.clone());
                 self.stash.clear();
                 self.revision += 1;
@@ -254,6 +400,12 @@ impl Editor {
                     ui.close();
                 }
             });
+            if ui.add_enabled(self.can_undo(), egui::Button::new("Undo")).on_hover_text("Cmd+Z").clicked() {
+                self.undo();
+            }
+            if ui.add_enabled(self.can_redo(), egui::Button::new("Redo")).on_hover_text("Cmd+Shift+Z").clicked() {
+                self.redo();
+            }
             ui.separator();
             let mut name = get_s(&self.layout, "name", "Untitled stadium").to_string();
             if ui.add(egui::TextEdit::singleline(&mut name).desired_width(240.0)).changed() {
@@ -271,13 +423,20 @@ impl Editor {
                 self.revision += 1;
             }
             ui.separator();
-            for (k, l) in [("broadcast", "Broadcast"), ("aerial", "Aerial"), ("pitch", "Pitch"), ("goal", "Goal")] {
+            for (k, l) in [("broadcast", "Broadcast"), ("aerial", "Aerial"), ("pitch", "Pitch"), ("goal", "Goal"), ("goalmouth", "Goalmouth")] {
                 if ui.button(l).clicked() {
                     self.camera_request = Some(k);
                 }
             }
             ui.separator();
             ui.add(egui::Slider::new(&mut self.exposure, 0.2..=1.5).text("exposure"));
+            if let Some(f) = self.focus.clone() {
+                ui.separator();
+                ui.label(RichText::new(format!("Selected: {}", f.label)).color(Color32::from_rgb(255, 196, 90)));
+                if ui.small_button("×").on_hover_text("Clear selection (Esc)").clicked() {
+                    self.select(None);
+                }
+            }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.weak(format!("{:.0} fps", self.fps));
                 if !self.status.is_empty() {
@@ -293,14 +452,55 @@ impl Editor {
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
             ui.spacing_mut().slider_width = 150.0;
             let all = self.expand_all;
-            egui::CollapsingHeader::new(RichText::new("Pitch").strong()).default_open(true).show(ui, |ui| self.pitch_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Goals & corner flags").strong()).default_open(all).show(ui, |ui| self.goals_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Stands").strong()).default_open(true).show(ui, |ui| self.stands_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Seat colours & mosaics").strong()).default_open(all).show(ui, |ui| self.colours_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Roof & facade").strong()).default_open(all).show(ui, |ui| self.roof_facade_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Floodlights").strong()).default_open(all).show(ui, |ui| self.lights_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Advertising").strong()).default_open(all).show(ui, |ui| self.ads_ui(ui));
-            egui::CollapsingHeader::new(RichText::new("Screens, dugouts, tunnel").strong()).default_open(all).show(ui, |ui| self.furniture_ui(ui));
+            // a click in the 3D view opens its section once and scrolls to it
+            let reveal = if self.reveal { self.focus.as_ref().map(|f| f.section) } else { None };
+            self.reveal = false;
+            let sel = self.focus.as_ref().map(|f| f.section);
+            let header = |title: &str, section: Section, default: bool| {
+                let mut t = RichText::new(title).strong();
+                if sel == Some(section) {
+                    t = t.color(Color32::from_rgb(255, 196, 90));
+                }
+                let h = egui::CollapsingHeader::new(t).id_salt(title).default_open(default || all);
+                if reveal == Some(section) { h.open(Some(true)) } else { h }
+            };
+            let scroll = |ui: &mut Ui, section: Section| {
+                if reveal == Some(section) {
+                    ui.scroll_to_cursor(Some(egui::Align::TOP));
+                }
+            };
+            header("Pitch", Section::Pitch, true).show(ui, |ui| {
+                scroll(ui, Section::Pitch);
+                self.pitch_ui(ui)
+            });
+            header("Goals & corner flags", Section::Goals, false).show(ui, |ui| {
+                scroll(ui, Section::Goals);
+                self.goals_ui(ui)
+            });
+            header("Stands", Section::Stands, true).show(ui, |ui| {
+                scroll(ui, Section::Stands);
+                self.stands_ui(ui)
+            });
+            header("Seat colours & mosaics", Section::Colours, false).show(ui, |ui| {
+                scroll(ui, Section::Colours);
+                self.colours_ui(ui)
+            });
+            header("Roof & facade", Section::RoofFacade, false).show(ui, |ui| {
+                scroll(ui, Section::RoofFacade);
+                self.roof_facade_ui(ui)
+            });
+            header("Floodlights", Section::Lights, false).show(ui, |ui| {
+                scroll(ui, Section::Lights);
+                self.lights_ui(ui)
+            });
+            header("Advertising", Section::Ads, false).show(ui, |ui| {
+                scroll(ui, Section::Ads);
+                self.ads_ui(ui)
+            });
+            header("Screens, dugouts, tunnel", Section::Furniture, false).show(ui, |ui| {
+                scroll(ui, Section::Furniture);
+                self.furniture_ui(ui)
+            });
         });
     }
 
@@ -348,20 +548,36 @@ impl Editor {
             let g = obj(&mut self.layout, "goals");
             c |= combo(ui, "goal", "Style", g, "style", "classic", &cat_opts(&cat.goals));
             c |= color(ui, "Frame", g, "frame_color", "#f4f4f0");
-            let mut net = g.get("net_colors").and_then(|v| v.as_array()).and_then(|a| a.first()).and_then(|v| v.as_str()).unwrap_or("#f7f7f5").to_string();
-            let mut rgb = hex_to_rgb(&net);
-            if label_row(ui, "Net", |ui| ui.color_edit_button_srgb(&mut rgb).changed()) {
-                net = rgb_to_hex(rgb);
-                let mut list: Vec<Value> = g.get("net_colors").and_then(|v| v.as_array()).cloned().unwrap_or_default();
-                if list.is_empty() {
-                    list.push(json!(net));
-                } else {
-                    list[0] = json!(net);
+            c |= combo(ui, "netpat", "Net pattern", g, "net_pattern", "solid", &opts(&["solid", "bands", "checker"]));
+            let pattern = get_s(g, "net_pattern", "solid").to_string();
+            // net colours: one for a solid net, two for bands and checkers
+            let mut list: Vec<String> = g.get("net_colors").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+            if list.is_empty() {
+                list.push("#f7f7f5".into());
+            }
+            if pattern != "solid" && list.len() < 2 {
+                list.push("#c8102e".into());
+            }
+            let mut nc = false;
+            let n = if pattern == "solid" { 1 } else { 2 };
+            for (k, col) in list.iter_mut().take(n).enumerate() {
+                let mut rgb = hex_to_rgb(col);
+                if label_row(ui, if k == 0 { "Net colour" } else { "Second colour" }, |ui| ui.color_edit_button_srgb(&mut rgb).changed()) {
+                    *col = rgb_to_hex(rgb);
+                    nc = true;
                 }
-                g["net_colors"] = Value::Array(list);
+            }
+            let stored = g.get("net_colors").and_then(|v| v.as_array()).map(|a| a.len()).unwrap_or(0);
+            if nc || (n == 2 && stored < 2) {
+                g["net_colors"] = json!(list);
                 c = true;
             }
-            ui.weak("Net cord pattern and mesh come from the library's net cards (Blender exports).");
+            if pattern != "solid" {
+                c |= num(ui, "Band width", g, "band_cells", 3.0, 1.0..=8.0, 1.0, " cells");
+            }
+            c |= combo(ui, "netmesh", "Mesh", g, "mesh", "hex", &opts(&["hex", "square"]));
+            c |= num(ui, "Mesh size", g, "mesh_size", 0.12, 0.08..=0.2, 0.005, " m");
+            c |= num(ui, "Cord", g, "cord_mm", 4.0, 2.0..=6.0, 0.5, " mm");
         }
         if self.section_toggle(ui, "corner_flags", "Corner flags", json!({"preset": "pro_spring"})) {
             let f = obj(&mut self.layout, "corner_flags");
@@ -413,12 +629,17 @@ impl Editor {
                 c = true;
             }
         }
+        let picked = self.focus.as_ref().and_then(|f| f.side.clone());
         for side in SIDES {
             let has = sides.get(side).is_some_and(|v| v.get("profile").is_some());
+            let mut label = RichText::new(side).strong();
+            if picked.as_deref() == Some(side) {
+                label = label.color(Color32::from_rgb(255, 196, 90));
+            }
             ui.horizontal(|ui| {
                 let mut on = has;
                 ui.add_enabled_ui(!curved, |ui| {
-                    if ui.checkbox(&mut on, RichText::new(side).strong()).changed() {
+                    if ui.checkbox(&mut on, label).changed() {
                         if on {
                             sides[side] = json!({"profile": "single_tier_20", "seat": "tipup_classic"});
                         } else if let Some(o) = sides.as_object_mut() {
@@ -485,7 +706,7 @@ impl Editor {
                 if pat == "random" {
                     c |= ui.add(egui::DragValue::new(&mut weights[k]).range(0.0..=20.0).speed(0.1).prefix("weight ")).changed();
                 }
-                if k > 0 && ui.small_button("✕").clicked() {
+                if k > 0 && ui.small_button("×").clicked() {
                     remove = Some(k);
                 }
             });
@@ -538,38 +759,111 @@ impl Editor {
             }
         }
         ui.separator();
-        ui.label(RichText::new("Mosaics (text spelled in seats)").italics());
+        ui.label(RichText::new("Mosaics (text or a picture spelled in seats)").italics());
         let mut list: Vec<Value> = s.get("mosaics").and_then(|v| v.as_array()).cloned().unwrap_or_default();
         let mut remove = None;
+        let root = self.layouts_dir.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+        let previews = &mut self.previews;
+        let mut status: Option<String> = None;
+        let report = self.report.as_ref();
+        // rows of a stand's tier, from the last build (mosaic pixels need to fit in them)
+        let tier_rows = |run: &str, tier: usize| report.and_then(|r| r.tiers.iter().find(|t| t.0 == run)).and_then(|t| t.1.get(tier)).map(|t| t.rows);
         for (k, mz) in list.iter_mut().enumerate() {
             ui.push_id(format!("mz{k}"), |ui| {
+                let is_image = mz.get("image").is_some();
+                let rows = tier_rows(get_s(mz, "run", "north"), get_f(mz, "tier", 0.0) as usize);
+                let fit = rows.map(|r| (r / 2).clamp(4, 12) as u32).unwrap_or(12);
                 ui.horizontal(|ui| {
+                    let mut kind = if is_image { 1 } else { 0 };
+                    ui.selectable_value(&mut kind, 0, "Text");
+                    ui.selectable_value(&mut kind, 1, "Image");
+                    if kind == 1 && !is_image {
+                        if let Some(src) = rfd::FileDialog::new().add_filter("image", &["png", "jpg", "jpeg"]).pick_file() {
+                            match mosaic_from_file(&root, &src, fit) {
+                                Ok((master, sized)) => {
+                                    if let Some(o) = mz.as_object_mut() {
+                                        o.shift_remove("text");
+                                    }
+                                    mz["image_master"] = json!(master);
+                                    mz["image"] = json!(sized);
+                                    mz["pixel_rows"] = json!(fit);
+                                    c = true;
+                                }
+                                Err(e) => status = Some(format!("mosaic image: {e}")),
+                            }
+                        }
+                    } else if kind == 0 && is_image {
+                        if let Some(o) = mz.as_object_mut() {
+                            o.shift_remove("image");
+                            o.shift_remove("image_master");
+                            o.shift_remove("pixel_rows");
+                        }
+                        mz["text"] = json!("KIT FC");
+                        c = true;
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.small_button("×").clicked() {
+                            remove = Some(k);
+                        }
+                    });
+                });
+                if mz.get("image").is_some() {
+                    let sized = get_s(mz, "image", "").to_string();
+                    if let Some(tex) = preview(previews, ui.ctx(), &root, &sized) {
+                        let [w, h] = tex.size();
+                        let scale = (180.0 / w.max(1) as f32).min(60.0 / h.max(1) as f32).max(1.0);
+                        ui.add(egui::Image::new(&tex).fit_to_exact_size(egui::vec2(w as f32 * scale, h as f32 * scale)).texture_options(egui::TextureOptions::NEAREST));
+                        ui.weak(format!("{w} × {h} pixels; transparent pixels keep the stand's colours"));
+                        if let Some(r) = rows {
+                            let note = format!("This tier has {r} rows; taller pictures are cropped (rows by the vomitories stay clear).");
+                            if h as usize + 2 > r {
+                                ui.colored_label(Color32::from_rgb(240, 190, 80), note);
+                            } else {
+                                ui.weak(note);
+                            }
+                        }
+                    }
+                    let old = get_f(mz, "pixel_rows", 12.0);
+                    if num(ui, "Pixel rows", mz, "pixel_rows", 12.0, 4.0..=40.0, 1.0, "") {
+                        let rows = get_f(mz, "pixel_rows", old) as u32;
+                        let master = root.join(get_s(mz, "image_master", &sized));
+                        match mosaic_from_file(&root, &master, rows) {
+                            Ok((_, sized)) => {
+                                mz["image"] = json!(sized);
+                                c = true;
+                            }
+                            Err(e) => status = Some(format!("mosaic image: {e}")),
+                        }
+                    }
+                } else {
                     let mut text = get_s(mz, "text", "").to_string();
-                    if ui.add(egui::TextEdit::singleline(&mut text).desired_width(120.0)).changed() {
+                    if label_row(ui, "Text", |ui| ui.add(egui::TextEdit::singleline(&mut text).desired_width(150.0)).changed()) {
                         mz["text"] = json!(text.to_uppercase());
                         c = true;
                     }
-                    if ui.small_button("✕").clicked() {
-                        remove = Some(k);
-                    }
-                });
+                }
                 c |= combo(ui, &format!("mzrun{k}"), "Stand", mz, "run", "north", &opts(&side_names.iter().map(|s| s.as_str()).collect::<Vec<_>>()));
                 c |= num(ui, "Tier", mz, "tier", 0.0, 0.0..=3.0, 1.0, "");
-                c |= color(ui, "Letters", mz, "color", "#ffffff");
-                let mut bg = mz.get("background").is_some();
-                if ui.checkbox(&mut bg, "Background colour").changed() {
-                    if bg {
-                        mz["background"] = json!("#111111");
-                    } else if let Some(o) = mz.as_object_mut() {
-                        o.shift_remove("background");
+                if mz.get("image").is_none() {
+                    c |= color(ui, "Letters", mz, "color", "#ffffff");
+                    let mut bg = mz.get("background").is_some();
+                    if ui.checkbox(&mut bg, "Background colour").changed() {
+                        if bg {
+                            mz["background"] = json!("#111111");
+                        } else if let Some(o) = mz.as_object_mut() {
+                            o.shift_remove("background");
+                        }
+                        c = true;
                     }
-                    c = true;
-                }
-                if bg {
-                    c |= color(ui, "Background", mz, "background", "#111111");
+                    if bg {
+                        c |= color(ui, "Background", mz, "background", "#111111");
+                    }
                 }
             });
             ui.separator();
+        }
+        if let Some(m) = status {
+            self.status = m;
         }
         if let Some(k) = remove {
             list.remove(k);
@@ -864,4 +1158,52 @@ fn fmt_int(n: usize) -> String {
         out.push(ch);
     }
     out
+}
+
+/// Turn a picture into a seat mosaic: keep a master copy (at most 256 px) and a version `rows`
+/// pixels tall in layouts/mosaics/, each pixel one block of seats. Returns both paths relative to
+/// the repository root, as layouts store them (the Python pipeline reads the same files).
+pub fn mosaic_from_file(root: &std::path::Path, src: &std::path::Path, rows: u32) -> Result<(String, String), String> {
+    let dir = root.join("layouts").join("mosaics");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let img = image::open(src).map_err(|e| format!("{}: {e}", src.display()))?.to_rgba8();
+    let stem: String = src.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or("mosaic".into())
+        .chars().map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' }).collect();
+    let stem = stem.trim_end_matches(|c: char| c == '_' || c.is_ascii_digit()).to_string();
+    let stem = if stem.is_empty() { "mosaic".to_string() } else { stem };
+    let master_rel = format!("layouts/mosaics/{stem}.png");
+    let master_path = root.join(&master_rel);
+    let master = if src == master_path {
+        img
+    } else {
+        let s = 256.0 / img.width().max(img.height()) as f32;
+        let m = if s < 1.0 {
+            image::imageops::resize(&img, (img.width() as f32 * s).round().max(1.0) as u32, (img.height() as f32 * s).round().max(1.0) as u32, image::imageops::FilterType::Lanczos3)
+        } else {
+            img
+        };
+        m.save(&master_path).map_err(|e| e.to_string())?;
+        m
+    };
+    let rows = rows.clamp(2, 64);
+    let cols = ((rows as f32 * master.width() as f32 / master.height().max(1) as f32).round() as u32).max(1);
+    let mut small = image::imageops::resize(&master, cols, rows, image::imageops::FilterType::Triangle);
+    for p in small.pixels_mut() {
+        p[3] = if p[3] >= 128 { 255 } else { 0 }; // a seat is painted or it is not
+    }
+    let sized_rel = format!("layouts/mosaics/{stem}_{rows}.png");
+    small.save(root.join(&sized_rel)).map_err(|e| e.to_string())?;
+    Ok((master_rel, sized_rel))
+}
+
+/// A small texture of a mosaic image for the panel (cached per path).
+fn preview(cache: &mut std::collections::HashMap<String, egui::TextureHandle>, ctx: &egui::Context, root: &std::path::Path, rel: &str) -> Option<egui::TextureHandle> {
+    if let Some(t) = cache.get(rel) {
+        return Some(t.clone());
+    }
+    let img = image::open(root.join(rel)).ok()?.to_rgba8();
+    let ci = egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.as_raw());
+    let t = ctx.load_texture(rel, ci, egui::TextureOptions::NEAREST);
+    cache.insert(rel.to_string(), t.clone());
+    Some(t)
 }

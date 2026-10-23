@@ -5,7 +5,7 @@ use crate::glb::{self, Alpha, Image, Instance, Light, Material, PitchInfo, Primi
 use crate::library::Library;
 use glam::{DVec3, Mat4, Vec2, Vec3, Vec4};
 use stadium_gen::mesh::to_trimesh;
-use stadium_gen::stadium::{Mat, Stadium, Tex};
+use stadium_gen::stadium::{Mat, NetSpec, Stadium, Tex};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -49,7 +49,7 @@ struct Builder<'a> {
     mats: HashMap<String, usize>,
     lib_images: HashMap<usize, usize>,
     extra_images: HashMap<u64, usize>,
-    lib_meshes: HashMap<(usize, Vec<(String, [u32; 3])>), usize>,
+    lib_meshes: HashMap<(usize, String), usize>,
     pub warnings: Vec<String>,
 }
 
@@ -139,6 +139,17 @@ impl<'a> Builder<'a> {
                 }
                 m
             }
+            "TINT_net_card" if matches!(mat.texture, Some(Tex::Net(_))) => {
+                let Some(Tex::Net(spec)) = &mat.texture else { unreachable!() };
+                let lm = self.lib.material("TINT_net_card").cloned().unwrap_or_else(|| plain("TINT_net_card", Vec3::ONE, 0.7));
+                let mut m = self.copy_lib(&lm);
+                let (img, scale) = crate::net::texture(spec);
+                let i = self.image(img);
+                m.base_tex = Some(TexRef { image: i, repeat: true, xform: TexXform { offset: Vec2::ZERO, scale: Vec2::new(scale[0], scale[1]), rotation: 0.0 } });
+                m.base_color = Vec4::ONE;
+                m.alpha = Alpha::Mask;
+                return m;
+            }
             key => match self.lib.material(key) {
                 Some(lm) => {
                     let lm = lm.clone();
@@ -168,9 +179,10 @@ impl<'a> Builder<'a> {
         m
     }
 
-    /// Copy a library mesh into the scene with material recolours; cached per (mesh, tints).
-    fn lib_mesh(&mut self, mesh: usize, tints: &[(String, DVec3)]) -> usize {
-        let key = (mesh, tints.iter().map(|(n, c)| (n.clone(), [(c.x * 255.0) as u32, (c.y * 255.0) as u32, (c.z * 255.0) as u32])).collect::<Vec<_>>());
+    /// Copy a library mesh into the scene with material recolours (and a goal's net card);
+    /// cached per (mesh, options).
+    fn lib_mesh(&mut self, mesh: usize, tints: &[(String, DVec3)], net: Option<&NetSpec>) -> usize {
+        let key = (mesh, format!("{tints:?}{net:?}"));
         if let Some(&i) = self.lib_meshes.get(&key) {
             return i;
         }
@@ -181,7 +193,12 @@ impl<'a> Builder<'a> {
             .map(|p| {
                 let lm = &self.lib.scene.materials[p.material];
                 let tint = tints.iter().find(|(n, _)| *n == lm.name).map(|t| t.1);
-                let mi = self.material(&Mat { key: lm.name.clone(), color: tint, emission: None, texture: None });
+                let texture = match net {
+                    Some(n) if lm.name == "TINT_net_card" => Some(Tex::Net(n.clone())),
+                    _ => None,
+                };
+                let color = if texture.is_some() { None } else { tint };
+                let mi = self.material(&Mat { key: lm.name.clone(), color, emission: None, texture });
                 Primitive { positions: p.positions.clone(), normals: p.normals.clone(), uvs: p.uvs.clone(), indices: p.indices.clone(), material: mi }
             })
             .collect();
@@ -263,6 +280,8 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
         }
         b.scene.meshes.push(prims);
         b.scene.instances.push(vec![Instance { model: Mat4::IDENTITY, color: Vec4::ZERO }]);
+        // names for click-to-select
+        b.scene.nodes.push((part.name.clone(), "part".into(), b.scene.meshes.len() - 1, Mat4::IDENTITY));
     }
     // props
     let c = kit_to_gltf();
@@ -274,9 +293,12 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
         };
         let lod = lib.props.get(&format!("{}.lod2", ps.key));
         for (k, (mesh, local)) in prop.parts.iter().enumerate() {
-            let mi = b.lib_mesh(*mesh, &ps.tints);
+            let mi = b.lib_mesh(*mesh, &ps.tints, ps.net.as_ref());
+            if !b.scene.nodes.iter().any(|n| n.2 == mi) {
+                b.scene.nodes.push((ps.key.clone(), "prop".into(), mi, Mat4::IDENTITY));
+            }
             if let Some(l) = lod.and_then(|l| l.parts.get(k)) {
-                let li = b.lib_mesh(l.0, &ps.tints);
+                let li = b.lib_mesh(l.0, &ps.tints, ps.net.as_ref());
                 if !b.scene.lods.iter().any(|x| x.0 == mi) {
                     b.scene.lods.push((mi, li));
                 }
