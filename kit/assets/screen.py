@@ -57,6 +57,7 @@ def build(cfg, pitch, stands, night, col=None):
     mat = led_material("Screen_LED", img, 1.6 if night else 3.5, (1920, 1080))
     model = panel("ScreenModel", w, h, col, mat)
     model.hide_render = model.hide_viewport = True
+    model["template"] = True
     steel = galvanised()
     L, W = pitch["length"], pitch["width"]
     roofs = (stands or {}).get("roofs", {})

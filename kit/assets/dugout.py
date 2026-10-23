@@ -186,6 +186,7 @@ def build(cfg, pitch, night=False, col=None):
     Lx = length(p)
     model = _model(p, col, "DugoutModel")
     model.hide_render = model.hide_viewport = True
+    model["template"] = True
     y = -(pitch["width"] / 2 + FRONT_FROM_TOUCHLINE)
     xs = (-(GAP / 2 + Lx / 2), GAP / 2 + Lx / 2)
     for side, x in zip(("home", "away"), xs):

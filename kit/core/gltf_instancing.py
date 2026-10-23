@@ -86,3 +86,32 @@ def count_instances(path):
         if ext:
             out[n["name"]] = gltf["accessors"][ext["attributes"]["TRANSLATION"]]["count"]
     return out
+
+
+def add_lods(path, pairs, coverage=(0.004, 0.0)):
+    """Link LOD meshes with MSFT_lod. pairs: {base node name: lod node name}. The LOD nodes are
+    detached from the scene (engines without MSFT_lod never draw them) and referenced from the base
+    node; MSFT_screencoverage in extras gives the switch thresholds."""
+    gltf, binary = _read(path)
+    names = {n.get("name"): i for i, n in enumerate(gltf["nodes"])}
+    lod_ids = {names[l] for b, l in pairs.items() if b in names and l in names}
+    for n in gltf["nodes"]:
+        if "children" in n:
+            n["children"] = [c for c in n["children"] if c not in lod_ids]
+            if not n["children"]:
+                del n["children"]
+    for sc in gltf.get("scenes", []):
+        sc["nodes"] = [c for c in sc["nodes"] if c not in lod_ids]
+    linked = 0
+    for base, lod in pairs.items():
+        if base in names and lod in names:
+            node = gltf["nodes"][names[base]]
+            node.setdefault("extensions", {})["MSFT_lod"] = {"ids": [names[lod]]}
+            node.setdefault("extras", {})["MSFT_screencoverage"] = list(coverage)
+            linked += 1
+    if linked:
+        used = gltf.setdefault("extensionsUsed", [])
+        if "MSFT_lod" not in used:
+            used.append("MSFT_lod")
+    _write(path, gltf, binary)
+    return linked

@@ -128,6 +128,7 @@ def build(cfg, pitch, stands, night, col=None):
     area = L * W
     model = fixture_model(spec["fixture"], col, spec["kelvin"], on)
     model.hide_render = True
+    model["template"] = True
     model.hide_viewport = True
     steel = galvanised()
     fixtures = []          # (pos, mount)

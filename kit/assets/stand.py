@@ -373,6 +373,7 @@ def build(cfg, pitch_params, col=None):
             pnt, n = run.frame(0.5 * (run.t0 + run.t1))
             q = pnt + n * (t["s0"] - 1.2)
             camera_mount = (float(q[0]), float(q[1]), t["h"][0] + t["parapet"] + 1.6)
+            socket("camera", "main", camera_mount, 0.0, parent=root, col=col, target=(0.0, 6.0, 0.0))
 
     mosaics = []
     for mz in cfg.get("mosaics", []):
