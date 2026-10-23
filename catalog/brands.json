@@ -1,0 +1,15 @@
+{
+  "_doc": "Fictional advertisers (no real brands). bg/fg/accent are sRGB hex; logo: disc | ring | chevron | triangle | bars | wave | none. tier sets how much each pays per m2 of TV-weighted area (for the future revenue system).",
+  "northwind": {"name": "NORTHWIND", "tagline": "FLY FURTHER", "bg": "#0b2a5b", "fg": "#ffffff", "accent": "#5fb8ff", "logo": "chevron", "tier": 3},
+  "kestrel": {"name": "KESTREL BANK", "tagline": "BANKING THAT MOVES", "bg": "#f4f1ea", "fg": "#0d3b2e", "accent": "#d4a017", "logo": "ring", "tier": 3},
+  "volta": {"name": "VOLTA", "tagline": "ENERGY FOR EVERY MATCH", "bg": "#ffd400", "fg": "#111111", "accent": "#111111", "logo": "bars", "tier": 2},
+  "meridian": {"name": "MERIDIAN TYRES", "tagline": "GRIP THE ROAD", "bg": "#111111", "fg": "#ffffff", "accent": "#e10600", "logo": "disc", "tier": 2},
+  "halcyon": {"name": "HALCYON", "tagline": "BREWED SINCE 1871", "bg": "#5a1a1a", "fg": "#f3e6c8", "accent": "#d9a441", "logo": "triangle", "tier": 2},
+  "orbit": {"name": "ORBIT MOBILE", "tagline": "5G EVERYWHERE", "bg": "#6a1b9a", "fg": "#ffffff", "accent": "#ff7ad9", "logo": "ring", "tier": 3},
+  "pioneer": {"name": "PIONEER MOTORS", "tagline": "DRIVE ELECTRIC", "bg": "#e9eef2", "fg": "#0a0a0a", "accent": "#0077c8", "logo": "wave", "tier": 3},
+  "lumen": {"name": "LUMEN SPORT", "tagline": "MADE FOR THE PITCH", "bg": "#00a86b", "fg": "#ffffff", "accent": "#003d26", "logo": "chevron", "tier": 1},
+  "tidewater": {"name": "TIDEWATER", "tagline": "INSURANCE YOU CAN TRUST", "bg": "#0e7c86", "fg": "#ffffff", "accent": "#bfeff2", "logo": "wave", "tier": 1},
+  "summit": {"name": "SUMMIT COLA", "tagline": "TASTE THE PEAK", "bg": "#d71920", "fg": "#ffffff", "accent": "#ffffff", "logo": "triangle", "tier": 2},
+  "local_butcher": {"name": "J. HARGREAVES & SON", "tagline": "FAMILY BUTCHERS", "bg": "#ffffff", "fg": "#1c3f94", "accent": "#c8102e", "logo": "none", "tier": 0},
+  "local_garage": {"name": "BRIDGE ST GARAGE", "tagline": "MOT & SERVICING", "bg": "#1f5c2e", "fg": "#fff6d5", "accent": "#fff6d5", "logo": "none", "tier": 0}
+}
