@@ -1,0 +1,9 @@
+{
+  "_doc": "Corner flag presets. Colours sRGB hex.",
+  "pro_spring": {"label": "Pro flexible post", "height": 1.6, "pole_colors": ["#f2f2ee"], "band_length": 0.0,
+                 "base": "spring", "flag_pattern": "solid", "flag_colors": ["#e8d21d"], "flag_size": [0.45, 0.45]},
+  "striped": {"label": "Striped post", "height": 1.5, "pole_colors": ["#f2f2ee", "#c8102e"], "band_length": 0.25,
+              "base": "spring", "flag_pattern": "diagonal", "flag_colors": ["#c8102e", "#f2f2ee"], "flag_size": [0.45, 0.45]},
+  "grassroots": {"label": "Grassroots plastic post", "height": 1.5, "pole_colors": ["#e8b31d", "#1d1d1d"], "band_length": 0.3,
+                 "base": "rigid", "flag_pattern": "checker", "flag_colors": ["#e8501d", "#f2f2ee"], "flag_size": [0.4, 0.4]}
+}

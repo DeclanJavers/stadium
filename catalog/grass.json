@@ -1,0 +1,45 @@
+{
+  "_doc": "Grass types. Colours are sRGB hex. Gameplay values are starting estimates (see docs/SPECS.md).",
+  "perennial_ryegrass": {
+    "label": "Perennial ryegrass", "natural": true, "climate": "cool temperate",
+    "height_mm": {"min": 22, "max": 30, "default": 25},
+    "color": "#4a6d27", "color_dry": "#8a8247", "stripe_strength": 0.20, "blade_width_mm": 3.0,
+    "gameplay": {"ball_roll": 1.00, "bounce": 1.00, "traction": 1.00, "wear_rate": 1.00, "water_need": 1.0, "temp_c": [5, 25]}
+  },
+  "kentucky_bluegrass": {
+    "label": "Kentucky bluegrass", "natural": true, "climate": "cool continental",
+    "height_mm": {"min": 25, "max": 35, "default": 28},
+    "color": "#3f6a33", "color_dry": "#857f4c", "stripe_strength": 0.22, "blade_width_mm": 3.0,
+    "gameplay": {"ball_roll": 1.08, "bounce": 0.97, "traction": 1.02, "wear_rate": 1.10, "water_need": 1.2, "temp_c": [0, 24]}
+  },
+  "hybrid_rye": {
+    "label": "Hybrid (ryegrass + synthetic fibres)", "natural": true, "climate": "cool temperate",
+    "height_mm": {"min": 22, "max": 28, "default": 24},
+    "color": "#4b6f28", "color_dry": "#888048", "stripe_strength": 0.20, "blade_width_mm": 3.0,
+    "gameplay": {"ball_roll": 0.97, "bounce": 1.02, "traction": 1.06, "wear_rate": 0.45, "water_need": 1.0, "temp_c": [5, 25]}
+  },
+  "bermuda": {
+    "label": "Bermuda grass", "natural": true, "climate": "hot",
+    "height_mm": {"min": 12, "max": 20, "default": 16},
+    "color": "#56772b", "color_dry": "#9a8a52", "stripe_strength": 0.15, "blade_width_mm": 1.8,
+    "gameplay": {"ball_roll": 0.88, "bounce": 1.05, "traction": 0.97, "wear_rate": 0.80, "water_need": 0.7, "temp_c": [18, 40]}
+  },
+  "seashore_paspalum": {
+    "label": "Seashore paspalum", "natural": true, "climate": "tropical coastal",
+    "height_mm": {"min": 15, "max": 25, "default": 18},
+    "color": "#3b6726", "color_dry": "#7f7d45", "stripe_strength": 0.17, "blade_width_mm": 2.2,
+    "gameplay": {"ball_roll": 0.92, "bounce": 1.03, "traction": 0.99, "wear_rate": 0.85, "water_need": 0.8, "temp_c": [16, 38]}
+  },
+  "zoysia": {
+    "label": "Zoysia", "natural": true, "climate": "warm humid",
+    "height_mm": {"min": 15, "max": 25, "default": 20},
+    "color": "#4f6a2d", "color_dry": "#958a55", "stripe_strength": 0.14, "blade_width_mm": 2.5,
+    "gameplay": {"ball_roll": 1.05, "bounce": 1.00, "traction": 1.03, "wear_rate": 0.75, "water_need": 0.8, "temp_c": [12, 35]}
+  },
+  "artificial_3g": {
+    "label": "Artificial 3G (rubber infill)", "natural": false, "climate": "any",
+    "height_mm": {"min": 40, "max": 60, "default": 50},
+    "color": "#3d7a34", "color_dry": "#3d7a34", "stripe_strength": 0.07, "blade_width_mm": 1.2,
+    "gameplay": {"ball_roll": 0.82, "bounce": 1.15, "traction": 1.10, "wear_rate": 0.05, "water_need": 0.0, "temp_c": [-10, 45]}
+  }
+}

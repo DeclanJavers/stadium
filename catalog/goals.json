@@ -1,0 +1,18 @@
+{
+  "_doc": "Goal styles. Depths in metres. post_profile: elliptical | round | square | rectangular.",
+  "box": {
+    "label": "Box net (elite)", "post_profile": "elliptical", "post_size": [0.10, 0.12],
+    "net_top_depth": 2.0, "net_bottom_depth": 2.0, "support": "rear_poles", "slack": 0.05,
+    "frame_finish": "powder_coat"
+  },
+  "classic": {
+    "label": "Classic stanchion", "post_profile": "elliptical", "post_size": [0.10, 0.12],
+    "net_top_depth": 0.8, "net_bottom_depth": 2.0, "support": "stanchions", "slack": 0.04,
+    "frame_finish": "powder_coat"
+  },
+  "portable": {
+    "label": "Portable aluminium (grassroots)", "post_profile": "round", "post_size": [0.10, 0.10],
+    "net_top_depth": 1.0, "net_bottom_depth": 2.0, "support": "rear_frame", "slack": 0.06,
+    "frame_finish": "worn_aluminium"
+  }
+}
