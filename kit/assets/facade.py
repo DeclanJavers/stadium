@@ -64,7 +64,7 @@ def etfe(color, glow, strength):
     pos = nb.geometry()["Position"]
     # milky, slightly translucent foil (printed frit), not clear glass
     nb.output(nb.principled(Base_Color=srgb(color), Roughness=0.3, Transmission_Weight=0.25, IOR=1.4,
-                            Subsurface_Weight=0.3, Subsurface_Radius=(0.2, 0.2, 0.2), Coat_Weight=0.4,
+                            Subsurface_Weight=0.3, Subsurface_Radius=(0.2, 0.2, 0.2), Coat_Weight=0.15,
                             Emission_Color=srgb(glow or color), Emission_Strength=strength,
                             Normal=nb.bump(nb.noise(pos, 2.0), 0.05, 0.01)))
     return m

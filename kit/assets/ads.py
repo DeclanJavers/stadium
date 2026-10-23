@@ -146,6 +146,7 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         else:
             panel = 7.2
             legs = []
+            backs = MeshAcc()
             for run in runs:
                 length = run.t1 - run.t0
                 n_p = max(1, int(length // (panel + 0.2)))
@@ -159,6 +160,9 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
                     # start of the panel (in run order) is the reader's right-hand end
                     UVv[:, 0] = np.where(np.arange(len(UVv)) // 2 == 0, (bi + 1) / n_atlas, bi / n_atlas)
                     _mesh_with_vertex_uvs(f"Board_{run.name}_{k}", V, F, UVv, col, root, img_mat)
+                    # the panel's back: a printed board is a sheet on a frame, not a see-through quad
+                    back = np.array([(0.02, 0.05), (0.035, 0.05), (0.275, 0.92), (0.26, 0.92)])
+                    backs.add_prism(run, ta, ta + panel, (back, [0] * 4), cap_tag=0)
                     for t in (ta + 0.4, ta + panel / 2, ta + panel - 0.4):
                         p, nrm = run.frame(t)
                         top = np.array([*(p + nrm * 0.24), 0.9])
@@ -168,6 +172,9 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
                     slot("perimeter_static", f"{run.name}_{k}", (p[0], p[1], 0.5), -nrm, panel * 0.9, b)
             from .stand import _tubes_mesh
             _tubes_mesh("BoardLegs", legs, col, root, galvanised(), sides=6)
+            V, F, _, UV = backs.arrays()
+            o = mesh_object("BoardBacks", V, F, col, root, materials=[housing], uvs=UV)
+            _recalc(o)
 
     # -- 3D carpets
     cp = cfg.get("carpets")

@@ -65,7 +65,9 @@ def painted(name, color, rough=0.5):
     pos = nb.geometry()["Position"]
     v = nb.noise(pos, 2.0, detail=4)
     col = nb.mix(nb.mul(v, 0.15), srgb(color), nb.mix(1.0, srgb(color), (0.8, 0.8, 0.8), blend="MULTIPLY"))
-    nb.output(nb.principled(Base_Color=col, Roughness=rough, Normal=nb.bump(nb.noise(pos, 90.0), 0.05, 0.001)))
+    col, r = MAT.weathering(nb, col, nb.madd(nb.sub(nb.noise(pos, 4.0, detail=3), 0.5), 0.1, rough + 0.05), 0.5)
+    nb.output(nb.principled(Base_Color=col, Roughness=r, Specular_IOR_Level=0.45,
+                            Normal=nb.bump(nb.noise(pos, 90.0), 0.08, 0.001)))
     return m
 
 

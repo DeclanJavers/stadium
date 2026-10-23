@@ -177,21 +177,42 @@ plain glTF that any engine draws correctly (`kit/core/game.py`, `kit/core/bake.p
 `tools/preview_game.py` renders a game `.glb` imported into an empty Blender scene, and the Rust
 viewer (`viewer/`) renders it in real time, so both prove what an engine actually receives.
 
+## Runtime generator and stadium editor (`viewer/`)
+
+The generators the game needs at runtime are ported to Rust (`viewer/gen`, crate `stadium-gen`):
+sightlines, runs and bays, stand sections with aisles and vomitories, seat anchors, rails,
+barriers, roofs (both systems and the sightline/headroom solver), facades, floodlight design with
+aim optimisation, seat patterns and mosaics, ad placement and carpets, pitch markings, and the
+layout assembler. Determinism is portable: SplitMix64 replaces numpy's generators and CRC-32
+replaces Python's salted `hash()`, so both implementations give identical seat colours and
+floodlight designs. `viewer/gen/tests/parity.rs` compares the port with reference outputs dumped
+from the Python (`tools/dump_reference.py`) — counts and indices exactly, coordinates to ~1e-9 — and
+checks whole-layout capacities against the Blender assembler.
+
+The Rust viewer is also a live editor: every layout option in a side panel, a background rebuild on
+each change (≈0.2–0.6 s for the 150k bowl), readouts for capacity, sightlines, roof clearances,
+floodlight uniformity and ad inventory, and JSON save/load of the same `stadium-layout/1` file.
+It draws generated geometry with materials and props from an asset library that Blender exports
+once (`tools/export_library.py` → `out/library/library.game.glb`): the same baked PBR materials
+and LOD props as the game export, recoloured at runtime through `tint_gain` / `base_hex`.
+
 ## Layout file
 
 A stadium is one JSON document (`schema: stadium-layout/1`), e.g. `layouts/sunday_league.json`.
-The game saves and edits this; the assembler turns it into a scene. Sections:
-`pitch`, `goals`, `corner_flags`, then (later) `perimeter`, `stands`, `roof`, `ads`, `lighting`.
+The game saves and edits this; the Blender assembler and the Rust editor both turn it into a
+stadium. Sections: `name`, `lighting` (`day`/`night`), `pitch`, `goals`, `corner_flags`, `stands`
+(sides, corners, colours, mosaics, roof, facade), `floodlights`, `ads`, `screens`, `dugouts`,
+`tunnel`. A missing section means "none", except goals and corner flags, which default to on.
 
 ## Game-readiness
 
 - `.glb` per asset in `out/assets/`, plus `out/manifest.json` (ids, dims, sockets, triangle
   counts, tint slots).
-- Procedural Blender shaders do not survive glTF export. Pitch grass, paint and wear are
-  documented as portable shader maths in `docs/SPECS.md` (game engines re-implement them in a
-  few lines), and other procedural materials will be baked to PBR texture sets in a later phase.
-- Hero geometry (cord-level nets, grass blades) is for close-ups and renders. Game LODs (alpha-card
-  nets, shader-only grass) come in the LOD phase.
+- Procedural Blender shaders do not survive glTF export: the game export bakes them to PBR (see
+  above), and the pitch's grass, stripes and wear are portable shader maths in `docs/SPECS.md`
+  (the Rust viewer is a reference implementation).
+- Hero geometry (cord-level nets, grass blades) is for close-ups and renders; games get alpha-card
+  nets and shader grass.
 
 ## Testing
 
@@ -212,4 +233,8 @@ The game saves and edits this; the assembler turns it into a scene. Sections:
    ad inventory with TV weights. *(done)*
 5. **Game-ready export:** baked PBR materials, seat and net LODs, exported lights, and a Rust
    real-time viewer with LOD switching and a floodlight irradiance volume. *(done)*
+6. **Runtime generator and live editor:** the generators ported to Rust with parity tests, a live
+   stadium editor (egui) with readouts and save/load, an exported asset library, sky-visibility
+   shading, and a realism pass on grass (canopy shading, blades, parallax) and painted/plastic
+   materials (satin, weathered). *(done)*
 

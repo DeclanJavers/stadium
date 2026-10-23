@@ -26,13 +26,20 @@ def seat_plastic(default="#c8102e"):
     m, nb = material(name)
     attr = nb.attribute("seat_color", "INSTANCER")
     col = nb.mix(attr[3], srgb(default), attr[0])  # Alpha is 0 when no instancer colour exists
-    pos = nb.geometry()["Position"]
-    grain = nb.noise(pos, 260.0, detail=2)
+    geo = nb.geometry()
+    pos = geo["Position"]
+    # moulded polypropylene: a fine spark-eroded texture (satin, not gloss), UV chalking and dust
+    # that settles in the seat pan
+    grain = nb.noise(pos, 900.0, detail=2)
     dust = nb.smooth(0.6, 0.85, nb.noise(pos, 25.0, detail=3))
-    col = nb.mix(nb.mul(dust, 0.05), col, srgb("#8d8a80"))
-    bsdf = nb.principled(Base_Color=col, Roughness=nb.madd(dust, 0.12, 0.32), Coat_Weight=0.15,
-                         Coat_Roughness=0.3, Subsurface_Weight=0.04, Subsurface_Radius=(0.01, 0.01, 0.01),
-                         Normal=nb.bump(grain, 0.05, 0.001))
+    up = nb.smooth(0.4, 0.95, nb.sep(geo["Normal"])[2])
+    dust = nb.add(nb.mul(dust, 0.06), nb.mul(up, nb.mul(nb.smooth(0.35, 0.75, nb.noise(pos, 7.0, detail=4)), 0.14)))
+    col = nb.mix(dust, col, srgb("#8d8a80"))
+    chalk = nb.mul(nb.smooth(0.3, 0.9, nb.noise(pos, 0.15, detail=2)), 0.12)
+    col = nb.mix(chalk, col, nb.mix(0.4, col, (0.82, 0.82, 0.82)))
+    bsdf = nb.principled(Base_Color=col, Roughness=nb.madd(dust, 0.35, nb.add(0.5, nb.mul(chalk, 0.5))),
+                         Specular_IOR_Level=0.45, Subsurface_Weight=0.04, Subsurface_Radius=(0.01, 0.01, 0.01),
+                         Normal=nb.bump(grain, 0.12, 0.0004))
     nb.output(bsdf)
     return m
 
@@ -62,7 +69,7 @@ def wood(name="Seat_Wood"):
     stretch = nb.vmath("MULTIPLY", pos, (2.0, 40.0, 40.0))
     grain = nb.noise(stretch, 6.0, detail=6, rough=0.6, distortion=0.4)
     col = nb.mix(nb.mul(grain, 0.5), base, nb.mix(1.0, base, (0.55, 0.5, 0.45), blend="MULTIPLY"))
-    bsdf = nb.principled(Base_Color=col, Roughness=nb.madd(grain, 0.2, 0.4), Coat_Weight=0.4, Coat_Roughness=0.2,
+    bsdf = nb.principled(Base_Color=col, Roughness=nb.madd(grain, 0.2, 0.4), Coat_Weight=0.15, Coat_Roughness=0.4,
                          Normal=nb.bump(grain, 0.15, 0.001))
     nb.output(bsdf)
     return m

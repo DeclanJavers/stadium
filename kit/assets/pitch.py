@@ -178,6 +178,18 @@ def _lean_field(nb, pos, mow):
     raise ValueError(f"unknown mow pattern {pattern}")
 
 
+def _blade_noise(nb, pos, mow):
+    """Blade-scale noise streaked along the mowing direction (laid-over blades)."""
+    ang = math.radians(float(mow.get("angle", 0.0)))
+    if mow.get("pattern") in ("diagonal", "diamond"):
+        ang += math.radians(45)
+    ca, sa = math.cos(ang), math.sin(ang)
+    x, y, _ = nb.sep(pos)
+    xr = nb.add(nb.mul(x, ca), nb.mul(y, sa))
+    yr = nb.sub(nb.mul(y, ca), nb.mul(x, sa))
+    return nb.noise(nb.comb(nb.mul(xr, 3.2), yr, 0.0), 40.0, detail=3, rough=0.6)
+
+
 def _gauss(nb, x, y, cx, cy, sx, sy):
     dx = nb.div(nb.sub(x, cx), sx)
     dy = nb.div(nb.sub(y, cy), sy)
@@ -208,13 +220,27 @@ def surface_group(p):
     n_large = nb.noise(pos, 0.035, detail=3, rough=0.5)
     n_med = nb.noise(pos, 0.7, detail=3, rough=0.55)
     n_fine = nb.noise(pos, 45.0, detail=4, rough=0.6)
-    var = nb.mul(nb.mul(nb.madd(nb.sub(n_large, 0.5), 0.45 if natural else 0.08, 1.0),
-                        nb.madd(nb.sub(n_med, 0.5), 0.22 if natural else 0.06, 1.0)),
-                 nb.madd(nb.sub(n_fine, 0.5), 0.35 if natural else 0.2, 1.0))
+    var = nb.mul(nb.madd(nb.sub(n_large, 0.5), 0.16 if natural else 0.05, 1.0),
+                 nb.madd(nb.sub(n_med, 0.5), 0.10 if natural else 0.04, 1.0))
     col = nb.mix(1.0, base, nb.comb(var, var, var), blend="MULTIPLY")
     if natural:
-        stress = nb.mul(nb.smooth(0.55, 0.8, nb.noise(pos, 0.08, detail=4)), 0.35)
+        stress = nb.mul(nb.smooth(0.62, 0.85, nb.noise(pos, 0.08, detail=4)), 0.14)
         col = nb.mix(stress, col, srgb(g["color_dry"]))
+        # clumps lean yellow-green or blue-green
+        hue = nb.noise(pos, 0.6, detail=2)
+        col = nb.mix(nb.mul(nb.sub(hue, 0.5), 0.6), col, nb.mix(1.0, col, (1.0, 1.06, 1.25), blend="MULTIPLY"))
+    # blade scale: streaks along the mowing direction, bright tips, a few dead blades, and dark
+    # thatch between blades that shows looking down and hides at grazing angles
+    blade = _blade_noise(nb, pos, p["mow"])
+    col = nb.mix(1.0, col, nb.comb(*(nb.madd(blade, 0.42, 0.80),) * 3), blend="MULTIPLY")
+    tips = nb.smooth(0.55, 0.85, nb.noise(pos, 140.0, detail=1))
+    col = nb.mix(nb.mul(tips, 0.5), col, nb.mix(1.0, col, (1.12, 1.10, 0.80), blend="MULTIPLY"))
+    if natural:
+        dead = nb.smooth(0.86, 0.97, nb.noise(pos, 300.0, detail=1))
+        col = nb.mix(nb.mul(dead, 0.35), col, srgb(g["color_dry"]))
+    facing = nb.node("ShaderNodeLayerWeight").outputs["Facing"]
+    gaps = nb.mul(nb.smooth(0.30, 0.0, blade), nb.madd(nb.sub(1.0, facing), 0.75, 0.25))
+    col = nb.mix(nb.mul(gaps, 0.55 if natural else 0.3), col, srgb("#3a3420"))
 
     # mowing stripes
     k = g["stripe_strength"] * min(1.6, max(0.4, p["height_mm"] / 25.0))
@@ -259,7 +285,7 @@ def surface_group(p):
     wet = p["wetness"]
     col = nb.mix(1.0, col, (1 - 0.3 * wet,) * 3, blend="MULTIPLY")
     # wet turf stays fairly matte (droplets sparkle, blades don't turn into a mirror); mud goes shiny
-    rough = nb.madd(nb.sub(n_fine, 0.5), 0.12, (0.74 if natural else 0.6) - 0.16 * wet)
+    rough = nb.madd(nb.sub(n_fine, 0.5), 0.12, (0.86 if natural else 0.7) - 0.16 * wet)
     rough = nb.mixf(soil, rough, 0.85 - 0.6 * wet)
 
     out = nb.node("NodeGroupOutput")
@@ -280,9 +306,12 @@ def grass_material(p, group):
     m, nb = material("Pitch_Grass")
     s = _group(nb, group)
     pos = nb.geometry()["Position"]
-    bump = nb.bump(nb.noise(pos, 180.0, detail=3), 0.35, 0.004)
-    bsdf = nb.principled(Base_Color=s["Color"], Roughness=s["Roughness"], Specular_IOR_Level=0.18,
-                         Sheen_Weight=0.12, Sheen_Roughness=0.5, Sheen_Tint=srgb("#b9d39a"), Normal=bump)
+    # blades shadow and mask each other, so a turf canopy never mirrors the sky the way a smooth
+    # dielectric does at grazing angles: specular stays faint, a soft sheen carries the grazing look
+    bump = nb.bump(nb.add(nb.mul(_blade_noise(nb, pos, p["mow"]), 0.7), nb.mul(nb.noise(pos, 180.0, detail=3), 0.3)),
+                   0.55, 0.004)
+    bsdf = nb.principled(Base_Color=s["Color"], Roughness=s["Roughness"], Specular_IOR_Level=0.04,
+                         Sheen_Weight=0.35, Sheen_Roughness=0.3, Sheen_Tint=srgb("#a9c48a"), Normal=bump)
     nb.output(bsdf)
     return m
 
@@ -304,8 +333,8 @@ def paint_material(p, group):
                    blend="MULTIPLY")
     col = nb.mix(cover, s["Color"], paint)
     bump = nb.bump(nb.noise(pos, 180.0, detail=3), 0.3, 0.004)
-    bsdf = nb.principled(Base_Color=col, Roughness=nb.mixf(cover, s["Roughness"], 0.6),
-                         Specular_IOR_Level=0.2, Sheen_Weight=0.1, Normal=bump)
+    bsdf = nb.principled(Base_Color=col, Roughness=nb.mixf(cover, s["Roughness"], 0.7),
+                         Specular_IOR_Level=0.08, Sheen_Weight=0.25, Sheen_Roughness=0.35, Normal=bump)
     nb.output(bsdf)
     m["tint_role"] = "line_paint"
     return m
@@ -319,16 +348,19 @@ def _blade_shapes(p, col):
     bw = g["blade_width_mm"] / 1000.0
     rng = np.random.default_rng(p["seed"])
     objs = []
-    for i in range(8):
-        hh = h * rng.uniform(0.75, 1.25)
-        segs = 5
+    for i in range(12):
+        hh = h * rng.uniform(0.7, 1.3)
+        segs = 6
         t = np.linspace(0, 1, segs + 1)
-        bend = rng.uniform(0.15, 0.5) * hh * (t ** 2)
-        width = bw * (1 - 0.35 * t) if g["natural"] else np.full_like(t, bw)
+        bend = rng.uniform(0.1, 0.6) * hh * (t ** 2)
+        twist = rng.uniform(-0.6, 0.6) * t
+        # mown blades end in a ragged, narrowing tip; synthetic fibres stay flat ribbons
+        width = bw * np.clip(1 - 0.75 * t ** 1.5, 0.12, 1) if g["natural"] else np.full_like(t, bw)
         verts = []
-        for ti, wi, bi in zip(t, width, bend):
+        for ti, wi, bi, tw in zip(t, width, bend, twist):
             z = ti * hh
-            verts += [(-wi / 2, bi, z), (wi / 2, bi, z)]
+            dx, dy = math.cos(tw) * wi / 2, math.sin(tw) * wi / 2
+            verts += [(-dx, bi - dy, z), (dx, bi + dy, z)]
         faces = [(2 * k, 2 * k + 1, 2 * k + 3, 2 * k + 2) for k in range(segs)]
         o = mesh_object(f"Blade{i}", verts, faces, col, smooth=True)
         objs.append(o)
@@ -342,19 +374,26 @@ def blade_material(p, group):
     rnd = nb.attribute("rnd", "INSTANCER")[2]
     gen = nb.node("ShaderNodeTexCoord").outputs["Generated"]
     zt = nb.sep(gen)[2]
-    shade = nb.madd(zt, 0.55, 0.6)                         # darker at the root
+    shade = nb.madd(zt, 0.75, 0.32)                        # deep shade at the root
     shade = nb.madd(nb.sub(rnd, 0.5), 0.35, shade)
     col = nb.mix(1.0, s["Color"], nb.comb(shade, shade, shade), blend="MULTIPLY")
+    # every blade a slightly different green: younger ones yellower, older ones bluer
+    hue = nb.attribute("hue", "INSTANCER")[2]
+    col = nb.mix(hue, nb.mix(1.0, col, (1.10, 1.05, 0.72), blend="MULTIPLY"),
+                 nb.mix(1.0, col, (0.88, 1.0, 1.15), blend="MULTIPLY"))
+    if p["_grass"]["natural"]:
+        dead = nb.smooth(0.955, 0.965, rnd)                 # the odd dead blade
+        col = nb.mix(dead, col, tuple(0.75 * c for c in srgb(p["_grass"]["color_dry"])[:3]))
     paint_rgb = tuple(0.82 * c for c in srgb(p["line_color"])[:3])
     painted = nb.mix(0.22, paint_rgb, col)  # some green shows through
     col = nb.mix(nb.smooth(0.3, 0.7, paint), col, painted)
     natural = p["_grass"]["natural"]
-    bsdf = nb.principled(Base_Color=col, Roughness=0.6 if natural else 0.45, Specular_IOR_Level=0.22,
-                         Sheen_Weight=0.1)
+    bsdf = nb.principled(Base_Color=col, Roughness=0.42 if natural else 0.5, Specular_IOR_Level=0.35)
     trans = nb.node("ShaderNodeBsdfTranslucent")
-    nb.connect(col, trans.inputs["Color"])
+    # light through a blade comes out a warmer, brighter green
+    nb.connect(nb.mix(1.0, col, (1.25, 1.35, 0.55), blend="MULTIPLY"), trans.inputs["Color"])
     mixs = nb.node("ShaderNodeMixShader")
-    mixs.inputs[0].default_value = 0.3 if natural else 0.1
+    mixs.inputs[0].default_value = 0.4 if natural else 0.1
     nb.connect(bsdf.outputs[0], mixs.inputs[1])
     nb.connect(trans.outputs[0], mixs.inputs[2])
     nb.output(mixs)
@@ -396,9 +435,14 @@ def add_blades(p, root, lines_obj, region, focus, density=20000.0, near=3.0, far
     fac.inputs["From Max"].default_value = far
     fac.inputs["To Min"].default_value = 1.0
     fac.inputs["To Max"].default_value = 0.015
+    # thin out towards the patch edges so the blades blend into the shaded surface without a seam
+    px, py, _ = nb.sep(posn)
+    edge = nb.math("MINIMUM", nb.math("MINIMUM", nb.sub(px, x0), nb.sub(x1, px)),
+                   nb.math("MINIMUM", nb.sub(py, y0), nb.sub(y1, py)))
+    efade = nb.smooth(0.0, 2.5, edge)
     dp = nb.node("GeometryNodeDistributePointsOnFaces", distribute_method="RANDOM")
     nb.connect(gin.outputs[0], dp.inputs["Mesh"])
-    nb.connect(nb.mul(fac.outputs["Result"], density), dp.inputs["Density"])
+    nb.connect(nb.mul(nb.mul(fac.outputs["Result"], efade), density), dp.inputs["Density"])
     dp.inputs["Seed"].default_value = p["seed"]
 
     lines_info = nb.node("GeometryNodeObjectInfo", transform_space="RELATIVE")
@@ -415,6 +459,13 @@ def add_blades(p, root, lines_obj, region, focus, density=20000.0, near=3.0, far
     st2.inputs["Name"].default_value = "rnd"
     nb.connect(st1.outputs[0], st2.inputs["Geometry"])
     nb.connect(rv.outputs[1], st2.inputs["Value"])
+    rh = nb.node("FunctionNodeRandomValue", data_type="FLOAT")
+    rh.inputs["Seed"].default_value = 11
+    sth = nb.node("GeometryNodeStoreNamedAttribute", data_type="FLOAT", domain="POINT")
+    sth.inputs["Name"].default_value = "hue"
+    nb.connect(st2.outputs[0], sth.inputs["Geometry"])
+    nb.connect(rh.outputs[1], sth.inputs["Value"])
+    st2 = sth
 
     ci = nb.node("GeometryNodeCollectionInfo", transform_space="RELATIVE")
     ci.inputs["Collection"].default_value = shapes_col

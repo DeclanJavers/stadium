@@ -20,8 +20,26 @@ def ground_dirt(nb, base_color, height=0.18, amount=1.0, color="#4b4a2c"):
     return nb.mix(mask, base_color, srgb(color)), mask
 
 
+def weathering(nb, col, rough, amount=1.0):
+    """Outdoor exposure: dust settling on upward faces, UV chalking in patches, rain streaks down
+    vertical faces. Returns (colour, roughness)."""
+    geo = nb.geometry()
+    pos, nrm = geo["Position"], geo["Normal"]
+    up = nb.smooth(0.3, 0.9, nb.sep(nrm)[2])
+    dust = nb.mul(nb.mul(up, nb.smooth(0.3, 0.8, nb.noise(pos, 2.5, detail=5))), 0.35 * amount)
+    col = nb.mix(dust, col, srgb("#8d877a"))
+    chalk = nb.mul(nb.smooth(0.4, 0.8, nb.noise(pos, 0.7, detail=3)), 0.18 * amount)
+    col = nb.mix(chalk, col, nb.mix(0.35, col, (0.8, 0.8, 0.8)))
+    streak = nb.smooth(0.55, 0.85, nb.noise(nb.vmath("MULTIPLY", pos, (8.0, 8.0, 0.4)), 1.0, detail=3))
+    side = nb.sub(1.0, nb.math("ABSOLUTE", nb.sep(nrm)[2]))
+    col = nb.mix(nb.mul(nb.mul(streak, side), 0.25 * amount), col, nb.mul(col, 0.6))
+    rough = nb.add(rough, nb.add(nb.mul(dust, 0.5), nb.mul(chalk, 0.6)))
+    return col, rough
+
+
 def painted_metal(name, color="#f4f4f0", rough=0.32, dirt=0.6, scuffs=0.4):
-    """Powder-coated steel/aluminium: satin paint, faint orange peel, grass stains at the foot."""
+    """Powder-coated steel/aluminium: satin paint (no clear coat: powder coat is not lacquered),
+    faint orange peel, weathering, grass stains at the foot."""
     if _get(name):
         return _get(name)
     m, nb = material(name)
@@ -31,9 +49,11 @@ def painted_metal(name, color="#f4f4f0", rough=0.32, dirt=0.6, scuffs=0.4):
     sc = nb.smooth(0.72, 0.8, nb.noise(pos, 9.0, detail=8, rough=0.7))
     col = nb.mix(nb.mul(sc, scuffs), col, srgb("#b9b8b2"))
     peel = nb.noise(pos, 400.0, detail=2)
-    r = nb.add(rough, nb.mul(dmask, 0.4))
-    bsdf = nb.principled(Base_Color=col, Roughness=r, Coat_Weight=0.25, Coat_Roughness=0.25,
-                         Normal=nb.bump(peel, 0.04, 0.001))
+    r = nb.add(rough + 0.12, nb.mul(dmask, 0.4))
+    r = nb.madd(nb.sub(nb.noise(pos, 3.0, detail=3), 0.5), 0.12, r)
+    col, r = weathering(nb, col, r, 0.8)
+    bsdf = nb.principled(Base_Color=col, Roughness=r, Specular_IOR_Level=0.45,
+                         Normal=nb.bump(peel, 0.06, 0.001))
     nb.output(bsdf)
     return m
 
@@ -61,8 +81,12 @@ def plastic(name, color, rough=0.45, dirt=0.3, sss=0.0):
         return _get(name)
     m, nb = material(name)
     col, dmask = ground_dirt(nb, srgb(color), amount=dirt, height=0.12)
-    bsdf = nb.principled(Base_Color=col, Roughness=nb.add(rough, nb.mul(dmask, 0.3)),
-                         Subsurface_Weight=sss, Subsurface_Radius=(0.02, 0.02, 0.02))
+    pos = nb.geometry()["Position"]
+    r = nb.madd(nb.sub(nb.noise(pos, 6.0, detail=3), 0.5), 0.15, nb.add(rough + 0.08, nb.mul(dmask, 0.3)))
+    col, r = weathering(nb, col, r, 0.6)
+    bsdf = nb.principled(Base_Color=col, Roughness=r, Specular_IOR_Level=0.4,
+                         Subsurface_Weight=sss, Subsurface_Radius=(0.02, 0.02, 0.02),
+                         Normal=nb.bump(nb.noise(pos, 250.0, detail=2), 0.08, 0.0008))
     nb.output(bsdf)
     return m
 

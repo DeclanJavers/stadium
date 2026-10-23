@@ -28,6 +28,8 @@ def load_layout(path):
 def scene(layout, sun=(38, 215)):
     reset()
     R.setup_cycles(SAMPLES, RES)
+    if CPU:
+        bpy.context.scene.cycles.device = "CPU"
     if NIGHT:
         layout = dict(layout, lighting="night")
         R.setup_night()
@@ -143,6 +145,8 @@ def shot_seat_lineup(layout, out):
     """Every seat style on a 3-row stepped block, side by side."""
     reset()
     R.setup_cycles(SAMPLES, RES)
+    if CPU:
+        bpy.context.scene.cycles.device = "CPU"
     R.setup_sky(30, 205)
     R.surroundings()
     from kit import catalog
@@ -223,9 +227,24 @@ def shot_carpets(layout, out):
     return [R.render(a, out / f"{NAME}_carpets_tv.png"), R.render(b, out / f"{NAME}_carpets_ground.png")]
 
 
+def blades_ahead(st, cam_pos, target, reach=12.0, density=16000):
+    """Blades on the turf in front of a pitch-level camera (renders only; games use the shader)."""
+    from kit.assets import pitch as P
+    p = st["pitch_params"]
+    hx = p["length"] / 2 + p["runoff_end"]
+    hy = p["width"] / 2 + p["runoff_side"]
+    cx, cy = cam_pos[0], cam_pos[1]
+    dx, dy = target[0] - cx, target[1] - cy
+    n = math.hypot(dx, dy) or 1.0
+    ex, ey = cx + dx / n * reach, cy + dy / n * reach
+    region = (max(-hx, min(cx, ex) - 3), min(hx, max(cx, ex) + 3), max(-hy, min(cy, ey) - 3), min(hy, max(cy, ey) + 3))
+    P.add_blades(p, st["pitch"], st["lines"], region, (cx, cy, 0.0), density=density, near=2.0, far=reach)
+
+
 def shot_dugouts(layout, out):
     st = scene(layout, sun=(36, 160))
     W = st["pitch_params"]["width"]
+    blades_ahead(st, (9.0, -W / 2 + 3.0), (-2.0, -W / 2 - 5.5), reach=9.0)
     cam = R.camera("Dugouts", (9.0, -W / 2 + 3.0, 1.7), (-2.0, -W / 2 - 5.5, 1.0), lens=24)
     return [R.render(cam, out / f"{NAME}_dugouts.png")]
 
@@ -272,10 +291,12 @@ if __name__ == "__main__":
     ap.add_argument("--res", default="1600x900")
     ap.add_argument("--out", default=str(OUT / "review"))
     ap.add_argument("--night", action="store_true")
+    ap.add_argument("--cpu", action="store_true", help="render on the CPU (Cycles Metal can crash on 150k-seat close-ups)")
     a = ap.parse_args(argv)
     SAMPLES = a.samples
     RES = tuple(int(v) for v in a.res.split("x"))
     NIGHT = a.night
+    CPU = a.cpu
     NAME = (Path(a.layout).stem if a.layout else "default") + ("_night" if a.night else "")
     layout = load_layout(a.layout)
     names = list(SHOTS) if a.shots == ["all"] else a.shots

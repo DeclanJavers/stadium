@@ -23,7 +23,7 @@ def fabric(color):
         return bpy.data.materials[name]
     m, nb = material(name)
     pos = nb.geometry()["Position"]
-    nb.output(nb.principled(Base_Color=srgb(color), Roughness=0.6, Sheen_Weight=0.5, Coat_Weight=0.2,
+    nb.output(nb.principled(Base_Color=srgb(color), Roughness=0.75, Sheen_Weight=0.6, Sheen_Roughness=0.35,
                             Normal=nb.bump(nb.noise(pos, 400.0, detail=1), 0.1, 0.001)))
     return m
 

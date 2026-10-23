@@ -63,7 +63,40 @@ Patterns give `L` per point: `stripes` (bands across the pitch, ±Y lean), `stri
 `checkerboard` (two passes: lean = normalised sum), `diagonal`, `diamond`, `circles`
 (tangential lean, alternating per ring), `none`.
 
-Wetness darkens the albedo by up to 30% and drops the roughness from about 0.7 to about 0.3.
+Wetness darkens the albedo by up to 30% and drops the roughness from about 0.85 to about 0.6
+(mud drops to about 0.35).
+
+### Why grass must not be shaded as a plane
+
+A turf canopy is millions of blades that shadow and mask each other. Shading it as a smooth
+dielectric sheet is what makes CG grass look like plastic: a sheet mirrors the bright horizon at
+grazing angles (a whitish Fresnel haze across the far pitch) and shows no structure up close. The
+kit's grass (Blender `kit/assets/pitch.py`, viewer `viewer/src/shader.wgsl`) therefore uses:
+
+4. **Colour at four scales.** Field tone (≈30 m, ±8%), clumps (≈1.5 m, ±5%, leaning yellow- or
+   blue-green), dry-stress patches, and blade scale: noise streaked along the mowing direction
+   (≈4 mm across, ≈12 mm along, ±20%), bright tips, ~1% dead blades. Engines fade each octave to its
+   mean once the pixel footprint exceeds about half its wavelength, so distant grass averages to
+   the same colour instead of shimmering.
+5. **Thatch between blades.** Where the blade noise is low, the colour falls towards dark thatch
+   (sRGB ≈ #3a3420), weighted by how directly the surface is seen from above: looking straight
+   down you see between the blades; across the pitch the blades hide it.
+6. **Canopy lighting.** Specular is faint (IOR level ≈0.04 in Blender; the viewer scales GGX by
+   0.25), a soft sheen carries the grazing look, ambient is reduced 12–27% for blade
+   self-occlusion, an opposition hotspot brightens the canopy up to 45% when the sun is behind the
+   viewer, light comes through the blades (a warm green) when looking towards the sun, and within
+   ~15 m a parallax ray march through the blade layer shades blade bases darker than tips.
+7. **Blades for close-ups.** Render-only blades are pointed, twisted, 0.7–1.3× the cut height,
+   each a slightly different green, 40% translucent, with a deep-shaded root and a waxy
+   (roughness 0.42) surface; their density fades with distance and towards the patch edges so they
+   blend into the shaded surface without a seam.
+
+### Other surfaces
+
+Outdoor powder coat is satin and never lacquered (no clear coat), so painted steel uses roughness
+0.45–0.55 plus weathering: dust on upward faces, UV chalking in patches, rain streaks down vertical
+faces. Moulded polypropylene seats are spark-eroded satin (roughness ≈0.5) with chalking and dust
+in the seat pan. Static perimeter boards have a back panel (printed sheet on a frame).
 
 ### Grass types (`catalog/grass.json`)
 
