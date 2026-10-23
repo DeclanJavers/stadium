@@ -1,0 +1,129 @@
+{
+  "_doc": "Stand cross-sections. Tiers bottom to top. overhang: how far a tier's front projects over the tier below (m). clearance: headroom from the lower tier's top tread to this tier's soffit (m). Rows' heights are solved from c_value (see kit/stands/sightlines.py).",
+  "rail_terrace_6": {
+    "label": "Grassroots rail-side terrace (6 steps)",
+    "front_height": 0.3,
+    "tiers": [
+      {
+        "rows": 6,
+        "kind": "standing",
+        "c_value": 0.04,
+        "vomitories": false
+      }
+    ]
+  },
+  "small_seated_8": {
+    "label": "Small seated stand (8 rows)",
+    "front_height": 0.6,
+    "tiers": [
+      {
+        "rows": 8,
+        "vomitories": false
+      }
+    ]
+  },
+  "kop_terrace_40": {
+    "label": "Standing kop (40 steps)",
+    "front_height": 0.9,
+    "tiers": [
+      {
+        "rows": 40,
+        "kind": "standing",
+        "c_value": 0.07
+      }
+    ]
+  },
+  "single_tier_20": {
+    "label": "Single tier (20 rows)",
+    "front_height": 1.0,
+    "tiers": [
+      {
+        "rows": 20
+      }
+    ]
+  },
+  "single_tier_32": {
+    "label": "Single tier (32 rows)",
+    "front_height": 1.1,
+    "tiers": [
+      {
+        "rows": 32
+      }
+    ]
+  },
+  "steep_wall_45": {
+    "label": "Steep single-tier wall (45 rows)",
+    "front_height": 1.2,
+    "tiers": [
+      {
+        "rows": 45,
+        "c_value": 0.12
+      }
+    ]
+  },
+  "two_tier_22_18": {
+    "label": "Two tiers (22 + 18 rows)",
+    "front_height": 1.0,
+    "tiers": [
+      {
+        "rows": 22
+      },
+      {
+        "rows": 18,
+        "overhang": 3.0,
+        "clearance": 3.2
+      }
+    ]
+  },
+  "three_tier_bowl": {
+    "label": "Three-tier bowl with hospitality tier (~60k as a bowl)",
+    "front_height": 0.8,
+    "tiers": [
+      {
+        "rows": 26
+      },
+      {
+        "rows": 10,
+        "overhang": 2.0,
+        "clearance": 3.0,
+        "tread": 0.95,
+        "seat_pitch": 0.56,
+        "hospitality": true,
+        "vomitories": false
+      },
+      {
+        "rows": 30,
+        "overhang": 2.0,
+        "clearance": 2.9
+      }
+    ]
+  },
+  "mega_bowl": {
+    "label": "Four-tier mega bowl (~150k as a bowl)",
+    "front_height": 1.0,
+    "tiers": [
+      {
+        "rows": 45
+      },
+      {
+        "rows": 10,
+        "overhang": 2.0,
+        "clearance": 3.0,
+        "tread": 0.95,
+        "seat_pitch": 0.56,
+        "hospitality": true,
+        "vomitories": false
+      },
+      {
+        "rows": 41,
+        "overhang": 2.0,
+        "clearance": 2.9
+      },
+      {
+        "rows": 31,
+        "overhang": 2.0,
+        "clearance": 2.9
+      }
+    ]
+  }
+}

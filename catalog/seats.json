@@ -1,0 +1,77 @@
+{
+  "_doc": "Seat styles. Origin: on the tread at the back (riser line), seat centre, +Y towards the pitch. width = nominal seat pitch (m). Variants are chosen per seat: 'every' = [variant, period] (seat index % period == 0), 'row_end' = variant for the last seat of a row segment. stretch: continuous parts are scaled to the actual pitch. min_tread = front of seat + 305 mm seatway (Green Guide), tested.",
+  "tipup_classic": {
+    "label": "Tip-up (moulded polypropylene)",
+    "width": 0.5,
+    "min_tread": 0.7,
+    "variants": [
+      "std",
+      "end"
+    ],
+    "row_end": 1,
+    "color": "#c8102e"
+  },
+  "bucket_fixed": {
+    "label": "Fixed bucket seat",
+    "width": 0.48,
+    "min_tread": 0.78,
+    "variants": [
+      "std"
+    ],
+    "color": "#1d4ea8"
+  },
+  "bench": {
+    "label": "Aluminium bench",
+    "width": 0.45,
+    "min_tread": 0.78,
+    "variants": [
+      "plank",
+      "bracket"
+    ],
+    "every": [
+      1,
+      4
+    ],
+    "row_end": 1,
+    "stretch": true,
+    "color": "#b9bcbf"
+  },
+  "padded_vip": {
+    "label": "Padded hospitality seat",
+    "width": 0.56,
+    "min_tread": 0.93,
+    "variants": [
+      "std",
+      "end"
+    ],
+    "row_end": 1,
+    "color": "#3b3f46"
+  },
+  "rail_seat": {
+    "label": "Safe-standing rail seat",
+    "width": 0.5,
+    "min_tread": 0.7,
+    "variants": [
+      "plain",
+      "post"
+    ],
+    "every": [
+      1,
+      2
+    ],
+    "row_end": 1,
+    "stretch": true,
+    "color": "#c8102e"
+  },
+  "wooden_tipup": {
+    "label": "Heritage wooden tip-up",
+    "width": 0.5,
+    "min_tread": 0.7,
+    "variants": [
+      "std",
+      "end"
+    ],
+    "row_end": 1,
+    "color": "#7a4a2a"
+  }
+}
