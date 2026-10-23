@@ -42,6 +42,8 @@ pub struct Material {
     pub alpha: Alpha,
     pub cutoff: f32,
     pub transmission: f32,
+    /// glTF material extras (tint_gain for runtime-recolourable TINT_ materials)
+    pub extras: Value,
 }
 
 pub struct Primitive {
@@ -68,9 +70,19 @@ pub struct Light {
 }
 
 pub struct Image {
+    /// unique per decoded image: the renderer caches GPU textures by it across scene rebuilds
+    pub id: u64,
     pub width: u32,
     pub height: u32,
     pub rgba: Vec<u8>,
+}
+
+static NEXT_IMAGE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
+impl Image {
+    pub fn new(width: u32, height: u32, rgba: Vec<u8>) -> Self {
+        Image { id: NEXT_IMAGE.fetch_add(1, std::sync::atomic::Ordering::Relaxed), width, height, rgba }
+    }
 }
 
 pub struct PitchInfo {
@@ -79,13 +91,29 @@ pub struct PitchInfo {
     pub angle: f32,
     pub strength: f32,
     pub natural: bool,
+    /// grass colours (linear), wear, wetness, blade height and pitch half-size, for the shader
+    pub color: Vec3,
+    pub dry: Vec3,
+    pub wear: f32,
+    pub wetness: f32,
+    pub height_mm: f32,
+    pub half: Vec2,
+    /// true when the grass albedo is computed in the shader (editor) rather than baked (export)
+    pub procedural: bool,
+}
+
+pub fn srgb_hex(h: &str) -> Vec3 {
+    let h = h.trim_start_matches('#');
+    let c = |i: usize| u8::from_str_radix(h.get(i..i + 2).unwrap_or("80"), 16).unwrap_or(128) as f32 / 255.0;
+    let lin = |v: f32| if v <= 0.04045 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) };
+    Vec3::new(lin(c(0)), lin(c(2)), lin(c(4)))
 }
 
 pub struct Scene {
     pub meshes: Vec<Vec<Primitive>>,
     pub instances: Vec<Vec<Instance>>, // per mesh
     pub materials: Vec<Material>,
-    pub images: Vec<Image>,
+    pub images: Vec<std::sync::Arc<Image>>,
     pub lights: Vec<Light>,
     pub bounds: (Vec3, Vec3),
     pub pitch: Option<PitchInfo>,
@@ -93,6 +121,8 @@ pub struct Scene {
     pub main_camera: Option<Vec3>,
     /// (base mesh, coarse mesh) pairs from MSFT_lod: the coarse mesh draws the far instances
     pub lods: Vec<(usize, usize)>,
+    /// every mesh node: (node name, name of its top-level ancestor, mesh, world transform)
+    pub nodes: Vec<(String, String, usize, Mat4)>,
 }
 
 struct Doc<'a> {
@@ -227,7 +257,7 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
         let o = bv["byteOffset"].as_u64().unwrap_or(0) as usize;
         let l = bv["byteLength"].as_u64().unwrap() as usize;
         let decoded = image::load_from_memory(&bin[o..o + l]).map_err(|e| e.to_string())?.to_rgba8();
-        images.push(Image { width: decoded.width(), height: decoded.height(), rgba: decoded.into_raw() });
+        images.push(std::sync::Arc::new(Image::new(decoded.width(), decoded.height(), decoded.into_raw())));
     }
 
     // materials
@@ -255,13 +285,14 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
             },
             cutoff: f(&m["alphaCutoff"], 0.5),
             transmission: f(&ext["KHR_materials_transmission"]["transmissionFactor"], 0.0),
+            extras: m["extras"].clone(),
         });
     }
     if materials.is_empty() {
         materials.push(Material {
             name: "default".into(), base_color: Vec4::ONE, metallic: 0.0, roughness: 0.6, emissive: Vec3::ZERO,
             emissive_strength: 1.0, base_tex: None, mr_tex: None, normal_tex: None, emissive_tex: None,
-            alpha: Alpha::Opaque, cutoff: 0.5, transmission: 0.0,
+            alpha: Alpha::Opaque, cutoff: 0.5, transmission: 0.0, extras: Value::Null,
         });
     }
 
@@ -299,6 +330,7 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
     let mut pitch = None;
     let mut capacity = None;
     let mut main_camera = None;
+    let mut node_list = Vec::new();
     let nodes = j["nodes"].as_array().cloned().unwrap_or_default();
     let mut parent: HashMap<usize, usize> = HashMap::new();
     for (i, n) in nodes.iter().enumerate() {
@@ -349,8 +381,15 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
                     pattern: mow["pattern"].as_str().unwrap_or("stripes").to_string(),
                     width: f(&mow["width"], 5.25),
                     angle: f(&mow["angle"], 0.0),
-                    strength: 0.2 * (f(&params["height_mm"], 25.0) / 25.0).clamp(0.4, 1.6),
+                    strength: f(&grass["stripe_strength"], 0.2) * (f(&params["height_mm"], 25.0) / 25.0).clamp(0.4, 1.6),
                     natural,
+                    color: srgb_hex(grass["color"].as_str().unwrap_or("#4a6d27")),
+                    dry: srgb_hex(grass["color_dry"].as_str().unwrap_or("#8a8247")),
+                    wear: f(&params["wear"], 0.25),
+                    wetness: f(&params["wetness"], 0.0),
+                    height_mm: f(&params["height_mm"], 25.0),
+                    half: Vec2::new(f(&params["length"], 105.0) / 2.0, f(&params["width"], 68.0) / 2.0),
+                    procedural: false,
                 });
             }
         }
@@ -376,6 +415,11 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
         }
         let Some(mi) = n["mesh"].as_u64() else { continue };
         let mi = mi as usize;
+        let mut top = i;
+        while let Some(&p) = parent.get(&top) {
+            top = p;
+        }
+        node_list.push((n["name"].as_str().unwrap_or("").to_string(), nodes[top]["name"].as_str().unwrap_or("").to_string(), mi, w));
         if let Some(gi) = n["extensions"].get("EXT_mesh_gpu_instancing") {
             let at = &gi["attributes"];
             let (t, _) = doc.accessor(at["TRANSLATION"].as_u64().unwrap() as usize);
@@ -424,6 +468,6 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
             }
         }
     }
-    Ok(Scene { meshes, instances, materials, images, lights, bounds: (lo, hi), pitch, capacity, main_camera, lods })
+    Ok(Scene { meshes, instances, materials, images, lights, bounds: (lo, hi), pitch, capacity, main_camera, lods, nodes: node_list })
 }
 

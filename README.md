@@ -20,7 +20,10 @@ $B -b --factory-startup -P tools/review.py -- all --layout layouts/premier.json 
 $B -b --factory-startup -P tools/export_stadium.py -- layouts/mega.json          # whole stadium (render quality) -> out/stadiums/*.glb
 $B -b --factory-startup -P tools/export_stadium.py -- layouts/mega.json --game   # game-ready: baked PBR, LODs, lights -> *.game.glb
 $B -b --factory-startup -P tools/preview_game.py -- out/stadiums/mega.game.glb  # what an engine receives, rendered on its own
-viewer/build.sh --offline && viewer/target/release/stadium-viewer out/stadiums/mega.game.glb   # real-time viewer (see viewer/README.md)
+$B -b --factory-startup -P tools/export_library.py                # asset library for the live editor
+viewer/build.sh --offline && viewer/target/release/stadium-viewer layouts/premier.json   # live stadium editor (see viewer/README.md)
+viewer/target/release/stadium-viewer out/stadiums/mega.game.glb   # real-time viewer for game exports
+(cd viewer && cargo test --offline --release --workspace)          # Rust port parity + editor tests
 ```
 
 Review shots: `broadcast`, `behind_goal`, `goalmouth`, `goal_side`, `grass_macro`, `corner_flag`,
@@ -68,7 +71,8 @@ kit/assembler.py   layout JSON -> scene, by snapping assets onto sockets
 catalog/       variant presets (data, shared with the game)
 layouts/       example stadiums
 kit/core/game.py, bake.py   game export: baked PBR, tint split, metric UVs, light conversion
-tools/         build.py, review.py, export_stadium.py, preview_game.py
+tools/         build.py, review.py, export_stadium.py, preview_game.py, export_library.py, dump_reference.py
 tests/         run_tests.py, test_stands.py, test_roofs_lights.py, test_signage.py, test_game.py
-viewer/        Rust (wgpu/Metal) real-time viewer for game exports
+viewer/        Rust (wgpu/Metal, egui) live stadium editor and viewer for game exports
+viewer/gen/    Rust port of the generators (crate stadium-gen) with parity tests against the Python
 ```
