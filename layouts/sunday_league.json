@@ -1,0 +1,81 @@
+{
+  "schema": "stadium-layout/1",
+  "name": "Sunday league, end of season",
+  "pitch": {
+    "length": 98,
+    "width": 62,
+    "grass": "perennial_ryegrass",
+    "height_mm": 34,
+    "mow": {
+      "pattern": "stripes",
+      "width": 2.2,
+      "angle": 90
+    },
+    "wear": 0.95,
+    "wetness": 0.5,
+    "hand_painted": 1.0,
+    "optional_marks": false,
+    "crown": 0.12
+  },
+  "goals": {
+    "style": "portable",
+    "mesh": "square",
+    "net_colors": [
+      "#f2f2ee"
+    ]
+  },
+  "corner_flags": {
+    "preset": "grassroots"
+  },
+  "stands": {
+    "front_gap": 2.0,
+    "corners": "open",
+    "apron": "turf",
+    "seat_fade": 0.6,
+    "fascia_color": "#2f4a2a",
+    "concrete": "#8f8b82",
+    "colors": {
+      "pattern": "solid",
+      "color": "#2f6b34"
+    },
+    "sides": {
+      "south": {
+        "profile": "small_seated_8",
+        "seat": "bench",
+        "length": 28,
+        "roof": {
+          "preset": "shed_cover"
+        },
+        "facade": {
+          "preset": "brick_heritage",
+          "color": "#7b5a45",
+          "cores_every": 0,
+          "entrance_every": 4
+        }
+      },
+      "north": {
+        "profile": "rail_terrace_6",
+        "length": 44
+      }
+    }
+  },
+  "floodlights": {
+    "preset": "grassroots_poles"
+  },
+  "ads": {
+    "perimeter": {
+      "type": "static"
+    },
+    "brands": [
+      "local_butcher",
+      "local_garage",
+      "lumen",
+      "tidewater"
+    ]
+  },
+  "dugouts": {
+    "style": "shelter",
+    "seats": 10,
+    "color": "#2f4a2a"
+  }
+}

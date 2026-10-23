@@ -1,0 +1,139 @@
+# Real-world specifications
+
+Numbers the kit is built and tested against. `tests/run_tests.py` checks the ones marked ✓.
+
+## Field of play (IFAB Laws of the Game, Law 1)
+
+| item | value |
+|---|---|
+| Length (touchline) | 90–120 m; international 100–110 m. Default **105 m** ✓ |
+| Width (goal line) | 45–90 m; international 64–75 m. Default **68 m** ✓ |
+| Line width | ≤ 12 cm, all lines equal ✓ |
+| Lines belong to the areas they bound | measurements are to the outer edge of the boundary lines |
+| Centre circle | radius 9.15 m ✓ |
+| Goal area | 5.5 m from the inside of each post, 5.5 m into the field |
+| Penalty area | 16.5 m from the inside of each post, 16.5 m into the field ✓ |
+| Penalty mark | 11 m from the midpoint between the posts ✓ |
+| Penalty arc | radius 9.15 m from the penalty mark, outside the penalty area |
+| Corner arc | radius 1 m |
+| Optional marks | 9.15 m from the corner arc, off the field, at right angles to the lines |
+| Corner flagpost | ≥ 1.5 m high, non-pointed top ✓ |
+
+Run-off used by the kit: 6 m beyond the touchlines and 7.5 m beyond the goal lines (UEFA
+recommends at least 5 m and 6 m including the technical areas).
+
+## Goals (Law 1)
+
+| item | value |
+|---|---|
+| Inner width | 7.32 m ✓ |
+| Inner height (lower edge of crossbar) | 2.44 m ✓ |
+| Post and crossbar width and depth | ≤ 12 cm, equal; same as the goal-line width ✓ |
+| Shapes allowed | square, rectangular, round, elliptical |
+| Placement | centred on the goal line; posts occupy the line |
+
+Kit goal styles (`catalog/goals.json`):
+
+- **box**: elite-level box net, 2.0 m deep at top and bottom, hung from two free-standing rear
+  poles. The roof and back sag between supports.
+- **classic**: bent stanchions; the net is 0.8 m deep at the crossbar and 2.0 m at the ground,
+  with a ground frame.
+- **portable**: grassroots aluminium goal with a welded rear frame (1.0 m top depth, 2.0 m ground
+  depth), round 100 mm posts, sandbag weights.
+
+Nets: 3–5 mm braided cord, 100–120 mm mesh, square or hexagonal.
+
+## Grass
+
+The pitch shader uses three effects, written here so any engine can reproduce them:
+
+1. **Base colour** = per-type healthy colour × large/medium/fine noise variation, mixed towards
+   straw then soil by the **wear mask** (Gaussians at both goalmouths, the centre spot, and the
+   assistant referees' running lanes, broken up by noise, scaled by `wear`).
+2. **Mowing stripes (natural grass) are view-dependent.** Each mowing pass leaves blades leaning
+   in its direction `L` (a unit vector on the ground plane, given by the pattern). With `V` the
+   unit vector from the camera to the surface point:
+   `colour *= 1 + k · dot(V.xy, L)`, where `k = stripe_strength(type) · clamp(height / 25 mm, 0.4, 1.6)`.
+   Grass leaning away from the viewer looks lighter. The stripes fade when seen from directly
+   above (|V.xy| → 0) and reverse when you walk to the other side of the pitch, as on a real pitch.
+3. **Artificial turf stripes are colour-based.** The two fibre shades are woven in, so
+   `colour *= 1 + k · s` with `s = ±1` per strip, independent of the viewing direction.
+
+Patterns give `L` per point: `stripes` (bands across the pitch, ±Y lean), `stripes_long`,
+`checkerboard` (two passes: lean = normalised sum), `diagonal`, `diamond`, `circles`
+(tangential lean, alternating per ring), `none`.
+
+Wetness darkens the albedo by up to 30% and drops the roughness from about 0.7 to about 0.3.
+
+### Grass types (`catalog/grass.json`)
+
+Gameplay values are **starting estimates** for the match engine to calibrate later. `ball_roll`
+is relative ground-roll deceleration (1.0 = perennial ryegrass at 25 mm; soccer-v2's fitted
+ground decay k = 0.43/s corresponds to roughly this). `bounce` is the relative coefficient of
+restitution; `traction` is relative stud grip; `wear_rate` is the relative wear per match.
+
+| type | climate | mow height | look |
+|---|---|---|---|
+| perennial_ryegrass | cool temperate (UK, N. Europe) | 22–30 mm | deep fresh green |
+| kentucky_bluegrass | cool continental | 25–35 mm | blue-green, dense |
+| hybrid_rye | cool temperate, elite (3–5% synthetic fibres) | 22–28 mm | rye look, wears far less |
+| bermuda | hot (US South, Middle East, Brazil) | 12–20 mm | finer, yellow-green |
+| seashore_paspalum | tropical, coastal, salt-tolerant | 15–25 mm | dark emerald |
+| zoysia | warm humid (Japan, Korea) | 15–25 mm | dense, slightly olive |
+| artificial_3g | any | 40–60 mm fibre | uniform, rubber infill, woven-in stripes |
+
+## Stands (Green Guide, 6th ed., and FIFA stadium guidance)
+
+| item | value used |
+|---|---|
+| Seated row depth (tread) | 0.80 m standard, 0.95 m hospitality; seat style sets a minimum ✓ |
+| Seatway (clear, seat front to the row behind) | ≥ 305 mm ✓ |
+| Seat pitch | ≥ 0.50 m standard, 0.56 m hospitality ✓ |
+| Seats between aisles | ≤ 28 ✓ |
+| Seated eye height | 1.15 m above tread, 0.30 m forward of the riser behind |
+| Standing eye height | 1.60 m; terrace steps 0.38 m deep |
+| C-value | target 90 mm (good), minimum 60 mm (acceptable); per profile ✓ |
+| Maximum rake | 34 deg ✓ |
+| Aisle step riser | ≤ 190 mm (intermediate steps inside each row) |
+| Focal point | nearest touchline (goal line for end stands), at pitch level |
+| Vomitory headroom | 2.2 m |
+| Crush barriers | 1.1 m high, every fifth step, staggered bay to bay |
+| Standing density | 1.8 people per metre of step (4.7/m² on 0.38 m steps) |
+| Upper-tier headroom over the tier below | ≥ 2.4 m ✓ |
+
+Capacities from the bundled profiles as full bowls on a 105 x 68 pitch: `single_tier_20`
+~15k, `three_tier_bowl` ~61k, `mega_bowl` ~153k.
+
+## Roofs
+
+| item | value used |
+|---|---|
+| Leading edge | clears the back-row sightline to a ball 15 m above the far touchline (+0.3–0.5 m) ✓ |
+| Headroom under the roof | ≥ 2.5 m over every covered tread ✓ |
+| Cantilever length | ≤ 60 m (longer spans need arches or tension rings, not modelled) ✓ |
+| Cantilever rise toward the pitch | 5–9 deg by preset |
+| Truss depth | span/7 at the column, span/40 at the tip |
+
+## Floodlighting (UEFA Stadium Infrastructure Regulations; EN 12193)
+
+| item | value used |
+|---|---|
+| Elite broadcast (UEFA level A) | ~2000 lux horizontal avg, U1 = Emin/Emax ≥ 0.7, U2 = Emin/Eavg ≥ 0.8 ✓ |
+| Classic televised ground | 1000 lux (preset), same uniformity ✓ |
+| Grassroots (EN 12193 class III) | 75–200 lux, U2 ≥ 0.5 ✓ |
+| Corner masts | lamp line ≥ 25 deg above the centre spot ✓ |
+| Colour temperature | LED 5700 K, metal halide 4300 K |
+| Blender light units | 1 W/m² ≈ 683 lux; spot power P emits P/4π W/sr inside its cone ✓ (unit test) |
+
+## Pitch-side furniture and advertising
+
+| item | value used |
+|---|---|
+| Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line ✓ |
+| LED board face | tilted ~10° back; one LED per texel (128 px per metre of height) |
+| 3D carpet | projection of a ~1 m virtual board from the main camera; stays ≥ 0.4 m clear of the end boards ✓ |
+| Dugouts | front 4.3 m behind the touchline (clear of the run-off) and in front of the stand ✓; 2 rows |
+| Technical area | 1 m beyond the seating either side, to within 1 m of the touchline (dashed) |
+| Tunnel | 3.6 m wide, 2.7 m high, at halfway between the dugouts |
+| Centre-hung screen | bottom ~20–30 m above the pitch ✓ |
+| End screens | hung below the roof edge, bottom > 12 m above the pitch ✓ |

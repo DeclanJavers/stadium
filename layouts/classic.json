@@ -1,0 +1,128 @@
+{
+  "schema": "stadium-layout/1",
+  "name": "Classic English ground: four separate stands",
+  "pitch": {
+    "grass": "perennial_ryegrass",
+    "mow": {
+      "pattern": "checkerboard",
+      "width": 6.0
+    },
+    "wear": 0.35
+  },
+  "goals": {
+    "style": "classic",
+    "net_colors": [
+      "#f7f7f5",
+      "#1d4ea8"
+    ],
+    "net_pattern": "bands",
+    "mesh": "square"
+  },
+  "corner_flags": {
+    "preset": "striped"
+  },
+  "stands": {
+    "front_gap": 2.5,
+    "corners": "open",
+    "apron": "turf",
+    "fascia_color": "#14306e",
+    "colors": {
+      "pattern": "solid",
+      "color": "#1d4ea8"
+    },
+    "sides": {
+      "south": {
+        "profile": "two_tier_22_18",
+        "seat": "tipup_classic",
+        "roof": {
+          "preset": "goalpost_classic"
+        }
+      },
+      "north": {
+        "profile": "single_tier_20",
+        "seat": "bucket_fixed",
+        "colors": {
+          "pattern": "random",
+          "colors": [
+            "#1d4ea8",
+            "#2a5cc0",
+            "#14306e"
+          ],
+          "weights": [
+            5,
+            2,
+            1
+          ]
+        },
+        "roof": {
+          "preset": "modern_cantilever"
+        },
+        "facade": {
+          "preset": "metal_bands",
+          "color": "#1d4ea8",
+          "accent": "#14306e"
+        }
+      },
+      "east": {
+        "profile": "kop_terrace_40",
+        "roof": {
+          "preset": "full_translucent"
+        },
+        "facade": {
+          "preset": "concrete_frame"
+        }
+      },
+      "west": {
+        "profile": "single_tier_20",
+        "seat": "wooden_tipup",
+        "length": 60,
+        "roof": {
+          "preset": "goalpost_classic",
+          "post_every": 2
+        }
+      }
+    },
+    "mosaics": [
+      {
+        "run": "north",
+        "tier": 0,
+        "text": "THE BLUES",
+        "color": "#f2f2f2"
+      }
+    ],
+    "facade": {
+      "preset": "brick_heritage"
+    }
+  },
+  "floodlights": {
+    "preset": "corner_pylons"
+  },
+  "ads": {
+    "perimeter": {
+      "type": "static"
+    },
+    "carpets": false,
+    "brands": [
+      "halcyon",
+      "meridian",
+      "tidewater",
+      "lumen",
+      "volta",
+      "kestrel"
+    ]
+  },
+  "screens": {
+    "placement": "corners",
+    "width": 12,
+    "height": 6
+  },
+  "dugouts": {
+    "style": "box",
+    "seats": 12,
+    "seat": "bucket_fixed",
+    "color": "#14306e"
+  },
+  "tunnel": {
+    "style": "portal"
+  }
+}

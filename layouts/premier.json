@@ -1,0 +1,109 @@
+{
+  "schema": "stadium-layout/1",
+  "name": "Elite bowl, cool climate",
+  "pitch": {
+    "grass": "hybrid_rye",
+    "mow": {
+      "pattern": "stripes",
+      "width": 5.25
+    },
+    "wear": 0.2
+  },
+  "goals": {
+    "style": "box",
+    "net_colors": [
+      "#f7f7f5",
+      "#c8102e"
+    ],
+    "net_pattern": "solid",
+    "mesh": "hex"
+  },
+  "corner_flags": {
+    "preset": "pro_spring"
+  },
+  "stands": {
+    "front_gap": 3.0,
+    "corners": "curved",
+    "corner_radius": 14,
+    "apron": "turf",
+    "fascia_color": "#16181b",
+    "colors": {
+      "pattern": "solid",
+      "color": "#c8102e"
+    },
+    "sides": {
+      "south": {
+        "profile": "three_tier_bowl",
+        "seat": "tipup_classic"
+      },
+      "north": {
+        "profile": "three_tier_bowl",
+        "seat": "tipup_classic"
+      },
+      "east": {
+        "profile": "three_tier_bowl",
+        "seat": "tipup_classic"
+      },
+      "west": {
+        "profile": "three_tier_bowl",
+        "seat": "tipup_classic"
+      }
+    },
+    "mosaics": [
+      {
+        "run": "north",
+        "tier": 2,
+        "text": "KIT FC",
+        "color": "#f4f4f0"
+      }
+    ],
+    "roof": {
+      "preset": "modern_cantilever"
+    },
+    "facade": {
+      "preset": "etfe_cushions",
+      "color": "#f2f2f0",
+      "glow": "#d0102b"
+    }
+  },
+  "floodlights": {
+    "preset": "roof_ribbon"
+  },
+  "ads": {
+    "perimeter": {
+      "type": "led"
+    },
+    "carpets": true,
+    "ribbons": {
+      "tiers": [
+        1,
+        2
+      ]
+    },
+    "brands": [
+      "northwind",
+      "kestrel",
+      "orbit",
+      "pioneer",
+      "meridian",
+      "summit",
+      "volta",
+      "halcyon"
+    ]
+  },
+  "screens": {
+    "placement": "ends",
+    "width": 20,
+    "height": 8.5
+  },
+  "dugouts": {
+    "style": "shell",
+    "seats": 16,
+    "seat": "padded_vip",
+    "color": "#c8102e"
+  },
+  "tunnel": {
+    "style": "telescopic",
+    "color": "#c8102e"
+  }
+}

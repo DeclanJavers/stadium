@@ -1,0 +1,7 @@
+{
+  "schema": "stadium-layout/1",
+  "name": "Hot climate, bermuda",
+  "pitch": {"grass": "bermuda", "mow": {"pattern": "circles", "width": 4.0}, "wear": 0.15},
+  "goals": {"style": "box", "net_colors": ["#f7f7f5", "#0b6e4f"], "net_pattern": "checker", "mesh": "hex"},
+  "corner_flags": {"preset": "striped"}
+}

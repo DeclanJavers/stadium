@@ -1,0 +1,110 @@
+{
+  "schema": "stadium-layout/1",
+  "name": "150k mega bowl, hot climate",
+  "pitch": {
+    "grass": "bermuda",
+    "mow": {
+      "pattern": "circles",
+      "width": 4.0
+    },
+    "wear": 0.15
+  },
+  "goals": {
+    "style": "box",
+    "net_colors": [
+      "#f7f7f5",
+      "#0b6e4f"
+    ],
+    "net_pattern": "checker",
+    "mesh": "hex"
+  },
+  "corner_flags": {
+    "preset": "striped"
+  },
+  "stands": {
+    "front_gap": 3.0,
+    "corners": "curved",
+    "corner_radius": 16,
+    "apron": "track",
+    "fascia_color": "#0b3d2e",
+    "colors": {
+      "pattern": "random",
+      "colors": [
+        "#0b6e4f",
+        "#f2f2ee",
+        "#d4af37"
+      ],
+      "weights": [
+        6,
+        2,
+        1
+      ]
+    },
+    "sides": {
+      "south": {
+        "profile": "mega_bowl",
+        "seat": "tipup_classic"
+      },
+      "north": {
+        "profile": "mega_bowl",
+        "seat": "tipup_classic"
+      },
+      "east": {
+        "profile": "mega_bowl",
+        "seat": "tipup_classic"
+      },
+      "west": {
+        "profile": "mega_bowl",
+        "seat": "tipup_classic"
+      }
+    },
+    "mosaics": [
+      {
+        "run": "north",
+        "tier": 2,
+        "text": "OASIS",
+        "color": "#f2f2ee",
+        "background": "#0b6e4f"
+      }
+    ],
+    "roof": {
+      "preset": "membrane_cantilever"
+    },
+    "facade": {
+      "preset": "metal_fins",
+      "color": "#d4af37"
+    }
+  },
+  "floodlights": {
+    "preset": "roof_ribbon",
+    "lux": 2200
+  },
+  "ads": {
+    "perimeter": {
+      "type": "led"
+    },
+    "carpets": true,
+    "ribbons": {
+      "tiers": [
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "screens": {
+    "placement": "center",
+    "width": 22,
+    "height": 9
+  },
+  "dugouts": {
+    "style": "shell",
+    "seats": 18,
+    "seat": "padded_vip",
+    "color": "#0b6e4f"
+  },
+  "tunnel": {
+    "style": "telescopic",
+    "color": "#0b6e4f"
+  }
+}
