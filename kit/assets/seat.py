@@ -287,6 +287,24 @@ def build_variant(style, variant, col=None):
     return obj
 
 
+LOD_RATIOS = {1: 0.18, 2: 0.05}
+
+
+def lod(obj, level, col=None):
+    """Decimated copy of a seat variant (shares nothing with the original)."""
+    o = obj.copy()
+    o.data = obj.data.copy()
+    o.name = o.data.name = f"{obj.name}_LOD{level}"
+    (col or obj.users_collection[0]).objects.link(o)
+    mod = o.modifiers.new("Decimate", "DECIMATE")
+    mod.decimate_type = "COLLAPSE"
+    mod.ratio = LOD_RATIOS[level]
+    mod.use_collapse_triangulate = True
+    bake(o)
+    o["lod"] = level
+    return o
+
+
 def build_style(style, col=None):
     """All variants of a style, in variant order (the order instancing picks by index)."""
     spec = resolve(style)

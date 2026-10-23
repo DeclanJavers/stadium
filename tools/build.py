@@ -13,7 +13,8 @@ sys.path.insert(0, str(ROOT))
 from kit import catalog  # noqa: E402
 from kit.assets import corner_flag, goal, pitch, seat  # noqa: E402
 from kit.core.export import export_glb, stats  # noqa: E402
-from kit.core.scene import OUT, reset  # noqa: E402
+from kit.core.scene import OUT, reset, set_params  # noqa: E402
+import bpy  # noqa: E402
 
 
 def variants():
@@ -25,8 +26,16 @@ def variants():
     for style, spec in catalog.load("seats").items():
         for v in spec["variants"]:
             yield f"seat.{style}.{v}", lambda style=style, v=v: seat.build_variant(style, v)
+            for lvl in (1, 2):
+                def make_lod(style=style, v=v, lvl=lvl):
+                    base = seat.build_variant(style, v)
+                    o = seat.lod(base, lvl)
+                    set_params(o, f"seat.{style}.{v}.lod{lvl}", "seat", "seat", {"style": style, "variant": v, "lod": lvl})
+                    bpy.data.objects.remove(base)
+                    return o
+                yield f"seat.{style}.{v}.lod{lvl}", make_lod
     from kit.assets import dugout, floodlight, screen
-    from kit.core.scene import collection, set_params
+    from kit.core.scene import collection
     for style in ("shell", "box", "shelter"):
         def make(style=style):
             p = dugout.resolve({"style": style})

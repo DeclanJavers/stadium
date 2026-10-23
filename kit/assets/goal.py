@@ -413,7 +413,74 @@ def build_net(p, col, root, mats):
     V, F, mi, RV, RF = _cords(p, s, panels, co)
     net = mesh_object("Net", V, F, col, root, smooth=True, materials=mats[:2], mat_index=mi)
     rope = mesh_object("NetRope", RV, RF, col, root, smooth=True, materials=[mats[0]])
+    for o in (net, rope):
+        o["lod"] = 0
+        o["has_lod1"] = True
+    card = _net_card(p, panels, co, col, root)
+    card.hide_render = True               # renders use the real cords; games use the card
     return net, rope, s
+
+
+def _pattern_image(p, px=128):
+    """One repeat of the cord pattern with alpha: square cell (s x s) or hex cell (s x sqrt(3) s)."""
+    size = p["mesh_size"]
+    r = p["cord_mm"] / 2000.0 * 1.6        # a touch thicker so the card holds up at distance
+    if p["mesh"] == "hex":
+        W, H = size, math.sqrt(3) * size
+        segs = _hex_segments(-W, 2 * W, -H, 2 * H, size)
+    else:
+        W, H = size, size
+        segs = _square_segments(-W, 2 * W, -H, 2 * H, size)
+    w, h = px, int(round(px * H / W))
+    X, Y = np.meshgrid((np.arange(w) + 0.5) / w * W, (np.arange(h) + 0.5) / h * H)
+    P = np.stack([X, Y], -1)
+    d = np.full(X.shape, 1e9)
+    for a, b in segs:
+        ab = b - a
+        t = np.clip(((P - a) @ ab) / max(ab @ ab, 1e-12), 0, 1)
+        d = np.minimum(d, np.linalg.norm(P - (a + t[..., None] * ab), axis=-1))
+    alpha = np.clip((r - d) / (0.5 * W / w) + 0.5, 0, 1)
+    rgba = np.ones((h, w, 4), np.float32)
+    rgba[..., 3] = alpha
+    img = MAT.image_from_array(f"NetPattern_{p['mesh']}", rgba)
+    return img, W, H
+
+
+def _net_card(p, panels, co, col, root):
+    """LOD1: the simulated net surface as a card, textured with the cord pattern (alpha clip)."""
+    img, pw, ph = _pattern_image(p)
+    name = "TINT_net_card"
+    mat = bpy.data.materials.get(name)
+    if mat is None:
+        from ..core.nodes import material, srgb
+        mat, nb = material(name)
+        uv = nb.node("ShaderNodeUVMap", uv_map="UVMap").outputs[0]
+        tex = nb.node("ShaderNodeTexImage", image=img, extension="REPEAT")
+        nb.connect(uv, tex.inputs["Vector"])
+        clip = nb.math("ROUND", tex.outputs["Alpha"])     # glTF exporter reads ROUND as alpha MASK
+        nb.output(nb.principled(Base_Color=srgb(p["net_colors"][0]), Roughness=0.7, Alpha=clip))
+    vs, fs, uvs, off = [], [], [], 0
+    for key, pn in panels.items():
+        G = co[pn["idx"]]
+        n0, n1 = G.shape[:2]
+        if key == "main":
+            U = np.broadcast_to(pn["x"][None, :], (n0, n1))
+            Vv = np.broadcast_to(pn["u"][:, None], (n0, n1))
+        else:
+            rest = pn["grid"][..., 1:]
+            U, Vv = rest[..., 0], rest[..., 1]
+        vs.append(G.reshape(-1, 3))
+        uvv = np.stack([U / pw, Vv / ph], -1).reshape(-1, 2)
+        i, j = np.meshgrid(np.arange(n0 - 1), np.arange(n1 - 1), indexing="ij")
+        a = i * n1 + j
+        F = np.stack([a, a + n1, a + n1 + 1, a + 1], -1).reshape(-1, 4)
+        fs.append(F + off)
+        uvs.append(uvv[F.ravel()])
+        off += n0 * n1
+    o = mesh_object("Net_LOD1", np.concatenate(vs), np.concatenate(fs), col, root, smooth=True,
+                    materials=[mat], uvs=np.concatenate(uvs))
+    o["lod"] = 1
+    return o
 
 
 # -- build ------------------------------------------------------------------------------------
