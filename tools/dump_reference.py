@@ -190,6 +190,7 @@ def main():
         "carpet_spots": [(s, side, b) for s, side, b in PL.carpet_spots(p)],
         "carpet": dict(zip(("V", "F", "UV"), PL.carpet(cam, np.array([53.3, 8.0, 0.0]), 5.0, 1.0, 8, 4))),
         "fit": PL.fit_carpet_height(cam, np.array([53.3, 8.0, 0.0]), 5.0, 1.1, p["length"] / 2 + 5.1),
+        "place": [PL.place_carpet(cam, b, 5.0, 1.1, p, p["length"] / 2 + 5.1) for _, _, b in PL.carpet_spots(p)],
         "tv": [PL.tv_weight((x, y, 0.5), f, cam) for x, y, f in ((0, 38, (0, -1)), (0, -38, (0, 1)), (56, 0, (-1, 0)))],
     })
 

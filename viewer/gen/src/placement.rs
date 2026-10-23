@@ -82,6 +82,32 @@ pub fn carpet_spots(p: &Pitch, width: f64, behind: f64) -> Vec<(f64, f64, DVec3)
     out
 }
 
+/// Keep a carpet off the field of play (see placement.place_carpet): push it back until its whole
+/// footprint lies behind the goal line and inside the touchline extended, then fit its height in
+/// front of the end boards. Returns (base, height).
+pub fn place_carpet(cam: DVec3, base: DVec3, width: f64, height: f64, p: &Pitch, limit_x: f64) -> (DVec3, f64) {
+    let margin = 0.3;
+    let s = if base.x > 0.0 { 1.0 } else { -1.0 };
+    let mut base = base;
+    let mut h = height;
+    for _ in 0..8 {
+        h = fit_carpet_height(cam, base, width, height, limit_x);
+        let (v, _, _) = carpet(cam, base, width, h, 4, 2, &|_, _| 0.0);
+        let inner = v.iter().map(|q| s * q.x).fold(f64::MAX, f64::min) - (p.length / 2.0 + margin);
+        let side = v.iter().map(|q| q.y.abs()).fold(f64::MIN, f64::max) - (p.width / 2.0 - 0.5);
+        if inner >= -1e-6 && side <= 1e-6 {
+            break;
+        }
+        if inner < 0.0 {
+            base.x += s * -inner;
+        }
+        if side > 0.0 {
+            base.y -= base.y.signum() * side;
+        }
+    }
+    (base, h)
+}
+
 pub fn fit_carpet_height(cam: DVec3, base: DVec3, width: f64, height: f64, limit_x: f64) -> f64 {
     let mut h = height;
     for _ in 0..30 {

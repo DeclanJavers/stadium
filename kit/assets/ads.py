@@ -188,7 +188,7 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         zf = crown_fn(pitch)
         for k, (s, side, base) in enumerate(PL.carpet_spots(pitch, width)):
             b = ckeys[k % len(ckeys)]
-            h = PL.fit_carpet_height(cam, base, width, 1.1, limit)
+            base, h = PL.place_carpet(cam, base, width, 1.1, pitch, limit)
             V, F, UVv = PL.carpet(cam, base, width, h, ground=lambda x, y: float(zf(x, y)))
             mat = print_material(f"Carpet_{b}", _image(images[b]), rough=0.85, cloth=True)
             _mesh_with_vertex_uvs(f"Carpet_{k}", V, F, UVv, col, root, mat)

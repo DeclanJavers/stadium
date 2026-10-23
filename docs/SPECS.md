@@ -164,7 +164,7 @@ Capacities from the bundled profiles as full bowls on a 105 x 68 pitch: `single_
 |---|---|
 | Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line ✓ |
 | LED board face | tilted ~10° back; one LED per texel (128 px per metre of height) |
-| 3D carpet | projection of a ~1 m virtual board from the main camera; stays ≥ 0.4 m clear of the end boards ✓ |
+| 3D carpet | projection of a ~1 m virtual board from the main camera, beside the goal; the whole footprint stays off the field of play (≥ 0.3 m behind the goal line, inside the touchline extended) and ≥ 0.4 m clear of the end boards ✓ |
 | Dugouts | front 4.3 m behind the touchline (clear of the run-off) and in front of the stand ✓; 2 rows |
 | Technical area | 1 m beyond the seating either side, to within 1 m of the touchline (dashed) |
 | Tunnel | 3.6 m wide, 2.7 m high, at halfway between the dugouts |

@@ -354,6 +354,15 @@ fn placement() {
     let uu: Vec<f64> = uv.iter().flat_map(|q| [q.x, q.y]).collect();
     close_v(&uu, &Value::Array(flat(&r["carpet"]["UV"]).into_iter().map(|v| json!(v)).collect()), 1e-12, "carpet UV");
     close(placement::fit_carpet_height(cam, DVec3::new(53.3, 8.0, 0.0), 5.0, 1.1, p.length / 2.0 + 5.1), &r["fit"], 1e-12, "fit");
+    // carpets end up entirely behind the goal line, in front of the end boards
+    for (k, (_, _, b)) in placement::carpet_spots(&p, 5.0, 0.8).iter().enumerate() {
+        let (base, h) = placement::place_carpet(cam, *b, 5.0, 1.1, &p, p.length / 2.0 + 5.1);
+        let x = &r["place"][k];
+        close_v(&v3(base), &x[0], 1e-9, "carpet base");
+        close(h, &x[1], 1e-9, "carpet height");
+        let (v, _, _) = placement::carpet(cam, base, 5.0, h, 8, 4, &|_, _| 0.0);
+        assert!(v.iter().all(|q| q.x.abs() >= p.length / 2.0 + 0.3 - 1e-6 && q.x.abs() <= p.length / 2.0 + 5.1 + 1e-6), "carpet {k} overlaps the pitch or the boards");
+    }
     let tv: Vec<f64> = [(0.0, 38.0, (0.0, -1.0)), (0.0, -38.0, (0.0, 1.0)), (56.0, 0.0, (-1.0, 0.0))]
         .iter()
         .map(|(x, y, f)| placement::tv_weight(DVec3::new(*x, *y, 0.5), DVec3::new(f.0, f.1, 0.0), cam))

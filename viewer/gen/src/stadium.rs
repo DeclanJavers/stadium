@@ -847,7 +847,7 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
         let limit = p.length / 2.0 + placement::BOARD_END_OFFSET - 0.4;
         for (k, (_, _, base)) in placement::carpet_spots(&p, width, 0.8).into_iter().enumerate() {
             let bk = ckeys[k % ckeys.len()].clone();
-            let h = placement::fit_carpet_height(cam, base, width, 1.1, limit);
+            let (base, h) = placement::place_carpet(cam, base, width, 1.1, &p, limit);
             let pc = p.clone();
             let (v, f, uv) = placement::carpet(cam, base, width, h, 32, 10, &move |x, y| pc.crown_z(x, y));
             let mut m = MeshAcc::new();
