@@ -6,6 +6,8 @@ they read correctly from the pitch.
 """
 import numpy as np
 
+from .prng import uniform
+
 FONT = {
     "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
     "B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
@@ -70,7 +72,6 @@ def text_bitmap(text):
 def base_colors(anchors, spec, tier_rows, seed=0):
     """anchors: list of dicts (tier, row, bay). Returns (N,3) sRGB."""
     n = len(anchors)
-    rng = np.random.default_rng(seed)
     pat = spec.get("pattern", "solid")
     tier = np.array([a["tier"] for a in anchors])
     row = np.array([a["row"] for a in anchors])
@@ -90,7 +91,8 @@ def base_colors(anchors, spec, tier_rows, seed=0):
         out = cols[0] * (1 - f) + cols[-1] * f
     elif pat == "random":
         w = np.array(spec.get("weights", [1] * len(cols)), float)
-        idx = rng.choice(len(cols), n, p=w / w.sum())
+        cum = np.cumsum(w / w.sum())
+        idx = [min(int(np.searchsorted(cum, uniform(seed, i), side="right")), len(cols) - 1) for i in range(n)]
         out = np.array(cols)[idx]
     else:
         raise ValueError(f"unknown seat pattern {pat!r}")
@@ -142,9 +144,10 @@ def apply_mosaic(colors, anchors, mosaic, run_length, tier_rows, image=None):
 
 
 def finish(colors, fade=0.0, variation=0.025, seed=0):
-    """Per-seat manufacturing/UV-fade variation; returns linear RGBA for the renderer."""
-    rng = np.random.default_rng(seed + 1)
-    c = colors * (1 + rng.normal(0, variation, (len(colors), 1)))
+    """Per-seat manufacturing/UV-fade variation; returns linear RGBA for the renderer.
+    The variation is uniform with the given standard deviation (portable, see prng.py)."""
+    k = np.array([(uniform(seed + 1, i) - 0.5) * 2 * 1.7320508 * variation for i in range(len(colors))])
+    c = colors * (1 + k[:, None])
     if fade:
         grey = c.mean(1, keepdims=True)
         c = c * (1 - 0.45 * fade) + (0.25 + 0.55 * grey) * 0.45 * fade + 0.08 * fade

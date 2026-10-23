@@ -147,8 +147,7 @@ def optimise_aims(fixtures, candidates, points, spot_deg, blend=0.9, iters=600, 
     fixtures = np.asarray(fixtures, float)
     C = np.stack([contribution(f, candidates, 1.0, spot_deg, blend, points) for f in fixtures])  # F, A, G
     F = len(fixtures)
-    rng = np.random.default_rng(seed)
-    a = rng.integers(0, len(candidates), F)
+    a = (np.arange(F) * 37 + seed) % len(candidates)     # deterministic, portable start
     E = C[np.arange(F), a].sum(0)
     for _ in range(iters):
         g = int(np.argmin(E))

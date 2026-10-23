@@ -225,13 +225,13 @@ def grid(nx, ny, sx, sy, z_fn=None):
 
 
 def smooth_noise_1d(t, seed=0, octaves=3, base_freq=0.15):
-    """Deterministic smooth 1D noise in [-1, 1] (sum of random-phase sines)."""
-    rng = np.random.default_rng(seed)
+    """Deterministic smooth 1D noise in [-1, 1] (sum of random-phase sines; portable PRNG)."""
+    from ..stands.prng import uniform
     out = np.zeros_like(np.asarray(t, float))
     amp, total = 1.0, 0.0
     for o in range(octaves):
-        f = base_freq * (2.1 ** o) * rng.uniform(0.8, 1.2)
-        out += amp * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi))
+        f = base_freq * (2.1 ** o) * (0.8 + 0.4 * uniform(seed, 2 * o))
+        out += amp * np.sin(2 * np.pi * f * t + 2 * np.pi * uniform(seed, 2 * o + 1))
         total += amp
         amp *= 0.5
     return out / total
