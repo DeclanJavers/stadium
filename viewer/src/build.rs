@@ -143,11 +143,12 @@ impl<'a> Builder<'a> {
                 let Some(Tex::Net(spec)) = &mat.texture else { unreachable!() };
                 let lm = self.lib.material("TINT_net_card").cloned().unwrap_or_else(|| plain("TINT_net_card", Vec3::ONE, 0.7));
                 let mut m = self.copy_lib(&lm);
-                let (img, scale) = crate::net::texture(spec);
+                let (img, scale, rn) = crate::net::texture(spec);
                 let i = self.image(img);
                 m.base_tex = Some(TexRef { image: i, repeat: true, xform: TexXform { offset: Vec2::ZERO, scale: Vec2::new(scale[0], scale[1]), rotation: 0.0 } });
                 m.base_color = Vec4::ONE;
                 m.alpha = Alpha::Mask;
+                m.cutoff = -rn; // negative: alpha is a distance field (net.rs)
                 return m;
             }
             key => match self.lib.material(key) {

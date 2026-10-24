@@ -55,7 +55,11 @@ impl Camera {
         match name {
             "aerial" => Camera::look(Vec3::new(-r * 0.75, r * 0.7, r * 0.95), Vec3::new(0.0, 0.0, 0.0), 40.0),
             "pitch" => Camera::look(Vec3::new(-28.0, 1.7, 18.0), Vec3::new(30.0, 4.0, -10.0), 60.0),
-            "goal" => Camera::look(Vec3::new(-80.0, 14.0, 6.0), Vec3::new(0.0, 0.0, 0.0), 50.0),
+            // behind the west goal, between the net and the end boards, looking down the pitch
+            "goal" => {
+                let gx = scene.pitch.as_ref().map(|p| p.half.x).unwrap_or(52.5);
+                Camera::look(Vec3::new(-(gx + 3.0), 4.5, 7.0), Vec3::new(0.0, 0.0, 0.0), 60.0)
+            }
             "grass" => Camera::look(Vec3::new(-8.0, 1.6, 6.0), Vec3::new(10.0, 0.0, -4.0), 55.0),
             // standing in the east penalty area, looking at the goal and its net
             "goalmouth" => {
@@ -101,7 +105,7 @@ fn globals(scene: &glb::Scene, cam: &Camera, size: (u32, u32), night: bool, r: &
     } else {
         // ground: the bounce from the bowl floor (sunlit and shaded turf, track, concrete): a
         // green-grey light on the undersides of roofs and the shaded tiers
-        (4.5, Vec3::new(0.12, 0.23, 0.50), Vec3::new(0.40, 0.45, 0.52), Vec3::new(0.15, 0.19, 0.10))
+        (4.5, Vec3::new(0.12, 0.23, 0.50), Vec3::new(0.40, 0.45, 0.52), Vec3::new(0.27, 0.28, 0.22))
     };
     let grass = scene.pitch.as_ref();
     Globals {
@@ -150,7 +154,7 @@ fn args() -> Args {
             Some((w.parse().ok()?, h.parse().ok()?))
         })
         .unwrap_or((1600, 900));
-    let flag_values = ["--camera", "--screenshot", "--size", "--max-lights", "--select"];
+    let flag_values = ["--camera", "--screenshot", "--size", "--max-lights", "--select", "--eye", "--target", "--fov"];
     let positional = a.iter().enumerate().find(|(i, x)| !x.starts_with("--") && !(*i > 0 && flag_values.contains(&a[i - 1].as_str()))).map(|(_, x)| PathBuf::from(x));
     let path = positional.unwrap_or_else(|| repo_root(&std::env::current_dir().unwrap()).map(|r| r.join("layouts/premier.json")).unwrap_or_else(|| PathBuf::from("layouts/premier.json")));
     Args { path, night: a.iter().any(|x| x == "--night"), camera: get("--camera").unwrap_or_else(|| "broadcast".into()), screenshot: get("--screenshot").map(PathBuf::from), size }
@@ -258,7 +262,16 @@ fn screenshot(a: &Args, scene: &glb::Scene, mut overlay: Option<Overlay>) {
         view_formats: &[],
     });
     let view = out.create_view(&Default::default());
-    let cam = Camera::preset(&a.camera, scene);
+    // --eye x,y,z --target x,y,z [--fov deg]: a free camera in kit coordinates (metres, Z up)
+    let vec3 = |k: &str| argv.iter().position(|x| x == k).and_then(|i| argv.get(i + 1)).and_then(|s| {
+        let v: Vec<f32> = s.split(',').filter_map(|t| t.trim().parse().ok()).collect();
+        (v.len() == 3).then(|| Vec3::new(v[0], v[2], -v[1]))
+    });
+    let fov = argv.iter().position(|x| x == "--fov").and_then(|i| argv.get(i + 1)).and_then(|s| s.parse().ok()).unwrap_or(55.0);
+    let cam = match (vec3("--eye"), vec3("--target")) {
+        (Some(e), Some(t)) => Camera::look(e, t, fov),
+        _ => Camera::preset(&a.camera, scene),
+    };
     let g = globals(scene, &cam, (w, h), a.night, &r, 0.0);
     let (near, far) = r.update_lods(&queue, cam.eye(), LOD_NEAR);
     let frame = |r: &Renderer| {
@@ -991,15 +1004,16 @@ mod editor_tests {
     fn net_textures_follow_the_options() {
         use stadium_gen::stadium::NetSpec;
         let spec = |mesh: &str, pattern: &str| NetSpec { mesh: mesh.into(), mesh_size_mm: 120, cord_tenths_mm: 40, pattern: pattern.into(), band_cells: 3, colors: vec![[247, 247, 245], [200, 16, 46]] };
-        let (hex, s) = net::texture(&spec("hex", "solid"));
+        let (hex, s, rn) = net::texture(&spec("hex", "solid"));
         assert!((s[0] - 1.0).abs() < 1e-5 && (s[1] - 1.0).abs() < 1e-5, "the default net keeps the library UVs: {s:?}");
+        // alpha is the distance to the nearest cord; cords are where it is under rn
         let alpha: Vec<u8> = hex.rgba.chunks(4).map(|p| p[3]).collect();
-        let open = alpha.iter().filter(|a| **a == 0).count() as f32 / alpha.len() as f32;
+        let open = alpha.iter().filter(|a| **a as f32 / 255.0 > rn).count() as f32 / alpha.len() as f32;
         assert!((0.6..0.97).contains(&open), "mostly holes between cords: {open}");
-        let (sq, s2) = net::texture(&spec("square", "checker"));
+        let (sq, s2, _) = net::texture(&spec("square", "checker"));
         assert!(s2[1] < 1.0 && sq.width > hex.width, "a checker tile spans several cells");
-        let reds = sq.rgba.chunks(4).filter(|p| p[3] > 0 && p[0] == 200).count();
-        let whites = sq.rgba.chunks(4).filter(|p| p[3] > 0 && p[0] == 247).count();
+        let reds = sq.rgba.chunks(4).filter(|p| p[0] == 200).count();
+        let whites = sq.rgba.chunks(4).filter(|p| p[0] == 247).count();
         assert!(reds > 0 && whites > 0);
     }
 }

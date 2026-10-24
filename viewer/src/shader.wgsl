@@ -61,10 +61,16 @@ struct Lights { items: array<Light, 512> };
 // so the solid structure itself does not darken its own faces
 fn sky_visibility(p: vec3<f32>, n: vec3<f32>) -> f32 {
     if (g.sky_origin.w <= 0.0) { return 1.0; }
-    let q = p + n * g.sky_origin.w * 0.9;
-    let uvw = (q - g.sky_origin.xyz) / g.sky_size.xyz;
-    if (any(uvw < vec3<f32>(0.0)) || any(uvw > vec3<f32>(1.0))) { return 1.0; }
-    return textureSampleLevel(sky_vol, g_samp, uvw, 0.0).r;
+    // two samples out along the normal: next to a thin solid object (a screen case, a board) the
+    // nearer one blends in cells inside the object and reads as fully occluded
+    var vis = 0.0;
+    for (var k = 1; k <= 2; k++) {
+        let q = p + n * g.sky_origin.w * 0.9 * f32(k);
+        let uvw = (q - g.sky_origin.xyz) / g.sky_size.xyz;
+        if (any(uvw < vec3<f32>(0.0)) || any(uvw > vec3<f32>(1.0))) { return 1.0; }
+        vis = max(vis, textureSampleLevel(sky_vol, g_samp, uvw, 0.0).r);
+    }
+    return vis;
 }
 
 // ambient-cube lookup: irradiance on a surface with normal n at world position p
@@ -367,7 +373,9 @@ fn grass_surface(world: vec3<f32>, view_dir: vec3<f32>, fp: f32, baked: vec3<f32
     albedo *= mix(1.0, ao, 1.0 - soil);
     var out: Grass;
     out.albedo = albedo;
-    out.rough = mix(mix(0.82, 0.62, wet), mix(0.9, 0.35, wet), soil);
+    // wet soil is satin, not a mirror: only scattered puddles in the churned mud get glossy
+    let puddle = smoothstep(0.62, 0.85, aa_noise(p + 3.0, 2.3, fp));
+    out.rough = mix(mix(0.82, 0.62, wet), mix(0.9, mix(0.78, 0.55, puddle), wet), soil);
     out.soil = soil;
     out.gaps = gaps;
     return out;
@@ -389,6 +397,23 @@ fn shade(i: VOut) -> vec4<f32> {
     var base = m.base_color;
     if (i.icolor.w > 0.5 && i.icolor.w < 1.5 && m.flags2.w > 0.5) { base = vec4<f32>(i.icolor.rgb, 1.0); }
     base *= mix(vec4<f32>(1.0), tb, m.flags.x);
+    if (m.params.z < 0.0) {
+        // goal net: alpha is the distance to the nearest cord (net.rs). Draw the cord at its true
+        // width, at least a pixel wide with its alpha scaled down to match, and fade to the mean
+        // coverage (2 rn) once a pixel spans a fair part of a cell
+        // (the pixel footprint comes from the uv derivatives: d's own derivatives flip sign across a
+        // cord and would make the width depend on how cords fall on 2x2 pixel quads)
+        let rn = -m.params.z;
+        let d = tb.a;
+        let tuv = xform(i.uv, m.xf_base, m.rot.x) * vec2<f32>(textureDimensions(t_base));
+        let texels = max(length(dpdx(tuv)), length(dpdy(tuv)));
+        let w = max(texels / 48.0, 1e-4);             // d spans half a cell = 48 texels
+        let eff = max(rn, 0.5 * w);
+        var cov = clamp((eff - d) / w + 0.5, 0.0, 1.0) * (rn / eff);
+        let cells = texels / 96.0;
+        cov = mix(cov, min(2.0 * rn, 1.0), smoothstep(0.2, 0.5, cells));
+        base.a = m.base_color.a * cov;
+    }
     let alpha_mode = m.flags2.x;
     let metallic = m.params.x * mix(1.0, tmr.b, m.flags.y);
     var rough = m.params.y * mix(1.0, tmr.g, m.flags.y);
@@ -419,7 +444,7 @@ fn shade(i: VOut) -> vec4<f32> {
             rough = gs.rough;
             canopy = 1.0 - gs.soil;
             gaps = gs.gaps;
-            spec = mix(0.25, 1.0, gs.soil);
+            spec = mix(0.25, 0.45, gs.soil);
         } else {
             // line paint sprayed onto blades: grass texture shows through, ragged coverage
             let p = vec2<f32>(i.world.x, -i.world.z);
@@ -433,7 +458,9 @@ fn shade(i: VOut) -> vec4<f32> {
         let pj = vec2<f32>(i.world.x, -i.world.z);
         let jx = aa_noise(pj, 23.0, fp) - 0.5;
         let jz = aa_noise(pj + 11.0, 23.0, fp) - 0.5;
-        n = normalize(n + vec3<f32>(jx, 0.0, jz) * 0.35 * canopy);
+        // (bare soil: clods and studs marks break the highlight up the same way)
+        let jitter = select(0.35 * canopy, 0.35 * canopy + 0.3 * (1.0 - canopy), grass);
+        n = normalize(n + vec3<f32>(jx, 0.0, jz) * jitter);
     }
     let diffuse = albedo * (1.0 - metallic);
     let f0 = mix(vec3<f32>(0.04), albedo, metallic);
@@ -562,7 +589,10 @@ fn vs_shadow(v: VIn) -> SOut {
 @fragment
 fn fs_shadow(i: SOut) {
     let a = m.base_color.a * mix(1.0, textureSample(t_base, s_base, xform(i.uv, m.xf_base, m.rot.x)).a, m.flags.x);
-    if (m.flags2.x > 0.5 && a < max(m.params.z, 0.35)) { discard; }
+    if (m.params.z < 0.0) {
+        // goal net distance field: cords only
+        if (a > -m.params.z) { discard; }
+    } else if (m.flags2.x > 0.5 && a < max(m.params.z, 0.35)) { discard; }
 }
 
 // editor selection overlay, drawn through everything (no depth test), additively faint

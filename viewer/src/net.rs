@@ -1,6 +1,8 @@
 //! Goal net card textures, generated at runtime (port of goal._pattern_image with colours):
-//! the cord pattern (hex or square cells, cord thickness) as an alpha mask, coloured solid, in
-//! bands, or as a checker. The library's card has UVs in metres divided by one repeat of the
+//! the cord pattern (hex or square cells, cord thickness) coloured solid, in bands, or as a
+//! checker. Alpha holds the distance to the nearest cord (0..half a cell), not coverage: the
+//! shader draws anti-aliased cords of the right width from it at any distance and fades them to
+//! their mean coverage once a pixel spans a cell, so mip levels can't eat holes in the net. The library's card has UVs in metres divided by one repeat of the
 //! default net (hex, 120 mm); `uv_scale` maps those UVs onto this texture's tile.
 
 use crate::glb::Image;
@@ -10,7 +12,7 @@ use std::sync::{Arc, Mutex};
 /// The library card's pattern repeat (goal.py defaults: hex mesh, 0.12 m cells).
 const LIB_W: f64 = 0.12;
 const LIB_H: f64 = 0.12 * 1.732_050_807_568_877_2;
-const PX_PER_REPEAT: f64 = 96.0;
+const PX_PER_REPEAT: f64 = 96.0; // shader.wgsl's net fade-out assumes the same
 
 type Seg = ([f64; 2], [f64; 2]);
 
@@ -63,11 +65,11 @@ fn seg_dist(p: [f64; 2], s: &Seg) -> f64 {
     (d[0] * d[0] + d[1] * d[1]).sqrt()
 }
 
-/// (texture, uv scale for the library card's UVs)
-pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2]) {
-    static CACHE: Mutex<Vec<(NetSpec, Arc<Image>, [f32; 2])>> = Mutex::new(Vec::new());
+/// (texture, uv scale for the library card's UVs, cord radius as a fraction of the distance range)
+pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2], f32) {
+    static CACHE: Mutex<Vec<(NetSpec, Arc<Image>, [f32; 2], f32)>> = Mutex::new(Vec::new());
     if let Some(c) = CACHE.lock().unwrap().iter().find(|c| c.0 == *spec) {
-        return (c.1.clone(), c.2);
+        return (c.1.clone(), c.2, c.3);
     }
     let size = (spec.mesh_size_mm.max(20) as f64) / 1000.0;
     let hex = spec.mesh != "square";
@@ -81,7 +83,7 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2]) {
     let (w, h) = ((nu as f64 * PX_PER_REPEAT) as u32, (nv as f64 * PX_PER_REPEAT * h_rep / w_rep).round() as u32);
     let segs = if hex { hex_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size) } else { square_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size) };
     let r = spec.cord_tenths_mm as f64 / 20000.0 * 1.6; // radius, a touch thicker so it holds up at distance
-    let px_m = tw / w as f64;
+    let range = 0.5 * size;
     let colors: Vec<[u8; 3]> = if spec.colors.is_empty() { vec![[247, 247, 245]] } else { spec.colors.clone() };
     let mut rgba = vec![0u8; (w * h * 4) as usize];
     for row in 0..h {
@@ -90,7 +92,7 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2]) {
         for col in 0..w {
             let x = (col as f64 + 0.5) / w as f64 * tw;
             let d = segs.iter().map(|s| seg_dist([x, y], s)).fold(f64::MAX, f64::min);
-            let alpha = ((r - d) / (0.5 * px_m) + 0.5).clamp(0.0, 1.0);
+            let alpha = (d / range).clamp(0.0, 1.0);
             let band_v = ((y / (th / 2.0)).floor() as i64).rem_euclid(2) as usize;
             let band_u = ((x / (tw / 2.0)).floor() as i64).rem_euclid(2) as usize;
             let idx = match spec.pattern.as_str() {
@@ -105,6 +107,7 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2]) {
     }
     let img = Arc::new(Image::new(w, h, rgba));
     let scale = [(LIB_W / tw) as f32, (LIB_H / th) as f32];
-    CACHE.lock().unwrap().push((spec.clone(), img.clone(), scale));
-    (img, scale)
+    let rn = (r / range) as f32;
+    CACHE.lock().unwrap().push((spec.clone(), img.clone(), scale, rn));
+    (img, scale, rn)
 }
