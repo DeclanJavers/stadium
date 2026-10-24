@@ -92,6 +92,24 @@ def perimeter_runs(A, B, sides, corners, corner_radius):
     return runs
 
 
+def max_corner_radius(A, B, half_length, half_width, margin=2.0):
+    """Largest corner radius for a bowl whose front line is the A x B rectangle: each corner arc
+    must stay `margin` metres outside the corner of the field of play, and the straight sides must
+    keep some length."""
+    def ok(R):
+        cx, cy = A - R, B - R
+        if half_length <= cx or half_width <= cy:
+            return True                      # the field corner is not inside the arc's quadrant
+        return math.hypot(half_length - cx, half_width - cy) <= R - margin
+    lo, hi = 0.0, min(A, B) - 1.0
+    if ok(hi):
+        return hi
+    for _ in range(50):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if ok(mid) else (lo, mid)
+    return lo
+
+
 def bays(run, s_mid):
     width = (run.t1 - run.t0) * run.metric(s_mid)
     n = max(1, int(round(width / BAY_TARGET)))

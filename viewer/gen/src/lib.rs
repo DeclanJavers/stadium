@@ -15,6 +15,7 @@ pub mod prng;
 pub mod py;
 pub mod roofs;
 pub mod runs;
+pub mod sanitize;
 pub mod sightlines;
 pub mod stadium;
 pub mod stands;

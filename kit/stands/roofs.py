@@ -170,11 +170,15 @@ def build(run, roof, bay_list, include_ends=True):
         for i in range(len(ts) - 1):
             tubes.append((np.array([_world(run, ts[i], s_g, z_g + (dg if i % 2 else 0)),
                                     _world(run, ts[i + 1], s_g, z_g + (0 if i % 2 else dg))]), r * 0.6))
+        # posts count bays from the run's start; a run without its ends (a bowl's corner arc) leaves
+        # the ends to its neighbours, which already have a post there
+        first = 0 if include_ends else 1
+        r_post = 0.16 + z_g / 150.0
         for k, t in enumerate(bounds):
             tubes.append((np.array([_world(run, t, s_g, z_g + dg), _world(run, t, s_b, z_top_back)]), 0.12))
-            if k % p["post_every"] == 0 or t == bounds[-1]:
+            if (k + first) % max(1, p["post_every"]) == 0 or (include_ends and t == bounds[-1]):
                 tubes.append((np.array([_world(run, t, roof["s_post"], 0.0), _world(run, t, roof["s_post"], z_g)]),
-                              0.16))
+                              r_post))
         _deck(acc, run, roof, s_g - 0.3, s_b + 0.3, z_of, None, p["translucent"])
         if p["clad_girder"]:
             poly = np.array([(s_g - 0.35, z_g - 0.05), (s_g + 0.25, z_g - 0.05), (s_g + 0.25, z_g + dg + 0.25),
@@ -195,5 +199,5 @@ def build(run, roof, bay_list, include_ends=True):
         tail_s, tail_top = roof["s_back"] + roof["back_span"], _top_z(roof, roof["s_back"] + roof["back_span"]) + 0.3
     else:
         tail_s, tail_top = roof["s_back"] + 0.3, roof["z_back"] + 0.7
-    return {"mesh": acc.arrays(), "tubes": tubes, "sockets": sockets, "edge_line": edge_line,
+    return {"mesh": acc.arrays(), "tubes": tubes, "sockets": sockets, "edge_line": edge_line, "edge_top": z_edge_hi,
             "tail_s": tail_s, "tail_top": tail_top}

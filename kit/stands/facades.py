@@ -21,6 +21,8 @@ from .geometry import MeshAcc, _world, section_hull, stand_depth
 
 TAG_MAIN, TAG_ACCENT, TAG_DARK, TAG_TRIM, TAG_ETFE, TAG_CORE = range(6)
 LEVEL = 4.5
+DOOR_CLEAR, DOOR_TOP = 9.6, 3.55   # entrances: the cladding is cut this wide up to above the canopy
+ETFE_BASE = 4.0                    # ETFE cushions start above a glazed ground floor this tall
 
 DEFAULTS = {"type": "concrete_frame", "offset": 0.6, "cores_every": 4, "entrance_every": 2}
 
@@ -40,6 +42,22 @@ def _rect(s0, s1, z0, z1):
 
 def _prism(acc, run, ta, tb, s0, s1, z0, z1, tag, cap=None):
     acc.add_prism(run, ta, tb, (_rect(s0, s1, z0, z1), [tag] * 4), cap_tag=tag if cap is None else cap)
+
+
+def _split(t0, t1, doors):
+    """[t0, t1] cut at the door intervals: (ta, tb, inside a door)."""
+    out, t = [], t0
+    for a, b in doors:
+        a, b = max(a, t0), min(b, t1)
+        if b <= a or a < t:
+            continue
+        if a > t:
+            out.append((t, a, False))
+        out.append((a, b, True))
+        t = b
+    if t < t1:
+        out.append((t, t1, False))
+    return out
 
 
 def _repeat(run, s, spacing, t0, t1, offset=0.5):
@@ -63,9 +81,16 @@ def build(run, tiers, bay_list, spec, roof_info, ends=(False, False)):
         return 0.5 * width / run.metric(s)
 
     backing = TAG_DARK if kind in ("concrete_frame", "fins", "glass", "etfe") else TAG_MAIN
-    _prism(acc, run, t0, t1, sw, sw + 0.3, 0.0, H, backing)
+    # the inner face (seen from the back rows, under the roof) is the concourse's concrete wall
+    acc.add_prism(run, t0, t1, (_rect(sw, sw + 0.3, 0.0, H), [backing] * 3 + [TAG_CORE]), cap_tag=backing)
     _prism(acc, run, t0, t1, sw - 0.1, sw + 0.5, H - 0.6, H + 0.3, TAG_TRIM)   # coping
     out_s = sw + 0.3
+    # entrances: the cladding stops above the door canopy there
+    doors = [(0.5 * (ta + tb) - hw(DOOR_CLEAR, out_s), 0.5 * (ta + tb) + hw(DOOR_CLEAR, out_s))
+             for b, (ta, tb) in enumerate(bay_list) if b % spec["entrance_every"] == 0]
+
+    def at_door(t):
+        return any(a < t < b for a, b in doors)
 
     if kind == "concrete_frame":
         for ta, _ in bay_list + [(bay_list[-1][1], None)]:
@@ -93,22 +118,36 @@ def build(run, tiers, bay_list, spec, roof_info, ends=(False, False)):
         z, k = 0.6, 0
         while z < H - 0.7:
             h = min(1.2, H - 0.7 - z)
-            _prism(acc, run, t0, t1, sw + 0.3, sw + 0.42, z + 0.03, z + h - 0.03, TAG_MAIN if k % 2 == 0 else TAG_ACCENT)
+            for ta, tb, door in _split(t0, t1, doors):
+                lo = max(z + 0.03, DOOR_TOP) if door else z + 0.03
+                if lo < z + h - 0.03:
+                    _prism(acc, run, ta, tb, sw + 0.3, sw + 0.42, lo, z + h - 0.03,
+                           TAG_MAIN if k % 2 == 0 else TAG_ACCENT)
             z += h
             k += 1
     elif kind == "glass":
-        _prism(acc, run, t0, t1, sw + 0.3, sw + 0.34, 0.0, H - 0.6, TAG_DARK)
+        for ta, tb, door in _split(t0, t1, doors):
+            _prism(acc, run, ta, tb, sw + 0.3, sw + 0.34, DOOR_TOP if door else 0.0, H - 0.6, TAG_DARK)
         ts, _ = _repeat(run, out_s, 1.6, t0, t1, 0.0)
         for t in ts + [t1]:
-            _prism(acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.5, 0.0, H - 0.6, TAG_TRIM)
+            _prism(acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.5,
+                   DOOR_TOP if at_door(t) else 0.0, H - 0.6, TAG_TRIM)
         for z in np.arange(3.6, H - 0.6, 3.6):
             _prism(acc, run, t0, t1, sw + 0.3, sw + 0.48, z - 0.06, z + 0.06, TAG_TRIM)
     elif kind == "fins":
         ts, _ = _repeat(run, out_s, spec.get("fin_spacing", 1.1), t0, t1)
         for t in ts:
-            _prism(acc, run, t - hw(0.07, out_s), t + hw(0.07, out_s), sw + 0.35, sw + 1.35, 0.5, H - 0.3, TAG_MAIN)
+            _prism(acc, run, t - hw(0.07, out_s), t + hw(0.07, out_s), sw + 0.35, sw + 1.35,
+                   DOOR_TOP if at_door(t) else 0.5, H - 0.3, TAG_MAIN)
     elif kind == "etfe":
-        _etfe(acc, tubes, run, sw + 1.2, H, spec)
+        # cushions above a glazed ground floor (mullions, and a fascia closing the cushion line)
+        _etfe(acc, tubes, run, sw + 1.2, H, spec, ETFE_BASE)
+        ts, _ = _repeat(run, out_s, 1.6, t0, t1)
+        for t in ts:
+            if not at_door(t):
+                _prism(acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.45, 0.0, ETFE_BASE - 0.4,
+                       TAG_TRIM)
+        _prism(acc, run, t0, t1, sw + 0.3, sw + 1.3, ETFE_BASE - 0.4, ETFE_BASE, TAG_TRIM)
     else:
         raise ValueError(f"unknown facade type {kind!r}")
 
@@ -118,6 +157,11 @@ def build(run, tiers, bay_list, spec, roof_info, ends=(False, False)):
         if b % spec["entrance_every"] == 0:
             _prism(acc, run, tm - hw(4.2, out_s), tm + hw(4.2, out_s), sw + 0.3, sw + 0.36, 0.0, 3.2, TAG_DARK)
             _prism(acc, run, tm - hw(4.8, out_s), tm + hw(4.8, out_s), sw + 0.3, sw + 1.4, 3.2, 3.55, TAG_TRIM)
+            # door jambs and two mullions, so the opening reads as doors and not as more glazing
+            for dx in (-4.3, -1.4, 1.4, 4.3):
+                tc = tm + dx / run.metric(out_s)
+                wd = 0.25 if abs(dx) > 4.0 else 0.1
+                _prism(acc, run, tc - hw(wd, out_s), tc + hw(wd, out_s), sw + 0.3, sw + 0.55, 0.0, 3.2, TAG_TRIM)
         if spec["cores_every"] and b % spec["cores_every"] == spec["cores_every"] // 2 and H > 9:
             _core(acc, run, tm, sw, H, hw)
         p, n = run.frame(tm)
@@ -161,7 +205,7 @@ def _gable(acc, run, tiers, sw, H, at_start, kind):
     acc.add_prism(run, ta, tb, (poly, [tag] * len(poly)), cap_tag=tag)
 
 
-def _etfe(acc, tubes, run, s, H, spec):
+def _etfe(acc, tubes, run, s, H, spec, z0):
     """Diamond cushions, bulging outward, on a white frame."""
     wd, hd = spec.get("cushion", (4.0, 4.0))
     bulge = spec.get("bulge", 0.35)
@@ -169,8 +213,7 @@ def _etfe(acc, tubes, run, s, H, spec):
     length = (run.t1 - run.t0) * m
     n_u = max(1, int(round(length / wd)))
     wd = length / n_u
-    n_z = max(1, int((H - 1.0) / hd))
-    z0 = 0.5
+    n_z = max(1, int((H - z0 - 0.5) / hd))
     k = 5
     grid = np.linspace(0, 1, k + 1)
     A, B = np.meshgrid(grid, grid, indexing="ij")

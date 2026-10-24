@@ -25,6 +25,15 @@ from .facade import brick
 from .stand import _tubes_mesh, concrete, painted
 
 FRONT_FROM_TOUCHLINE = 4.3
+
+
+def front_from_touchline(pitch, stands=None):
+    """Dugout fronts sit 4.3 m behind the touchline, closer (not under 1.5 m) when the main stand's
+    front is near, so the dugout and its roof never run into the stand."""
+    if stands and "south" in (stands.get("runs") or {}):
+        room = stands["B"] - pitch["width"] / 2 - DEPTH - 0.65
+        return max(1.5, min(FRONT_FROM_TOUCHLINE, room))
+    return FRONT_FROM_TOUCHLINE
 DEPTH = 2.5
 GAP = 6.0          # between the two dugouts: fourth official and the tunnel
 
@@ -144,13 +153,13 @@ def _seats(p, col, parent, origin, flip):
             o.matrix_world = origin @ Matrix.Translation(local)
 
 
-def technical_areas(pitch, xs, Lx, col, parent):
+def technical_areas(pitch, xs, Lx, col, parent, front=FRONT_FROM_TOUCHLINE):
     """Dashed technical-area lines: 1 m beyond the seats each side, to 1 m from the touchline."""
     from .pitch import crown_fn
     zf = crown_fn(pitch)
     W = pitch["width"]
     y_front = -(W / 2 + 1.0)
-    y_back = -(W / 2 + FRONT_FROM_TOUCHLINE)
+    y_back = -(W / 2 + front)
     paint = bpy.data.materials.get("TINT_Pitch_Paint")
     vs, fs, uvs, off = [], [], [], 0
     for xc in xs:
@@ -176,7 +185,7 @@ def technical_areas(pitch, xs, Lx, col, parent):
                     materials=[paint] if paint else (), uvs=np.concatenate(uvs))
 
 
-def build(cfg, pitch, night=False, col=None):
+def build(cfg, pitch, night=False, col=None, stands=None):
     if not cfg:
         return None
     p = resolve(cfg)
@@ -187,7 +196,8 @@ def build(cfg, pitch, night=False, col=None):
     model = _model(p, col, "DugoutModel")
     model.hide_render = model.hide_viewport = True
     model["template"] = True
-    y = -(pitch["width"] / 2 + FRONT_FROM_TOUCHLINE)
+    front = front_from_touchline(pitch, stands)
+    y = -(pitch["width"] / 2 + front)
     xs = (-(GAP / 2 + Lx / 2), GAP / 2 + Lx / 2)
     for side, x in zip(("home", "away"), xs):
         o = link(bpy.data.objects.new(f"Dugout_{side}", model.data), col, root)
@@ -195,5 +205,5 @@ def build(cfg, pitch, night=False, col=None):
         o.matrix_world = origin
         _seats(p, col, root, origin, False)
         socket("dugout", side, (x, y, 0.0), 0.0, parent=root, col=col, seats=p["seats"], length=round(Lx, 2))
-    technical_areas(pitch, xs, Lx, col, root)
+    technical_areas(pitch, xs, Lx, col, root, front)
     return {"root": root, "length": Lx, "xs": xs}

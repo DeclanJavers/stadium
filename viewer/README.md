@@ -43,6 +43,9 @@ exposure.
   shows how many rows the tier has. The Blender pipeline reads the same files.
 - **Nets**: pattern (solid, bands, checker), two colours, band width, hex or square mesh, mesh
   size and cord thickness. The game's net card texture is regenerated from these.
+- **Any configuration builds**: unknown ids and bad colours in a hand-edited file fall back to a
+  default, and awkward combinations (low roofs, tight bowls, tall goalpost roofs, end boards that
+  don't fit) are adjusted; each case shows up in the warnings (docs/SPECS.md, Robustness).
 
 ## How the editor builds a stadium
 
@@ -78,8 +81,12 @@ material was baked with (`base_hex`).
   opposition hotspot, light through the blades, a faint waxy sheen instead of a specular sheet, and
   within ~15 m a parallax ray march through the blade layer. Line paint lets the grass show through.
 - Depth pre-pass, then shading with depth EQUAL and no `discard`, so every pixel is shaded once.
-- Alpha-tested textures get coverage-preserving mipmaps; net cards are blended, so cords fade to
-  faint lines with distance instead of breaking up or vanishing.
+- Alpha-tested textures get coverage-preserving mipmaps. Goal net cards store the distance to the
+  nearest cord instead of coverage: the shader draws each cord anti-aliased at its true width (at
+  least a pixel wide, with its alpha scaled to match) and fades to the mean coverage once a pixel
+  spans a cell, so the net reads evenly at every distance.
+- Sky visibility is read twice along the normal and the clearer sample kept, so thin solid objects
+  (screen cases, board backs) don't pick up the occlusion of cells inside them.
 - Seats: every frame each instance is assigned the fine mesh (< 45 m) or its coarse mesh; shadows
   always use the coarse mesh. Only the seat shell takes the per-seat colour.
 - Floodlights at night: a compute shader bakes all spots into an irradiance volume (an "ambient

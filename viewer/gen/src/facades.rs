@@ -17,6 +17,11 @@ pub const TAG_TRIM: i32 = 3;
 pub const TAG_ETFE: i32 = 4;
 pub const TAG_CORE: i32 = 5;
 pub const LEVEL: f64 = 4.5;
+/// Entrance openings: the cladding is cut this wide (m) up to DOOR_TOP (above the door canopy).
+pub const DOOR_CLEAR: f64 = 9.6;
+pub const DOOR_TOP: f64 = 3.55;
+/// ETFE cushions start above a glazed ground floor this tall.
+pub const ETFE_BASE: f64 = 4.0;
 
 #[derive(Clone, Copy, Debug)]
 pub struct RoofInfo {
@@ -41,6 +46,27 @@ fn rect(s0: f64, s1: f64, z0: f64, z1: f64) -> Vec<DVec2> {
 #[allow(clippy::too_many_arguments)]
 fn prism(acc: &mut MeshAcc, run: &Run, ta: f64, tb: f64, s0: f64, s1: f64, z0: f64, z1: f64, tag: i32) {
     acc.add_prism(run, ta, tb, &Section::uniform(rect(s0, s1, z0, z1), tag), tag);
+}
+
+/// [t0, t1] cut at the door intervals: (ta, tb, inside a door).
+fn split(t0: f64, t1: f64, doors: &[(f64, f64)]) -> Vec<(f64, f64, bool)> {
+    let mut out = Vec::new();
+    let mut t = t0;
+    for &(a, b) in doors {
+        let (a, b) = (a.max(t0), b.min(t1));
+        if b <= a || a < t {
+            continue;
+        }
+        if a > t {
+            out.push((t, a, false));
+        }
+        out.push((a, b, true));
+        t = b;
+    }
+    if t < t1 {
+        out.push((t, t1, false));
+    }
+    out
 }
 
 fn repeat(run: &Run, s: f64, spacing: f64, t0: f64, t1: f64, offset: f64) -> Vec<f64> {
@@ -72,9 +98,18 @@ pub fn build(run: &Run, tiers: &[Tier], bay_list: &[(f64, f64)], spec: &Value, r
     let levels = arange(LEVEL, h - 1.0, LEVEL);
     let hw = |width: f64, s: f64| 0.5 * width / run.metric(s);
     let backing = if matches!(kind, "concrete_frame" | "fins" | "glass" | "etfe") { TAG_DARK } else { TAG_MAIN };
-    prism(&mut acc, run, t0, t1, sw, sw + 0.3, 0.0, h, backing);
+    // the inner face (seen from the back rows, under the roof) is the concourse's concrete wall
+    acc.add_prism(run, t0, t1, &Section::new(rect(sw, sw + 0.3, 0.0, h), vec![backing, backing, backing, TAG_CORE]), backing);
     prism(&mut acc, run, t0, t1, sw - 0.1, sw + 0.5, h - 0.6, h + 0.3, TAG_TRIM);
     let out_s = sw + 0.3;
+    // entrances: the cladding stops above the door canopy there
+    let doors: Vec<(f64, f64)> = bay_list
+        .iter()
+        .enumerate()
+        .filter(|(b, _)| b % entrance_every == 0)
+        .map(|(_, &(ta, tb))| (0.5 * (ta + tb) - hw(DOOR_CLEAR, out_s), 0.5 * (ta + tb) + hw(DOOR_CLEAR, out_s)))
+        .collect();
+    let at_door = |t: f64| doors.iter().any(|&(a, b)| t > a && t < b);
     match kind {
         "concrete_frame" => {
             let mut cols: Vec<f64> = bay_list.iter().map(|b| b.0).collect();
@@ -110,17 +145,26 @@ pub fn build(run: &Run, tiers: &[Tier], bay_list: &[(f64, f64)], spec: &Value, r
             let (mut z, mut k) = (0.6, 0);
             while z < h - 0.7 {
                 let hh = 1.2f64.min(h - 0.7 - z);
-                prism(&mut acc, run, t0, t1, sw + 0.3, sw + 0.42, z + 0.03, z + hh - 0.03, if k % 2 == 0 { TAG_MAIN } else { TAG_ACCENT });
+                let tag = if k % 2 == 0 { TAG_MAIN } else { TAG_ACCENT };
+                for (ta, tb, door) in split(t0, t1, &doors) {
+                    let lo = if door { (z + 0.03).max(DOOR_TOP) } else { z + 0.03 };
+                    if lo < z + hh - 0.03 {
+                        prism(&mut acc, run, ta, tb, sw + 0.3, sw + 0.42, lo, z + hh - 0.03, tag);
+                    }
+                }
                 z += hh;
                 k += 1;
             }
         }
         "glass" => {
-            prism(&mut acc, run, t0, t1, sw + 0.3, sw + 0.34, 0.0, h - 0.6, TAG_DARK);
+            for (ta, tb, door) in split(t0, t1, &doors) {
+                prism(&mut acc, run, ta, tb, sw + 0.3, sw + 0.34, if door { DOOR_TOP } else { 0.0 }, h - 0.6, TAG_DARK);
+            }
             let mut ts = repeat(run, out_s, 1.6, t0, t1, 0.0);
             ts.push(t1);
             for t in ts {
-                prism(&mut acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.5, 0.0, h - 0.6, TAG_TRIM);
+                let z0 = if at_door(t) { DOOR_TOP } else { 0.0 };
+                prism(&mut acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.5, z0, h - 0.6, TAG_TRIM);
             }
             for z in arange(3.6, h - 0.6, 3.6) {
                 prism(&mut acc, run, t0, t1, sw + 0.3, sw + 0.48, z - 0.06, z + 0.06, TAG_TRIM);
@@ -128,10 +172,20 @@ pub fn build(run: &Run, tiers: &[Tier], bay_list: &[(f64, f64)], spec: &Value, r
         }
         "fins" => {
             for t in repeat(run, out_s, num(spec, "fin_spacing", 1.1), t0, t1, 0.5) {
-                prism(&mut acc, run, t - hw(0.07, out_s), t + hw(0.07, out_s), sw + 0.35, sw + 1.35, 0.5, h - 0.3, TAG_MAIN);
+                let z0 = if at_door(t) { DOOR_TOP } else { 0.5 };
+                prism(&mut acc, run, t - hw(0.07, out_s), t + hw(0.07, out_s), sw + 0.35, sw + 1.35, z0, h - 0.3, TAG_MAIN);
             }
         }
-        "etfe" => etfe(&mut acc, &mut tubes, run, sw + 1.2, h, spec),
+        "etfe" => {
+            // cushions above a glazed ground floor (mullions, and a fascia closing the cushion line)
+            etfe(&mut acc, &mut tubes, run, sw + 1.2, h, spec, ETFE_BASE);
+            for t in repeat(run, out_s, 1.6, t0, t1, 0.5) {
+                if !at_door(t) {
+                    prism(&mut acc, run, t - hw(0.08, out_s), t + hw(0.08, out_s), sw + 0.3, sw + 0.45, 0.0, ETFE_BASE - 0.4, TAG_TRIM);
+                }
+            }
+            prism(&mut acc, run, t0, t1, sw + 0.3, sw + 1.3, ETFE_BASE - 0.4, ETFE_BASE, TAG_TRIM);
+        }
         _ => {}
     }
     for (b, &(ta, tb)) in bay_list.iter().enumerate() {
@@ -139,6 +193,12 @@ pub fn build(run: &Run, tiers: &[Tier], bay_list: &[(f64, f64)], spec: &Value, r
         if b % entrance_every == 0 {
             prism(&mut acc, run, tm - hw(4.2, out_s), tm + hw(4.2, out_s), sw + 0.3, sw + 0.36, 0.0, 3.2, TAG_DARK);
             prism(&mut acc, run, tm - hw(4.8, out_s), tm + hw(4.8, out_s), sw + 0.3, sw + 1.4, 3.2, 3.55, TAG_TRIM);
+            // door jambs and two mullions, so the opening reads as doors and not as more glazing
+            for dx in [-4.3, -1.4, 1.4, 4.3] {
+                let tc = tm + dx / run.metric(out_s);
+                let wd = if dx.abs() > 4.0 { 0.25 } else { 0.1 };
+                prism(&mut acc, run, tc - hw(wd, out_s), tc + hw(wd, out_s), sw + 0.3, sw + 0.55, 0.0, 3.2, TAG_TRIM);
+            }
         }
         if cores_every > 0 && b % cores_every == cores_every / 2 && h > 9.0 {
             core(&mut acc, run, tm, sw, h);
@@ -181,7 +241,7 @@ fn gable(acc: &mut MeshAcc, run: &Run, tiers: &[Tier], sw: f64, h: f64, at_start
     acc.add_prism(run, ta, tb, &Section::uniform(poly, tag), tag);
 }
 
-fn etfe(acc: &mut MeshAcc, tubes: &mut Vec<Polyline>, run: &Run, s: f64, h: f64, spec: &Value) {
+fn etfe(acc: &mut MeshAcc, tubes: &mut Vec<Polyline>, run: &Run, s: f64, h: f64, spec: &Value, z0: f64) {
     let (mut wd, hd) = match spec.get("cushion").and_then(|v| v.as_array()) {
         Some(a) if a.len() == 2 => (a[0].as_f64().unwrap_or(4.0), a[1].as_f64().unwrap_or(4.0)),
         _ => (4.0, 4.0),
@@ -191,8 +251,7 @@ fn etfe(acc: &mut MeshAcc, tubes: &mut Vec<Polyline>, run: &Run, s: f64, h: f64,
     let length = (run.t1 - run.t0) * m;
     let n_u = 1i64.max(round_half_even(length / wd) as i64);
     wd = length / n_u as f64;
-    let n_z = 1i64.max(((h - 1.0) / hd) as i64);
-    let z0 = 0.5;
+    let n_z = 1i64.max(((h - z0 - 0.5) / hd) as i64);
     let k = 5usize;
     let grid = linspace(0.0, 1.0, k + 1);
     let pi = std::f64::consts::PI;

@@ -94,12 +94,19 @@ def marking_paths(p):
     return lines, discs
 
 
+def _step(pts, base):
+    """Resampling step for a marking: base, but at least 24 segments on short curves (the 1 m
+    corner arcs would otherwise turn into a three-segment polyline)."""
+    length = float(np.sum(np.linalg.norm(np.diff(np.asarray(pts, float), axis=0), axis=1)))
+    return min(base, max(length / 24.0, 0.05))
+
+
 def _wobble(pts, closed, amp, seed):
     """Perturb a polyline sideways with smooth noise (hand-painted lines)."""
     if amp <= 0:
         return pts
     q = np.concatenate([pts, pts[:1]]) if closed else pts
-    q = M.resample(q, 0.4)
+    q = M.resample(q, _step(q, 0.4))
     d = np.gradient(q, axis=0)
     d /= np.linalg.norm(d, axis=1, keepdims=True)
     nrm = np.stack([-d[:, 1], d[:, 0]], 1)
@@ -117,7 +124,11 @@ def build_markings(p, col, parent, mat):
     for i, (pts, closed) in enumerate(lines):
         pts = _wobble(pts, closed, amp, p["seed"] * 100 + i)
         # dense enough to follow the crowned surface instead of cutting under it
-        pts = M.resample(np.concatenate([pts, pts[:1]]), 0.5)[:-1] if closed else M.resample(pts, 0.5)
+        if closed:
+            ring = np.concatenate([pts, pts[:1]])
+            pts = M.resample(ring, _step(ring, 0.5))[:-1]
+        else:
+            pts = M.resample(pts, _step(pts, 0.5))
         width = p["line_width"] * (1 + 0.15 * p["hand_painted"])
         V, F, UV = M.strip(pts, width, closed)
         parts.append((V, F, UV, None))
@@ -497,6 +508,36 @@ def add_blades(p, root, lines_obj, region, focus, density=20000.0, near=3.0, far
 
 
 # -- build ------------------------------------------------------------------------------------
+
+def _rounded_rect_hit(dx, dy, hx, hy, r):
+    """Distance from the centre to a rounded rectangle along the unit direction (dx, dy)."""
+    lo, hi = 0.0, 4 * (hx + hy)
+    for _ in range(40):
+        mid = 0.5 * (lo + hi)
+        x, y = abs(dx * mid), abs(dy * mid)
+        qx, qy = max(x - (hx - r), 0), max(y - (hy - r), 0)
+        inside = (x <= hx and y <= hy) and (qx * qx + qy * qy <= r * r)
+        lo, hi = (mid, hi) if inside else (lo, mid)
+    return lo
+
+
+def clip_to_bowl(root, p, A, B, R):
+    """Pull the run-off turf in to a curved bowl's stand fronts: a tight bowl's corner stands come in
+    over the run-off corners, which would otherwise poke out behind them."""
+    surf = next((c for c in root.children if c.name.startswith("PitchSurface")), None)
+    if surf is None:
+        return
+    zf = crown_fn(p)
+    for v in surf.data.vertices:
+        x, y = v.co.x, v.co.y
+        r = math.hypot(x, y)
+        if r < 1e-9:
+            continue
+        f = _rounded_rect_hit(x / r, y / r, A + 0.3, B + 0.3, R)
+        if r > f:
+            fx, fy = x / r * f, y / r * f
+            v.co = (fx, fy, float(zf(fx, fy)))
+
 
 def build(params=None, col=None):
     p = resolve(params or {})

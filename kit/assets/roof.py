@@ -5,6 +5,7 @@ Roof layout section (stands.roof, overridable per side):
    "color": "#e3e4e2", "fascia_color": "#1b1d20", "steel_color": "#eef0f0", "deck": "metal|membrane"}
 """
 import bpy
+import numpy as np
 
 from .. import catalog
 from ..core import materials as MAT
@@ -13,6 +14,9 @@ from ..core.scene import mesh_object
 from ..core.sockets import socket
 from ..stands import roofs as RF
 from .stand import _recalc, _tubes_mesh, painted, smooth_by_angle
+
+
+GOALPOST_MAX_HEIGHT = 25.0   # highest front girder a goalpost roof is built with
 
 
 def resolve(spec):
@@ -63,6 +67,13 @@ def build(run, tiers, bay_list, spec, d_focal, far_width, col, parent, include_e
     if not spec:
         return None
     roof = RF.solve(tiers, spec, d_focal, far_width)
+    if roof["type"] == "goalpost" and roof["z_front"] > GOALPOST_MAX_HEIGHT:
+        # goalpost roofs suit single low stands; over a tall stand the posts would be 30-60 m columns
+        # in the front row, so such stands get a cantilever instead
+        print(f"[roof] warning: {run.name}: a goalpost roof would stand over {GOALPOST_MAX_HEIGHT:.0f} m on this "
+              "stand; using a cantilever", flush=True)
+        spec = dict(spec, type="cantilever")
+        roof = RF.solve(tiers, spec, d_focal, far_width)
     out = RF.build(run, roof, bay_list, include_ends)
     mats = [deck_material(spec.get("color", "#e3e4e2"), spec.get("deck") == "membrane"),
             translucent_material(),
@@ -78,4 +89,8 @@ def build(run, tiers, bay_list, spec, d_focal, far_width, col, parent, include_e
     import math
     for kind, ident, loc, n, props in out["sockets"]:
         socket(kind, ident, loc, math.degrees(math.atan2(n[0], -n[1])), parent=parent, col=col, **props)
-    return {"roof": roof, "edge_line": out["edge_line"], "tail_s": out["tail_s"], "tail_top": out["tail_top"]}
+    zs = [float(np.max(V[:, 2]))] if len(V) else []
+    zs += [float(np.max(np.asarray(t[0])[:, 2])) for t in out["tubes"] if len(t[0])]
+    return {"roof": roof, "edge_line": out["edge_line"], "edge_top": out["edge_top"], "tail_s": out["tail_s"],
+            "tail_top": out["tail_top"],
+            "top": max(zs) if zs else out["tail_top"]}

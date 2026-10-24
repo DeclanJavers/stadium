@@ -154,7 +154,10 @@ Capacities from the bundled profiles as full bowls on a 105 x 68 pitch: `single_
 | Elite broadcast (UEFA level A) | ~2000 lux horizontal avg, U1 = Emin/Emax ≥ 0.7, U2 = Emin/Eavg ≥ 0.8 ✓ |
 | Classic televised ground | 1000 lux (preset), same uniformity ✓ |
 | Grassroots (EN 12193 class III) | 75–200 lux, U2 ≥ 0.5 ✓ |
-| Corner masts | lamp line ≥ 25 deg above the centre spot ✓ |
+| Corner masts | lamp line ≥ 25 deg above the centre spot ✓; in the gap between stands at open corners, behind the corner stand (≥ 8 m past its back) in a bowl ✓ |
+| Roof ribbon | only on roof edges ≥ 10 m up (else corner pylons, with a warning) ✓; fixtures hang from a rail under the edge |
+| Aiming | no fixture aims back over its own shoulder (its aim point is in front of it, seen from the pitch's long axis); aims are dealt across the pitch, then re-aimed greedily for uniformity ✓ |
+| Poles | on the main-stand side, none within 15 m of halfway (dugouts, tunnel, TV camera) ✓ |
 | Colour temperature | LED 5700 K, metal halide 4300 K |
 | Blender light units | 1 W/m² ≈ 683 lux; spot power P emits P/4π W/sr inside its cone ✓ (unit test) |
 
@@ -162,11 +165,24 @@ Capacities from the bundled profiles as full bowls on a 105 x 68 pitch: `single_
 
 | item | value used |
 |---|---|
-| Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line; with 3D carpets the end boards move back (typically 7.75–8.75 m, never closer than 0.8 m to the stand front) so each carpet gets a 1 m virtual board ✓ |
+| Perimeter boards | 0.9–1.0 m high, 4.0 m behind the touchline, 5.5 m behind the goal line; with 3D carpets the end boards move back (typically 7.75–8.75 m, never closer than 0.8 m to the stand front) so each carpet gets a 1 m virtual board ✓; a manual end offset is kept between 3 m (behind the nets) and 0.8 m short of the stand front ✓ |
 | LED board face | tilted ~10° back; one LED per texel (128 px per metre of height) |
-| 3D carpet | projection of a ~1 m virtual board from the main camera, beside the goal; the whole footprint stays off the field of play (≥ 0.3 m behind the goal line, inside the touchline extended) and ≥ 0.4 m clear of the end boards ✓ |
-| Dugouts | front 4.3 m behind the touchline (clear of the run-off) and in front of the stand ✓; 2 rows |
+| 3D carpet | projection of a ~1 m virtual board from the main camera, beside the goal; the whole footprint stays off the field of play (≥ 0.3 m behind the goal line, inside the touchline extended), clear of the goal (no corner within 2.5 m behind the line and 4.26 m of the centre line) and ≥ 0.4 m clear of the end boards; a carpet squeezed under 0.35 m is left out with a warning ✓ |
+| Dugouts | front 4.3 m behind the touchline (clear of the run-off), closer (≥ 1.5 m) when the main stand is near, always in front of it ✓; 2 rows |
 | Technical area | 1 m beyond the seating either side, to within 1 m of the touchline (dashed) |
 | Tunnel | 3.6 m wide, 2.7 m high, at halfway between the dugouts |
-| Centre-hung screen | bottom ~20–30 m above the pitch ✓ |
-| End screens | hung below the roof edge, bottom > 12 m above the pitch ✓ |
+| Centre-hung screen | bottom ≥ 18 m (~20–30 m) above the pitch; roofs too low (or none) → screens at the ends, with a warning ✓ |
+| End screens | hung below the middle of the roof edge with ≥ 6 m clear below; otherwise on a frame on top of the end stand (above its roof), or freestanding with no stand; frames get a leg every ~8 m ✓ |
+| Main TV camera | front of the main-stand tier nearest 16 m, at least 12 m up: a lower tier front gets a gantry slung under the roof edge, or a platform on scaffold over the back rows ✓ |
+
+## Robustness
+
+| item | rule |
+|---|---|
+| Corner radius | clamped so the corner stands stay ≥ 2 m outside the field corners; the run-off turf and apron stop at the bowl front ✓ |
+| Curved corners | need four sides of one profile; otherwise open corners, with a warning ✓ |
+| Goalpost roofs | front girder ≤ 25 m; over taller stands a cantilever, with a warning ✓ |
+| Seat rows | treads widened to the seat's `min_tread` (305 mm seatway) ✓ |
+| Mosaic text | wrapped onto more lines when the tier has the rows, else shortened, with a warning; accents drawn as plain letters, missing glyphs left blank with a warning ✓ |
+| Unknown ids and colours | goal style, flag preset, grass, mowing, net pattern/mesh, profile, seat, roof/facade/floodlight preset, brand, screen placement and non-`#rrggbb` colours fall back to a default with a warning (`kit/sanitize.py`, `viewer/gen/src/sanitize.rs`) ✓ |
+| Fuzzing | `viewer/gen/tests/fuzz.rs` builds seeded random layouts across the editor's ranges (and some hand-edited mistakes) and checks: nothing buried or on the field of play, screens clear, furniture in front of the stands, carpets clear of goals and boards, floodlights high and aimed down, masts clear of stands, camera on its gantry (`FUZZ_N=1000 cargo test --release -p stadium-gen --test fuzz`) |

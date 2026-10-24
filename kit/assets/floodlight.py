@@ -16,8 +16,12 @@ from ..core import mesh as M
 from ..core.nodes import material, srgb
 from ..core.scene import collection, empty, link, mesh_object, set_params
 from ..stands import floodlights as FL
+from ..stands.geometry import stand_depth
 from .seat import galvanised, rounded_box, side_plate, tube
 from .stand import _tubes_mesh
+
+
+ROOF_LIGHTS_MIN_HEIGHT = 10.0   # lowest roof edge a floodlight ribbon is mounted on (m)
 
 
 def kelvin_rgb(k):
@@ -119,6 +123,15 @@ def build(cfg, pitch, stands, night, col=None):
     if "preset" in cfg:
         cfg = catalog.merge(catalog.preset("floodlights", cfg.pop("preset")), cfg)
     kind = cfg["type"]
+    if kind == "roof" and stands and stands.get("roofs"):
+        # a roof ribbon needs roof edges high enough to light the pitch from; under low roofs the
+        # lamps would sit a few metres above the grass, so light it from corner pylons instead
+        low = min(float(np.min(r["edge_line"][:, 2])) for r in stands["roofs"].values())
+        if low < ROOF_LIGHTS_MIN_HEIGHT:
+            print(f"[floodlights] warning: roof edges at {low:.1f} m are too low for roof floodlights; "
+                  "using corner pylons", flush=True)
+            kind = "corner_pylons"
+            cfg = dict(cfg, type=kind, fixture="led")
     spec = dict(FL.DEFAULTS[kind], **cfg)
     on = cfg.get("on", night)
     col = col or collection("Floodlights")
@@ -136,10 +149,13 @@ def build(cfg, pitch, stands, night, col=None):
         reach = 0.0
         roof_top = 0.0
         if stands:
-            reach = max([f["line_s"] for f in stands.get("facades", {}).values()] + [10.0])
+            # how far out the structures go: facades, the stands themselves, roof back spans
+            reach = max([f["line_s"] for f in stands.get("facades", {}).values()]
+                        + [stand_depth(t) for _, t in stands.get("runs", {}).values()]
+                        + [r["tail_s"] for r in stands.get("roofs", {}).values()] + [10.0])
             roof_top = max([r["tail_top"] for r in stands.get("roofs", {}).values()] + [0.0])
         masts = FL.pylons(L, W, stands["A"] if stands else L / 2 + 10, stands["B"] if stands else W / 2 + 8,
-                          reach, roof_top, spec)
+                          reach, roof_top, spec, corner_radius=(stands or {}).get("corner_radius"))
         for k, m in enumerate(masts):
             if spec["mast"] == "lattice":
                 _lattice(f"Mast_{k}", m["base"], m["height"] - 1.5, col, root, steel)
@@ -158,8 +174,18 @@ def build(cfg, pitch, stands, night, col=None):
         lines = [r["edge_line"] for r in (stands or {}).get("roofs", {}).values()]
         if not lines:
             raise ValueError("roof floodlights need roofs on the stands")
-        pts = FL.roof_ribbon(lines, spec["spacing"])
-        fixtures += [(p - np.array([0, 0, 0.45]), "roof") for p in pts]
+        # a rail under the roof edge, braced back to the edge girder, carries the fixtures on short
+        # hangers
+        rail = []
+        for line in lines:
+            rail.append((np.asarray(line) - np.array([0, 0, 0.12]), 0.06))
+            for p in FL.roof_ribbon([line], spec["spacing"]):
+                r = p - np.array([0, 0, 0.12])
+                out = FL.edge_normal(line, p)
+                rail.append((np.array([r, r + np.array([out[0] * 0.4, out[1] * 0.4, 0.47])]), 0.04))
+                rail.append((np.array([r, p - np.array([0, 0, 0.32])]), 0.035))
+                fixtures.append((p - np.array([0, 0, 0.45]), "roof"))
+        _tubes_mesh("RibbonRail", rail, col, root, steel, sides=6)
     elif kind == "poles":
         offset = pitch["runoff_side"] + 1.2
         for k, pole in enumerate(FL.poles(L, W, spec, offset)):
@@ -170,7 +196,8 @@ def build(cfg, pitch, stands, night, col=None):
             for j in range(spec["lamps"]):
                 p = np.array([bx, by, h + 0.3]) + side * (j - (spec["lamps"] - 1) / 2) * 0.8
                 fixtures.append((p - np.array([0, np.sign(by) * 0.5, 0]), "pole"))
-            tube(f"PoleBar_{k}", [(bx - 1.2, by, h), (bx + 1.2, by, h)], 0.05, col, steel).parent = root
+            bar = max(1.2, 0.4 * (spec["lamps"] - 1) + 0.4)      # the crossbar spans every lamp
+            tube(f"PoleBar_{k}", [(bx - bar, by, h), (bx + bar, by, h)], 0.05, col, steel).parent = root
     else:
         raise ValueError(f"unknown floodlight type {kind!r}")
 

@@ -291,7 +291,7 @@ fn facades() {
 fn floodlight_layouts() {
     let r = reference("floodlights");
     let (l, w) = (105.0, 68.0);
-    let masts = floodlights::pylons(l, w, 65.5, 43.0, 10.0, 25.0);
+    let masts = floodlights::pylons(l, w, 65.5, 43.0, 10.0, 25.0, None);
     for (m, x) in masts.iter().zip(r["pylons"].as_array().unwrap()) {
         close_v(&[m.base.x, m.base.y], &x["base"], 1e-12, "pylon base");
         close(m.height, &x["height"], 1e-12, "pylon height");
@@ -432,7 +432,7 @@ fn seat_patterns() {
         }
     }
     let mut cols = patterns::base_colors(&refs, &json!({"pattern": "solid", "color": "#1d4ea8"}), &tier_rows, 0).unwrap();
-    let painted = patterns::apply_mosaic(&mut cols, &anchors, &json!({"run": "south", "tier": 0, "text": "KIT FC", "color": "#ffffff"}), 0, 15.0, &tier_rows, None);
+    let painted = patterns::apply_mosaic(&mut cols, &anchors, &json!({"run": "south", "tier": 0, "text": "KIT FC", "color": "#ffffff"}), 0, 15.0, &tier_rows, None, &mut Vec::new());
     assert_eq!(painted as u64, r["mosaic"]["painted"].as_u64().unwrap());
     close_v(&cols.iter().flat_map(|c| v3(*c)).collect::<Vec<_>>(), &Value::Array(flat(&r["mosaic"]["colors"]).into_iter().map(|v| json!(v)).collect()), 1e-12, "mosaic");
     let fin = patterns::finish(&random[..50], 0.4, 5);

@@ -26,6 +26,7 @@ from ..stands import patterns as PAT
 from ..stands import sightlines as S
 from . import seat as SEAT
 
+CAMERA_MIN_HEIGHT = 12.0  # main TV camera; a lower tier front gets a gantry instead
 STANDING_PER_M = 1.8   # spectators per metre of terrace step (Green Guide 4.7/m2 on 0.38 m steps)
 
 
@@ -205,8 +206,11 @@ def _apron(p, A, B, R, corners, col, parent, kind):
                 lo, hi = (mid, hi) if inside else (lo, mid)
             out.append((dx * lo, dy * lo))
         return np.array(out)
-    inner = rect_hit(ix, iy, 0.0)
     outer = rect_hit(A + 0.3, B + 0.3, R if corners == "curved" else 0.0)
+    # (a tight bowl's corner stands come in over the run-off corners: stop at their front)
+    inner = rect_hit(ix, iy, 0.0)
+    far = np.linalg.norm(inner, axis=1) > np.linalg.norm(outer, axis=1)
+    inner[far] = outer[far]
     V = np.concatenate([np.column_stack([inner, np.full(n, -0.005)]), np.column_stack([outer, np.full(n, -0.005)])])
     j = np.arange(n)
     F = np.stack([j, (j + 1) % n, n + (j + 1) % n, n + j], 1)
@@ -299,7 +303,12 @@ def build(cfg, pitch_params, col=None):
     R = cfg.get("corner_radius", 14.0)
     A = p["length"] / 2 + p["runoff_end"] + gap
     B = p["width"] / 2 + p["runoff_side"] + gap
+    early_warnings = []
     if corners == "curved":
+        r_max = G.max_corner_radius(A, B, p["length"] / 2, p["width"] / 2)
+        if R > r_max:
+            early_warnings.append(f"corner radius {R:g} m would put the corner stands on the pitch; using {r_max:.1f} m")
+            R = r_max
         profs = {s["profile"] for s in sides.values()}
         if len(sides) < 4 or len(profs) != 1:
             raise ValueError("curved corners need all four sides to share one profile (a bowl); "
@@ -319,15 +328,23 @@ def build(cfg, pitch_params, col=None):
     any_side = next(iter(sides.values())) if sides else None
     all_anchors, run_lengths, report, standing = [], {}, {}, 0.0
     camera_mount = None
-    warnings = []
+    warnings = list(early_warnings)
     roofs, facades = {}, {}
     runs_out = {}
     tier_rows_by_run, vom_top_by_run = {}, {}
     for name, run in run_defs:
         sc = sides.get(name, any_side)
         df = min(d_focal.values()) if corners == "curved" else d_focal[name]
-        tiers = S.solve_profile(sc["_profile"], df)
         style = sc.get("seat", "tipup_classic")
+        # rows as deep as the seat needs for a 305 mm seatway (padded seats need wider treads)
+        prof = dict(sc["_profile"], tiers=[dict(ts) for ts in sc["_profile"]["tiers"]])
+        for ts in prof["tiers"]:
+            if ts.get("kind", "seated") != "standing":
+                st = cfg.get("hospitality_seat", "padded_vip") if ts.get("hospitality") else style
+                min_tread = SEAT.resolve(st)["min_tread"]
+                if ts.get("tread", 0.80) < min_tread - 1e-9:
+                    ts["tread"] = min_tread
+        tiers = S.solve_profile(prof, df)
         for t in tiers:
             st = cfg.get("hospitality_seat", "padded_vip") if t["hospitality"] else style
             t["seat_style"] = st
@@ -340,18 +357,33 @@ def build(cfg, pitch_params, col=None):
         V, F, tags, UV = out["mesh"]
         obj = mesh_object(f"Stand_{name}", V, F, col, root, materials=mats, mat_index=tags, uvs=UV)
         _recalc(obj)
-        far = p["width"] if name in ("north", "south") or run.curved else p["length"]
+        # a bowl's ring roof sights the longer span all round, so its edge is one level
+        if corners == "curved":
+            far = max(p["width"], p["length"])
+        else:
+            far = p["width"] if name in ("north", "south") else p["length"]
         roof_spec = sc.get("roof", cfg.get("roof"))
         from . import roof as ROOF
         rf = ROOF.build(run, tiers, out["bay_list"], roof_spec, df, far, col, root,
                         include_ends=not run.curved)
         if rf:
             roofs[name] = rf
+        roof_edge = roof_posts = None
+        if rf and len(rf["edge_line"]):
+            # (a goalpost roof's posts stand in the front row: a gantry goes in front of them)
+            r = rf["roof"]
+            s_hang = r["s_post"] - 0.8 if r["type"] == "goalpost" else r["s_front"] + 1.0
+            roof_edge = (r["s_front"], float(min(q[2] for q in rf["edge_line"])), rf["edge_top"], s_hang)
+            roof_posts = r["s_post"] if r["type"] == "goalpost" else None
         from . import facade as FACADE
         fc = FACADE.build(run, tiers, out["bay_list"], sc.get("facade", cfg.get("facade")), rf,
                           (corners != "curved",) * 2, col, root, night=cfg.get("_night", False))
         if fc:
             facades[name] = fc
+        elif corners != "curved" and len(tiers) > 1:
+            # no facade gables: close the exposed ends of a multi-tier stand with a concrete wall, or
+            # the concourse void under the upper tier shows as a hole
+            _end_walls(run, tiers, col, root, mats[0], name)
         _glass(run, tiers, col, root, glass_mat, name)
         _tubes_mesh(f"Rails_{name}", out["rails"] + _barrier_lines(out["barriers"]), col, root, rail_mat)
         _nosings_mesh(f"Nosings_{name}", out["nosings"], col, root, nose_mat)
@@ -375,6 +407,14 @@ def build(cfg, pitch_params, col=None):
             pnt, n = run.frame(0.5 * (run.t0 + run.t1))
             q = pnt + n * (t["s0"] - 1.2)
             camera_mount = (float(q[0]), float(q[1]), t["h"][0] + t["parapet"] + 1.6)
+            # a goalpost roof's front-row posts would stand in the shot of a camera behind them
+            behind_posts = roof_posts is not None and t["s0"] - 1.2 > roof_posts
+            if camera_mount[2] < CAMERA_MIN_HEIGHT or behind_posts:
+                s_cam, z_cam, gantry = _high_camera(tiers, roof_edge)
+                if z_cam > camera_mount[2] or behind_posts:
+                    q = pnt + n * s_cam
+                    camera_mount = (float(q[0]), float(q[1]), z_cam)
+                    _gantry(run, 0.5 * (run.t0 + run.t1), s_cam, z_cam, gantry, col, root, rail_mat)
             socket("camera", "main", camera_mount, 0.0, parent=root, col=col, target=(0.0, 6.0, 0.0))
 
     mosaics = []
@@ -385,7 +425,7 @@ def build(cfg, pitch_params, col=None):
         if "rows" not in mz and top is not None and rows - top >= 7:
             mz["rows"] = [top, rows - 1]  # keep letters clear of the vomitory mouths
         mosaics.append(mz)
-    colors = _colours(dict(cfg, mosaics=mosaics), sides, all_anchors, run_lengths, tier_rows_by_run)
+    colors = _colours(dict(cfg, mosaics=mosaics), sides, all_anchors, run_lengths, tier_rows_by_run, warnings)
     seats = {}
     for style in sorted({a["style"] for a in all_anchors}):
         idx = [i for i, a in enumerate(all_anchors) if a["style"] == style]
@@ -403,7 +443,102 @@ def build(cfg, pitch_params, col=None):
         print(f"[stands] warning: {w}", flush=True)
     return {"root": root, "capacity": capacity, "warnings": list(dict.fromkeys(warnings)), "seat_colors": colors, "report": report, "A": A, "B": B, "anchors": all_anchors,
             "tiers_by_run": tier_rows_by_run, "camera_mount": camera_mount,
-            "roofs": roofs, "facades": facades, "runs": runs_out}
+            "roofs": roofs, "facades": facades, "runs": runs_out,
+            "corner_radius": R if corners == "curved" else None}
+
+
+def _floor_at(tiers, s):
+    """Floor height of the stand at depth s (the highest tread in front of it)."""
+    z = 0.0
+    for t in tiers:
+        for si, hi in zip(t["s"], t["h"]):
+            if si - t["tread"] <= s:
+                z = max(z, hi)
+    return z
+
+
+def _high_camera(tiers, roof_edge):
+    """Where the main camera goes when the tier front is too low: (depth, eye height, gantry)
+    with gantry ("hung", roof edge z) or ("standing", floor z). roof_edge: (depth of the leading
+    edge, its underside, its top, where a gantry may hang)."""
+    if roof_edge:
+        s_front, z_edge, edge_top, s_hang = roof_edge
+        if z_edge - 2.2 >= CAMERA_MIN_HEIGHT - 2.0:
+            # a gantry slung under the roof's leading edge, clear of the treads below and low enough
+            # that the edge and any floodlights on it stay above the shot
+            s = s_hang
+            z = min(max(z_edge - 2.2, _floor_at(tiers, s) + 2.2), z_edge - 0.3)
+            return s, z, ("hung", z_edge)
+        # a low roof: a gantry standing on its leading edge
+        return s_front + 0.6, max(edge_top + 1.6, CAMERA_MIN_HEIGHT), ("standing", edge_top)
+    s = tiers[-1]["s_back"] - 1.2
+    floor = _floor_at(tiers, s)
+    return s, max(floor + 1.6, CAMERA_MIN_HEIGHT), ("standing", floor)
+
+
+def _gantry(run, t, s_cam, z, gantry, col, parent, mat):
+    """Camera platform: a 3 x 2.4 m deck 1.6 m below the lens, the lens at its open front edge (rails
+    on the sides and back only, out of shot), and hangers to the roof edge or legs down to the
+    treads or the roof."""
+    deck = z - 1.6
+    s = s_cam + 1.0
+    corners = [(-1.5, -1.2), (1.5, -1.2), (1.5, 1.2), (-1.5, 1.2)]
+
+    def at(dt, ds, zz):
+        p, n = run.frame(t + dt)
+        q = p + n * (s + ds)
+        return (float(q[0]), float(q[1]), zz)
+
+    def ring(zz):
+        r = [at(a, b, zz) for a, b in corners]
+        return r + [r[0]]
+
+    lines = [(ring(deck), 0.05), ([at(*corners[k], deck + 1.1) for k in (1, 2, 3, 0)], 0.025)]
+    kind, zr = gantry
+    for a, b in corners:
+        lines.append(([at(a, b, deck), at(a, b, deck + 1.1)], 0.025))
+        if kind == "hung":
+            lines.append(([at(a, b, deck), at(a, b, zr)], 0.04))
+        elif deck - zr > 0.3:
+            lines.append(([at(a, b, zr), at(a, b, deck)], 0.05))
+    if kind == "standing":
+        zz = zr
+        while zz + 2.0 < deck:
+            for k in range(4):
+                (a0, b0), (a1, b1) = corners[k], corners[(k + 1) % 4]
+                lines.append(([at(a0, b0, zz), at(a1, b1, zz + 2.0)], 0.03))
+            zz += 2.0
+    _tubes_mesh("CameraGantry_frame", lines, col, parent, mat, sides=8)
+    acc = G.MeshAcc()
+    poly = np.array([(s - 1.2, deck - 0.12), (s + 1.2, deck - 0.12), (s + 1.2, deck), (s - 1.2, deck)])
+    acc.add_prism(run, t - 1.5, t + 1.5, (poly, [0] * 4))
+    V, F, _, UV = acc.arrays()
+    mesh_object("CameraGantry", V, F, col, parent, materials=[mat])
+
+
+def _end_walls(run, tiers, col, parent, mat, name):
+    P = sorted(set(map(tuple, G.section_hull(tiers).tolist())))
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, up = [], []
+    for q in P:
+        while len(lo) >= 2 and cross(lo[-2], lo[-1], q) <= 0:
+            lo.pop()
+        lo.append(q)
+    for q in reversed(P):
+        while len(up) >= 2 and cross(up[-2], up[-1], q) <= 0:
+            up.pop()
+        up.append(q)
+    poly = np.array(lo[:-1] + up[:-1])
+    acc = G.MeshAcc()
+    d = 0.3 / run.metric(0.0)
+    acc.add_prism(run, run.t0 - d, run.t0, (poly, [0] * len(poly)), cap_tag=0)
+    acc.add_prism(run, run.t1, run.t1 + d, (poly, [0] * len(poly)), cap_tag=0)
+    V, F, _, UV = acc.arrays()
+    if len(F):
+        o = mesh_object(f"StandEnds_{name}", V, F, col, parent, materials=[mat], uvs=UV)
+        _recalc(o)
 
 
 def _glass(run, tiers, col, parent, mat, name):
@@ -419,7 +554,7 @@ def _glass(run, tiers, col, parent, mat, name):
         mesh_object(f"Glass_{name}", V, F, col, parent, materials=[mat])
 
 
-def _colours(cfg, sides, anchors, run_lengths, tier_rows_by_run):
+def _colours(cfg, sides, anchors, run_lengths, tier_rows_by_run, warnings=None):
     default = cfg.get("colors", {"pattern": "solid", "color": "#c8102e"})
     out = np.zeros((len(anchors), 3))
     groups = {}
@@ -432,7 +567,8 @@ def _colours(cfg, sides, anchors, run_lengths, tier_rows_by_run):
         out[idx] = PAT.base_colors(sub, spec, tier_rows_by_run[run], seed=_stable(run) % 1000)
     for mz in cfg.get("mosaics", []):
         image = _load_image(mz["image"]) if mz.get("image") else None
-        PAT.apply_mosaic(out, anchors, mz, run_lengths[mz["run"]], tier_rows_by_run[mz["run"]], image)
+        PAT.apply_mosaic(out, anchors, mz, run_lengths[mz["run"]], tier_rows_by_run[mz["run"]], image,
+                         warnings=warnings)
     return PAT.finish(out, cfg.get("seat_fade", 0.0))
 
 

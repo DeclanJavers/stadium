@@ -16,14 +16,23 @@ pub struct Mast {
     pub height: f64,
 }
 
-pub fn pylons(l: f64, w: f64, a: f64, b: f64, reach: f64, roof_top: f64) -> Vec<Mast> {
+/// Four masts on the diagonals, outside the stands. reach: how far out the structures go;
+/// corner_r: the corner radius of a curved bowl (the mast then stands behind the corner stand).
+pub fn pylons(_l: f64, _w: f64, a: f64, b: f64, reach: f64, roof_top: f64, corner_r: Option<f64>) -> Vec<Mast> {
     let mut out = Vec::new();
     for (sx, sy) in [(1.0, 1.0), (-1.0, 1.0), (-1.0, -1.0), (1.0, -1.0)] {
-        let d = DVec2::new(sx * (l / 2.0), sy * (w / 2.0));
-        let u = d / d.length();
-        let base = DVec2::new(sx * (a + reach * 0.5), sy * (b + reach * 0.5));
-        let r = base.length().max(d.length() + 15.0);
-        let p = if reach > 30.0 { u * r } else { base };
+        // open corners: in the gap between the stands (which never reach past a, b)
+        let gap = 0.5 * reach.min(30.0);
+        let mut p = DVec2::new(sx * (a + gap), sy * (b + gap));
+        if let Some(r) = corner_r {
+            // a bowl: behind the corner stand, clear of its back and the mast head's width
+            let c = DVec2::new(sx * (a - r), sy * (b - r));
+            let diag = DVec2::new(sx, sy) / std::f64::consts::SQRT_2;
+            let q = c + diag * (r + reach + 8.0);
+            if q.length() > p.length() {
+                p = q;
+            }
+        }
         let dist = p.length();
         let h = (dist * (MIN_ELEVATION + 3.0).to_radians().tan()).max(roof_top + 8.0).max(30.0);
         out.push(Mast { base: p, height: h });
@@ -69,6 +78,26 @@ pub fn resample(line: &[DVec3], spacing: f64, min_n: usize) -> Vec<DVec3> {
         .collect()
 }
 
+/// Horizontal unit normal of a roof edge polyline at its point nearest `p`, pointing away from the
+/// pitch centre.
+pub fn edge_normal(line: &[DVec3], p: DVec3) -> DVec2 {
+    let mut best = (f64::MAX, DVec2::X);
+    for w in line.windows(2) {
+        let (a, b) = (w[0].truncate(), w[1].truncate());
+        let ab = b - a;
+        if ab.length_squared() < 1e-12 {
+            continue;
+        }
+        let t = ((p.truncate() - a).dot(ab) / ab.length_squared()).clamp(0.0, 1.0);
+        let dist = (a + ab * t - p.truncate()).length();
+        if dist < best.0 {
+            best = (dist, ab.normalize());
+        }
+    }
+    let n = DVec2::new(best.1.y, -best.1.x);
+    if n.dot(p.truncate()) < 0.0 { -n } else { n }
+}
+
 pub fn roof_ribbon(edge_lines: &[Vec<DVec3>], spacing: f64) -> Vec<DVec3> {
     edge_lines.iter().flat_map(|l| resample(l, spacing, 1)).collect()
 }
@@ -83,11 +112,16 @@ pub fn poles(l: f64, w: f64, per_side: usize, height: f64, offset: f64) -> Vec<M
     let mut out = Vec::new();
     for sy in [1.0, -1.0] {
         for &x in &xs {
+            // the main-stand side keeps halfway clear for the dugouts, tunnel and TV camera
+            let x = if sy < 0.0 && x.abs() < POLE_CLEAR_X { if x < 0.0 { -POLE_CLEAR_X } else { POLE_CLEAR_X } } else { x };
             out.push(Mast { base: DVec2::new(x, sy * (w / 2.0 + offset)), height });
         }
     }
     out
 }
+
+/// Poles on the main-stand side stay this far from halfway.
+pub const POLE_CLEAR_X: f64 = 15.0;
 
 pub fn lamp_power(n_fixtures: usize, spot_deg: f64, lux: f64, area: f64) -> f64 {
     let efficiency = 0.65;
@@ -177,7 +211,29 @@ pub fn optimise_aims(fixtures: &[DVec3], candidates: &[DVec3], points: &[DVec3],
         }
     }
     let cr = |f: usize, a: usize| &c[(f * a_n + a) * g_n..(f * a_n + a + 1) * g_n];
-    let mut aim: Vec<usize> = (0..f_n).map(|f| (f * 37 + seed) % a_n).collect();
+    // a fixture never aims back over its own shoulder: its aim point lies in front of it, seen
+    // from the pitch's spine (the long axis between the penalty spots' latitudes); the start deals
+    // candidates round the fixtures (spread light), skipping those behind each fixture
+    let hx = candidates.iter().map(|c| c.x).fold(f64::MIN, f64::max);
+    let hy = candidates.iter().map(|c| c.y).fold(f64::MIN, f64::max);
+    let spine = (hx - hy).max(0.0);
+    let allowed: Vec<bool> = fixtures
+        .iter()
+        .flat_map(|f| {
+            let (ix, iy) = (f.x.clamp(-spine, spine) - f.x, -f.y);
+            candidates.iter().map(move |c| {
+                let (dx, dy) = (c.x - f.x, c.y - f.y);
+                ix.hypot(iy) < 1.0 || dx * ix + dy * iy >= 0.0
+            })
+        })
+        .collect();
+    let ok = |f: usize, a: usize| allowed[f * a_n + a];
+    let mut aim: Vec<usize> = (0..f_n)
+        .map(|f| {
+            let a0 = (f * 37 + seed) % a_n;
+            (0..a_n).map(|j| (a0 + j * 7) % a_n).find(|&a| ok(f, a)).unwrap_or(a0)
+        })
+        .collect();
     let mut e = vec![0.0; g_n];
     for f in 0..f_n {
         for (k, v) in cr(f, aim[f]).iter().enumerate() {
@@ -198,6 +254,9 @@ pub fn optimise_aims(fixtures: &[DVec3], candidates: &[DVec3], points: &[DVec3],
     let scores = |e: &[f64], aim: &[usize], star: usize| -> Vec<f64> {
         (0..f_n)
             .map(|f| {
+                if !ok(f, star) {
+                    return f64::MIN;
+                }
                 let (old, new) = (cr(f, aim[f]), cr(f, star));
                 let (mut mn, mut mx) = (f64::MAX, f64::MIN);
                 for k in 0..g_n {
@@ -313,6 +372,8 @@ pub struct StandInfo {
     pub reach: f64,
     pub roof_top: f64,
     pub roof_edges: Vec<Vec<DVec3>>,
+    /// Some(radius) for a curved bowl
+    pub corner_r: Option<f64>,
 }
 
 fn n(spec: &Value, k: &str, d: f64) -> f64 {
@@ -338,10 +399,10 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
         "corner_pylons" => {
             let rows = n(spec, "rows", 5.0) as usize;
             let cols = n(spec, "cols", 7.0) as usize;
-            let (reach, roof_top) = stands.map(|s| (s.reach, s.roof_top)).unwrap_or((0.0, 0.0));
+            let (reach, roof_top, corner_r) = stands.map(|s| (s.reach, s.roof_top, s.corner_r)).unwrap_or((0.0, 0.0, None));
             let (a, b) = stands.map(|s| (s.a, s.b)).unwrap_or((l / 2.0 + 10.0, w / 2.0 + 8.0));
             let lattice_mast = spec.get("mast").and_then(|v| v.as_str()).unwrap_or("lattice") == "lattice";
-            for m in pylons(l, w, a, b, reach, roof_top) {
+            for m in pylons(l, w, a, b, reach, roof_top, corner_r) {
                 if lattice_mast {
                     d.steel.extend(lattice(m.base, m.height - 1.5));
                 } else {
@@ -371,9 +432,18 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
             if lines.is_empty() {
                 return Err("roof floodlights need roofs on the stands".into());
             }
-            for p in roof_ribbon(&lines, n(spec, "spacing", 2.4)) {
-                d.fixtures.push((p - DVec3::new(0.0, 0.0, 0.45), DVec3::ZERO));
-                d.mounts.push(Mount::Roof);
+            // a rail under the roof edge, braced back to the edge girder, carries the fixtures on
+            // short hangers
+            for line in &lines {
+                d.steel.push((line.iter().map(|q| *q - DVec3::new(0.0, 0.0, 0.12)).collect(), 0.06));
+                for p in resample(line, n(spec, "spacing", 2.4), 1) {
+                    let rail = p - DVec3::new(0.0, 0.0, 0.12);
+                    let out = edge_normal(line, p);
+                    d.steel.push((vec![rail, rail + DVec3::new(out.x * 0.4, out.y * 0.4, 0.47)], 0.04));
+                    d.steel.push((vec![rail, p - DVec3::new(0.0, 0.0, 0.32)], 0.035));
+                    d.fixtures.push((p - DVec3::new(0.0, 0.0, 0.45), DVec3::ZERO));
+                    d.mounts.push(Mount::Roof);
+                }
             }
         }
         "poles" => {
@@ -387,7 +457,9 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
                     d.fixtures.push((p - DVec3::new(0.0, by.signum() * 0.5, 0.0), DVec3::ZERO));
                     d.mounts.push(Mount::Pole);
                 }
-                d.tube_masts.push((DVec3::new(bx - 1.2, by, h), DVec3::new(bx + 1.2, by, h), 0.05));
+                // the crossbar spans every lamp
+                let bar = 1.2f64.max(0.4 * (lamps as f64 - 1.0) + 0.4);
+                d.tube_masts.push((DVec3::new(bx - bar, by, h), DVec3::new(bx + bar, by, h), 0.05));
             }
         }
         k => return Err(format!("unknown floodlight type {k:?}")),

@@ -11,6 +11,14 @@ pub const BOARD_END_OFFSET: f64 = 5.5;
 pub const BOARD_HEIGHT: f64 = 0.9;
 /// virtual board height of a broadcast 3D carpet
 pub const CARPET_HEIGHT: f64 = 1.0;
+/// A carpet squeezed lower than this is left out.
+pub const CARPET_MIN_HEIGHT: f64 = 0.35;
+/// The end boards stand at least this far behind the goal line (clear of the goal nets).
+pub const BOARD_END_MIN: f64 = 3.0;
+/// A carpet keeps this far from the goal: behind the goal line (net depth 2 m + 0.5 m) and to the
+/// side of the centre line (half the goal 3.66 m + net and 0.6 m).
+pub const GOAL_CLEAR_X: f64 = 2.5;
+pub const GOAL_CLEAR_Y: f64 = 4.26;
 
 /// How far behind the goal line the end boards go when there are 3D carpets (see
 /// placement.end_board_offset): the smallest distance from the 5.5 m default, in 0.25 m steps, at
@@ -115,17 +123,31 @@ pub fn place_carpet(cam: DVec3, base: DVec3, width: f64, height: f64, p: &Pitch,
         let (v, _, _) = carpet(cam, base, width, h, 4, 2, &|_, _| 0.0);
         let inner = v.iter().map(|q| s * q.x).fold(f64::MAX, f64::min) - (p.length / 2.0 + margin);
         let side = v.iter().map(|q| q.y.abs()).fold(f64::MIN, f64::max) - (p.width / 2.0 - 0.5);
-        if inner >= -1e-6 && side <= 1e-6 {
+        // clear of the goal: no corner within the net's footprint (plus a margin)
+        let goal = v
+            .iter()
+            .filter(|q| s * q.x < p.length / 2.0 + GOAL_CLEAR_X && q.y * base.y.signum() > -GOAL_CLEAR_Y)
+            .map(|q| GOAL_CLEAR_Y - q.y * base.y.signum())
+            .fold(0.0, f64::max);
+        if inner >= -1e-6 && side <= 1e-6 && goal <= 1e-6 {
             break;
         }
         if inner < 0.0 {
             base.x += s * -inner;
         }
-        if side > 0.0 {
+        if goal > 0.0 {
+            base.y += base.y.signum() * goal;
+        } else if side > 0.0 {
             base.y -= base.y.signum() * side;
         }
     }
     (base, h)
+}
+
+/// A placed carpet is usable: tall enough to read and wholly in front of the end boards.
+pub fn carpet_fits(cam: DVec3, base: DVec3, width: f64, h: f64, limit_x: f64) -> bool {
+    let (v, _, _) = carpet(cam, base, width, h, 4, 2, &|_, _| 0.0);
+    h >= CARPET_MIN_HEIGHT && v.iter().all(|q| q.x.abs() <= limit_x + 1e-6)
 }
 
 pub fn fit_carpet_height(cam: DVec3, base: DVec3, width: f64, height: f64, limit_x: f64) -> f64 {

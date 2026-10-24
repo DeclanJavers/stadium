@@ -217,7 +217,11 @@ pub struct RoofOut {
     pub edge_line: Vec<DVec3>,
     pub tail_s: f64,
     pub tail_top: f64,
+    /// top of the leading edge (fascia or clad girder)
+    pub edge_top: f64,
     pub girder_depth: f64,
+    /// highest point of the roof (deck and steel)
+    pub top: f64,
 }
 
 pub fn build(run: &Run, roof: &Roof, bay_list: &[(f64, f64)], include_ends: bool) -> RoofOut {
@@ -289,11 +293,15 @@ pub fn build(run: &Run, roof: &Roof, bay_list: &[(f64, f64)], include_ends: bool
                     r * 0.6,
                 ));
             }
-            let last = bounds.last().copied();
+            // posts count bays from the run's start; a run without its ends (a bowl's corner arc)
+            // leaves the ends to its neighbours, which already have a post there
+            let last = bounds.last().copied().filter(|_| include_ends);
+            let first = usize::from(!include_ends);
+            let r_post = 0.16 + z_g / 150.0;
             for (k, &t) in bounds.iter().enumerate() {
                 o.tubes.push((vec![w(t, s_g, z_g + dg), w(t, s_b, z_top_back)], 0.12));
-                if k % p.post_every.max(1) == 0 || Some(t) == last {
-                    o.tubes.push((vec![w(t, roof.s_post, 0.0), w(t, roof.s_post, z_g)], 0.16));
+                if (k + first) % p.post_every.max(1) == 0 || Some(t) == last {
+                    o.tubes.push((vec![w(t, roof.s_post, 0.0), w(t, roof.s_post, z_g)], r_post));
                 }
             }
             deck(&mut o.mesh, run, s_g - 0.3, s_b + 0.3, &z_of, p.translucent);
@@ -327,7 +335,9 @@ pub fn build(run: &Run, roof: &Roof, bay_list: &[(f64, f64)], include_ends: bool
             ],
         });
     }
+    o.edge_top = z_edge_hi;
     o.edge_line = run.samples(run.t0, run.t1, roof.s_front).iter().map(|&t| w(t, roof.s_front - 0.4, z_edge_lo)).collect();
+    o.top = o.mesh.verts.iter().map(|v| v.z).chain(o.tubes.iter().flat_map(|t| t.0.iter().map(|q| q.z))).fold(f64::MIN, f64::max);
     match roof.kind {
         RoofKind::Cantilever => {
             o.tail_s = roof.s_back + roof.back_span;

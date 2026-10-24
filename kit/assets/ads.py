@@ -127,15 +127,19 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
     cp = cfg.get("carpets")
     carpet_width = cp.get("width", 5.0) if isinstance(cp, dict) else 5.0
     end_cfg = per.get("end_offset", "auto")
+    # the end boards stay behind the goal nets and in front of the end stands
+    reach = (stands["A"] - pitch["length"] / 2 - 0.8) if stands else pitch["runoff_end"] + 3.0
     if isinstance(end_cfg, (int, float)) and not isinstance(end_cfg, bool):
-        end_off = float(end_cfg)
+        end_off = max(min(float(end_cfg), reach), min(PL.BOARD_END_MIN, reach))
+        if abs(end_off - end_cfg) > 1e-9:
+            print(f"[ads] warning: end boards {end_cfg} m behind the goal line don't fit; using {end_off:.2f} m",
+                  flush=True)
     elif cp:
-        reach = (stands["A"] - pitch["length"] / 2 - 0.8) if stands else pitch["runoff_end"] + 3.0
         end_off = PL.end_board_offset(cam, pitch, carpet_width, reach)
     else:
         end_off = PL.BOARD_END_OFFSET
     root["end_board_offset"] = round(end_off, 2)
-    housing = painted("Board_Housing", "#111214", 0.5)
+    housing = painted("Board_Housing", "#34363a", 0.5)
     if kind != "none":
         runs = PL.board_runs(pitch, gap, end_offset=end_off)
         if kind == "led":
@@ -197,9 +201,16 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         limit = pitch["length"] / 2 + end_off - 0.4
         from .pitch import crown_fn
         zf = crown_fn(pitch)
+        skipped = False
         for k, (s, side, base) in enumerate(PL.carpet_spots(pitch, width)):
             b = ckeys[k % len(ckeys)]
             base, h = PL.place_carpet(cam, base, width, 1.1, pitch, limit)
+            if not PL.carpet_fits(cam, base, width, h, limit):
+                if not skipped:
+                    print("[ads] warning: no room for 3D carpets between the goals and the end boards; "
+                          "carpets left out", flush=True)
+                skipped = True
+                continue
             V, F, UVv = PL.carpet(cam, base, width, h, ground=lambda x, y: float(zf(x, y)))
             mat = print_material(f"Carpet_{b}", _image(images[b]), rough=0.85, cloth=True)
             _mesh_with_vertex_uvs(f"Carpet_{k}", V, F, UVv, col, root, mat)

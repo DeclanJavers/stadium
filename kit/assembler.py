@@ -11,8 +11,11 @@ def _family(name):
 
 
 def assemble(layout):
-    layout = layout or {}
-    state = {}
+    from .sanitize import sanitize
+    layout, fixes = sanitize(layout or {})
+    for w in fixes:
+        print(f"[assemble] warning: {w}", flush=True)
+    state = {"warnings": fixes}
     pitch_mod = _family("pitch")
     root, p, lines = pitch_mod.build(layout.get("pitch"))
     state.update(pitch=root, pitch_params=p, lines=lines)
@@ -34,6 +37,8 @@ def assemble(layout):
     if layout.get("stands"):
         st = _family("stand").build(dict(layout["stands"], _night=night), p, collection("Stands"))
         state["stands"] = st
+        if st.get("corner_radius") is not None:
+            pitch_mod.clip_to_bowl(root, p, st["A"], st["B"], st["corner_radius"])
         print(f"[assemble] capacity {st['capacity']}", flush=True)
 
     dug = layout.get("dugouts")
@@ -45,7 +50,7 @@ def assemble(layout):
         state["screens"] = _family("screen").build(layout["screens"], p, state.get("stands"), night,
                                                    collection("Screens"))
     if dug:
-        state["dugouts"] = _family("dugout").build(dug, p, night, collection("Dugouts"))
+        state["dugouts"] = _family("dugout").build(dug, p, night, collection("Dugouts"), state.get("stands"))
     if tun:
         state["tunnel"] = _family("tunnel").build(tun, p, state.get("stands"), collection("Tunnel"))
 

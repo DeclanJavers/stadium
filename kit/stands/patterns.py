@@ -50,6 +50,11 @@ FONT = {
     ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
     "&": ["01100", "10010", "10100", "01000", "10101", "10010", "01101"],
     "'": ["00100", "00100", "01000", "00000", "00000", "00000", "00000"],
+    "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
+    "?": ["01110", "10001", "00001", "00010", "00100", "00000", "00100"],
+    ":": ["00000", "01100", "01100", "00000", "01100", "01100", "00000"],
+    "/": ["00001", "00010", "00010", "00100", "01000", "01000", "10000"],
+    "+": ["00000", "00100", "00100", "11111", "00100", "00100", "00000"],
 }
 
 
@@ -67,6 +72,66 @@ def text_bitmap(text):
             cols.append(np.zeros((7, 1), bool))
         cols.append(np.array([[c == "1" for c in row] for row in g]))
     return np.concatenate(cols, 1) if cols else np.zeros((7, 0), bool)
+
+
+ACCENTS = {"ÀÁÂÃÄÅ": "A", "Ç": "C", "ÈÉÊË": "E", "ÌÍÎÏ": "I", "Ñ": "N", "ÒÓÔÕÖØ": "O", "ÙÚÛÜ": "U", "Ý": "Y"}
+
+
+def _plain_text(text, warnings):
+    """Upper case in the seat font: accents dropped, characters it has no glyph for left blank."""
+    out, missing = [], []
+    for ch in text.upper():
+        c = next((v for k, v in ACCENTS.items() if ch in k), ch)
+        if c in FONT:
+            out.append(c)
+        else:
+            if ch not in missing:
+                missing.append(ch)
+            out.append(" ")
+    if missing:
+        warnings.append(f"mosaic text {text!r}: the seat font has no {' '.join(missing)}; left blank")
+    return "".join(out)
+
+
+def _text_width(s):
+    return max(0, 6 * len(s) - 1)
+
+
+def text_block(text, max_w, max_h, warnings):
+    """The text as a bitmap at most max_w seats wide: on one line if it fits, else wrapped onto as
+    many lines as max_h rows hold (a blank row between lines, each centred), else shortened."""
+    t = _plain_text(text, warnings)
+    max_lines = max(1, (max_h + 1) // 8)
+    lines = [t]
+    if _text_width(t) > max_w and max_lines > 1:
+        wrapped = []
+        for word in t.split():
+            if wrapped and _text_width(wrapped[-1]) + 6 + _text_width(word) <= max_w:
+                wrapped[-1] += " " + word
+            else:
+                wrapped.append(word)
+        if 1 < len(wrapped) <= max_lines:
+            lines = wrapped
+    for i, line in enumerate(lines):
+        if _text_width(line) > max_w:
+            fit = line[:(max_w + 1) // 6]
+            # end on a whole word when there is one to end on
+            whole = line[len(fit):len(fit) + 1] == " " or " " not in fit
+            cut = (fit if whole else fit[:fit.rfind(" ")]).rstrip()
+            warnings.append(f"mosaic text {text!r} is {_text_width(line)} seats wide but the tier has room for "
+                            f"{max_w}; shortened to {cut!r}")
+            lines[i] = cut
+    w = max(_text_width(line) for line in lines)
+    rows = []
+    for k, line in enumerate(lines):
+        if k:
+            rows.append(np.zeros((1, w), bool))
+        bmp = text_bitmap(line)
+        pad = (w - _text_width(line)) // 2
+        block = np.zeros((7, w), bool)
+        block[:, pad:pad + bmp.shape[1]] = bmp
+        rows.append(block)
+    return np.concatenate(rows, 0)
 
 
 def base_colors(anchors, spec, tier_rows, seed=0):
@@ -99,7 +164,7 @@ def base_colors(anchors, spec, tier_rows, seed=0):
     return out
 
 
-def apply_mosaic(colors, anchors, mosaic, run_length, tier_rows, image=None):
+def apply_mosaic(colors, anchors, mosaic, run_length, tier_rows, image=None, warnings=None):
     """Overlay a text/image mosaic onto the anchors of one straight run and tier, in place.
 
     image: optional (H, W, 3) sRGB array (row 0 = top) used instead of text.
@@ -117,7 +182,8 @@ def apply_mosaic(colors, anchors, mosaic, run_length, tier_rows, image=None):
     t0, t1 = span[0] * run_length, span[1] * run_length
     avail_seats = (t1 - t0) / pitch
     if image is None:
-        bmp = text_bitmap(mosaic["text"])
+        bmp = text_block(mosaic["text"], int(np.floor(max(avail_seats, 0.0))), max(avail_rows, 0),
+                         [] if warnings is None else warnings)
         rgb = np.where(bmp[..., None], hex_rgb(mosaic.get("color", "#ffffff")), np.nan)
         if mosaic.get("background"):
             rgb = np.where(bmp[..., None], rgb, hex_rgb(mosaic["background"]))

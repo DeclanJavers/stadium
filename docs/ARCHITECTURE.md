@@ -191,6 +191,10 @@ replaces Python's salted `hash()`, so both implementations give identical seat c
 floodlight designs. `viewer/gen/tests/parity.rs` compares the port with reference outputs dumped
 from the Python (`tools/dump_reference.py`) — counts and indices exactly, coordinates to ~1e-9 — and
 checks whole-layout capacities against the Blender assembler.
+Both sides sanitise a layout first (unknown ids and bad colours warn and fall back) and share the
+same placement rules for awkward combinations (low roofs, tight bowls, tall goalpost roofs; see
+docs/SPECS.md, Robustness). `viewer/gen/tests/fuzz.rs` builds hundreds of seeded random layouts and
+checks geometric invariants on each.
 
 The Rust viewer is also a live editor: every layout option in a side panel, a background rebuild on
 each change (≈0.2–0.6 s for the 150k bowl), readouts for capacity, sightlines, roof clearances,

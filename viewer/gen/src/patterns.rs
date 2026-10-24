@@ -49,6 +49,11 @@ const FONT: &[(char, [u8; 7])] = &[
     ('.', [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01100]),
     ('&', [0b01100, 0b10010, 0b10100, 0b01000, 0b10101, 0b10010, 0b01101]),
     ('\'', [0b00100, 0b00100, 0b01000, 0b00000, 0b00000, 0b00000, 0b00000]),
+    ('!', [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100]),
+    ('?', [0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b00000, 0b00100]),
+    (':', [0b00000, 0b01100, 0b01100, 0b00000, 0b01100, 0b01100, 0b00000]),
+    ('/', [0b00001, 0b00010, 0b00010, 0b00100, 0b01000, 0b01000, 0b10000]),
+    ('+', [0b00000, 0b00100, 0b00100, 0b11111, 0b00100, 0b00100, 0b00000]),
 ];
 
 fn glyph(ch: char) -> [u8; 7] {
@@ -73,6 +78,83 @@ pub fn text_bitmap(text: &str) -> Vec<Vec<bool>> {
             for c in 0..5 {
                 row.push(g[r] & (1 << (4 - c)) != 0);
             }
+        }
+    }
+    rows
+}
+
+/// Accented capitals drawn with the plain letter.
+const ACCENTS: &[(&str, char)] = &[("ÀÁÂÃÄÅ", 'A'), ("Ç", 'C'), ("ÈÉÊË", 'E'), ("ÌÍÎÏ", 'I'), ("Ñ", 'N'), ("ÒÓÔÕÖØ", 'O'), ("ÙÚÛÜ", 'U'), ("Ý", 'Y')];
+
+/// Upper case in the seat font: accents dropped, characters it has no glyph for left blank.
+fn plain_text(text: &str, warnings: &mut Vec<String>) -> String {
+    let mut out = String::new();
+    let mut missing: Vec<char> = Vec::new();
+    for ch in text.to_uppercase().chars() {
+        let c = ACCENTS.iter().find(|a| a.0.contains(ch)).map(|a| a.1).unwrap_or(ch);
+        if FONT.iter().any(|g| g.0 == c) {
+            out.push(c);
+        } else {
+            if !missing.contains(&ch) {
+                missing.push(ch);
+            }
+            out.push(' ');
+        }
+    }
+    if !missing.is_empty() {
+        let list: Vec<String> = missing.iter().map(|c| c.to_string()).collect();
+        warnings.push(format!("mosaic text {text:?}: the seat font has no {}; left blank", list.join(" ")));
+    }
+    out
+}
+
+fn text_width(s: &str) -> usize {
+    (6 * s.chars().count()).saturating_sub(1)
+}
+
+/// The text as a bitmap at most `max_w` seats wide: on one line if it fits, else wrapped onto as
+/// many lines as `max_h` rows hold (a blank row between lines, each centred), else shortened.
+pub fn text_block(text: &str, max_w: usize, max_h: usize, warnings: &mut Vec<String>) -> Vec<Vec<bool>> {
+    let t = plain_text(text, warnings);
+    let max_lines = 1usize.max((max_h + 1) / 8);
+    let mut lines = vec![t.clone()];
+    if text_width(&t) > max_w && max_lines > 1 {
+        let mut wrapped: Vec<String> = Vec::new();
+        for word in t.split_whitespace() {
+            match wrapped.last_mut() {
+                Some(l) if text_width(l) + 6 + text_width(word) <= max_w => {
+                    l.push(' ');
+                    l.push_str(word);
+                }
+                _ => wrapped.push(word.to_string()),
+            }
+        }
+        if wrapped.len() > 1 && wrapped.len() <= max_lines {
+            lines = wrapped;
+        }
+    }
+    for l in lines.iter_mut() {
+        if text_width(l) > max_w {
+            let fit: String = l.chars().take((max_w + 1) / 6).collect();
+            // end on a whole word when there is one to end on
+            let whole = l.chars().nth(fit.chars().count()) == Some(' ') || !fit.contains(' ');
+            let cut = if whole { fit.trim_end().to_string() } else { fit[..fit.rfind(' ').unwrap()].trim_end().to_string() };
+            warnings.push(format!("mosaic text {text:?} is {} seats wide but the tier has room for {max_w}; shortened to {cut:?}", text_width(l)));
+            *l = cut;
+        }
+    }
+    let w = lines.iter().map(|l| text_width(l)).max().unwrap_or(0);
+    let mut rows = Vec::new();
+    for (k, l) in lines.iter().enumerate() {
+        if k > 0 {
+            rows.push(vec![false; w]);
+        }
+        let pad = (w - text_width(l)) / 2;
+        for r in text_bitmap(l) {
+            let mut row = vec![false; pad];
+            row.extend(r);
+            row.resize(w, false);
+            rows.push(row);
         }
     }
     rows
@@ -149,6 +231,7 @@ pub fn apply_mosaic(
     run_length: f64,
     tier_rows: &[usize],
     image: Option<&Picture>,
+    warnings: &mut Vec<String>,
 ) -> usize {
     let tier = mosaic.get("tier").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
     let idx: Vec<usize> = (0..anchors.len()).filter(|&i| anchors[i].run == run_index && anchors[i].tier == tier).collect();
@@ -169,11 +252,12 @@ pub fn apply_mosaic(
     let pic = match image {
         Some(p) => p,
         None => {
-            let bmp = text_bitmap(mosaic.get("text").and_then(|v| v.as_str()).unwrap_or(""));
+            let text = mosaic.get("text").and_then(|v| v.as_str()).unwrap_or("");
+            let bmp = text_block(text, avail_seats.max(0.0).floor() as usize, avail_rows.max(0) as usize, warnings);
             let fg = hex_rgb(mosaic.get("color").and_then(|v| v.as_str()).unwrap_or("#ffffff"));
             let bg = mosaic.get("background").and_then(|v| v.as_str()).filter(|s| !s.is_empty()).map(hex_rgb);
-            let w = bmp[0].len();
-            text_pic = Picture { w, h: 7, px: bmp.iter().flat_map(|r| r.iter().map(|&on| if on { Some(fg) } else { bg })).collect() };
+            let w = bmp.first().map_or(0, |r| r.len());
+            text_pic = Picture { w, h: bmp.len(), px: bmp.iter().flat_map(|r| r.iter().map(|&on| if on { Some(fg) } else { bg })).collect() };
             &text_pic
         }
     };

@@ -91,6 +91,32 @@ impl Run {
     }
 }
 
+/// Largest corner radius for a bowl whose front line is the a x b rectangle (see
+/// geometry.max_corner_radius): the arcs stay `margin` outside the field corners and the straight
+/// sides keep some length.
+pub fn max_corner_radius(a: f64, b: f64, half_length: f64, half_width: f64, margin: f64) -> f64 {
+    let ok = |r: f64| {
+        let (cx, cy) = (a - r, b - r);
+        if half_length <= cx || half_width <= cy {
+            return true;
+        }
+        (half_length - cx).hypot(half_width - cy) <= r - margin
+    };
+    let (mut lo, mut hi) = (0.0, a.min(b) - 1.0);
+    if ok(hi) {
+        return hi;
+    }
+    for _ in 0..50 {
+        let mid = 0.5 * (lo + hi);
+        if ok(mid) {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    lo
+}
+
 /// Yaw that turns local +Y towards -n (the pitch).
 pub fn yaw_facing_pitch(n: DVec2) -> f64 {
     n.x.atan2(-n.y)

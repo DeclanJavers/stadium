@@ -15,6 +15,7 @@ import numpy as np
 
 LUX_PER_W = 683.0      # Blender light units: 1 W/m^2 ~ 683 lux
 MIN_ELEVATION = 25.0   # UEFA: lamp line at >= 25 deg from the centre of the pitch
+POLE_CLEAR_X = 15.0    # poles on the main-stand side stay this far from halfway
 
 DEFAULTS = {
     "corner_pylons": {"lux": 1200, "rows": 5, "cols": 7, "mast": "lattice", "fixture": "halide", "kelvin": 4300},
@@ -39,15 +40,21 @@ def assign(fixtures, aims, seed=0):
     return np.array(out)
 
 
-def pylons(L, W, A, B, reach, roof_top, spec):
-    """Four masts on the diagonals, outside the stands. reach: how far out the structures go."""
+def pylons(L, W, A, B, reach, roof_top, spec, corner_radius=None):
+    """Four masts on the diagonals, outside the stands. reach: how far out the structures go;
+    corner_radius: a curved bowl's corner radius (the mast then stands behind the corner stand)."""
     out = []
     for sx, sy in ((1, 1), (-1, 1), (-1, -1), (1, -1)):
-        d = np.array([sx * (L / 2), sy * (W / 2)])
-        u = d / np.linalg.norm(d)
-        base = np.array([sx * (A + reach * 0.5), sy * (B + reach * 0.5)])
-        r = max(np.linalg.norm(base), np.linalg.norm(d) + 15.0)
-        p = u * r if reach > 30 else base
+        # open corners: in the gap between the stands (which never reach past A, B)
+        gap = 0.5 * min(reach, 30.0)
+        p = np.array([sx * (A + gap), sy * (B + gap)])
+        if corner_radius is not None:
+            # a bowl: behind the corner stand, clear of its back and the mast head's width
+            R = corner_radius
+            c = np.array([sx * (A - R), sy * (B - R)])
+            q = c + np.array([sx, sy]) / math.sqrt(2) * (R + reach + 8.0)
+            if np.linalg.norm(q) > np.linalg.norm(p):
+                p = q
         dist = np.linalg.norm(p)
         h = max(dist * math.tan(math.radians(MIN_ELEVATION + 3)), roof_top + 8.0, 30.0)
         out.append({"base": (float(p[0]), float(p[1])), "height": float(h)})
@@ -72,6 +79,24 @@ def head_layout(mast, spec):
     return np.array(pts), yaw, tilt
 
 
+def edge_normal(line, p):
+    """Horizontal unit normal of a roof edge polyline at its point nearest p, pointing away from the
+    pitch centre."""
+    best = (math.inf, np.array([1.0, 0.0]))
+    q = np.asarray(p, float)[:2]
+    for a, b in zip(np.asarray(line)[:-1, :2], np.asarray(line)[1:, :2]):
+        ab = b - a
+        L2 = float(ab @ ab)
+        if L2 < 1e-12:
+            continue
+        t = min(max(float((q - a) @ ab) / L2, 0.0), 1.0)
+        dist = float(np.linalg.norm(a + ab * t - q))
+        if dist < best[0]:
+            best = (dist, ab / math.sqrt(L2))
+    n = np.array([best[1][1], -best[1][0]])
+    return -n if n @ q < 0 else n
+
+
 def roof_ribbon(edge_lines, spacing):
     pts = []
     for line in edge_lines:
@@ -89,6 +114,9 @@ def poles(L, W, spec, offset):
     xs = np.linspace(-L / 2, L / 2, n + 2)[1:-1] if n > 1 else np.array([0.0])
     for sy in (1, -1):
         for x in xs:
+            # the main-stand side keeps halfway clear for the dugouts, tunnel and TV camera
+            if sy < 0 and abs(x) < POLE_CLEAR_X:
+                x = -POLE_CLEAR_X if x < 0 else POLE_CLEAR_X
             out.append({"base": (float(x), float(sy * (W / 2 + offset))), "height": spec["height"]})
     return out
 
@@ -147,13 +175,25 @@ def optimise_aims(fixtures, candidates, points, spot_deg, blend=0.9, iters=600, 
     fixtures = np.asarray(fixtures, float)
     C = np.stack([contribution(f, candidates, 1.0, spot_deg, blend, points) for f in fixtures])  # F, A, G
     F = len(fixtures)
-    a = (np.arange(F) * 37 + seed) % len(candidates)     # deterministic, portable start
+    # a fixture never aims back over its own shoulder: its aim point lies in front of it, seen from the
+    # pitch's spine (the long axis between the penalty spots' latitudes); the start deals candidates
+    # round the fixtures (spread light), skipping those behind each fixture
+    spine = max(float(candidates[:, 0].max() - candidates[:, 1].max()), 0.0)
+    fx, fy = fixtures[:, 0][:, None], fixtures[:, 1][:, None]
+    ix, iy = np.clip(fx, -spine, spine) - fx, -fy
+    dx, dy = candidates[None, :, 0] - fx, candidates[None, :, 1] - fy
+    allowed = (np.hypot(ix, iy) < 1.0) | (dx * ix + dy * iy >= 0.0)
+    A = len(candidates)
+    a = (np.arange(F) * 37 + seed) % A
+    for f in range(F):
+        a0 = a[f]
+        a[f] = next((k for k in ((a0 + j * 7) % A for j in range(A)) if allowed[f, k]), a0)
     E = C[np.arange(F), a].sum(0)
     for _ in range(iters):
         g = int(np.argmin(E))
         star = int(np.argmin(np.linalg.norm(candidates[:, :2] - points[g, :2], axis=1)))
         new = E[None, :] - C[np.arange(F), a] + C[:, star]
-        score = new.min(1) / new.max(1)
+        score = np.where(allowed[:, star], new.min(1) / new.max(1), -np.inf)
         f = int(np.argmax(score))
         if score[f] <= E.min() / E.max() + 1e-6:
             # try the second-darkest region before giving up
@@ -162,7 +202,7 @@ def optimise_aims(fixtures, candidates, points, spot_deg, blend=0.9, iters=600, 
             for g in order:
                 star = int(np.argmin(np.linalg.norm(candidates[:, :2] - points[g, :2], axis=1)))
                 new = E[None, :] - C[np.arange(F), a] + C[:, star]
-                score = new.min(1) / new.max(1)
+                score = np.where(allowed[:, star], new.min(1) / new.max(1), -np.inf)
                 f = int(np.argmax(score))
                 if score[f] > E.min() / E.max() + 1e-6:
                     moved = True

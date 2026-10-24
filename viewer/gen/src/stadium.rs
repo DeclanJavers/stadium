@@ -29,6 +29,17 @@ pub const CREATIVE_M: f64 = 8.0;
 pub const DUGOUT_FRONT: f64 = 4.3;
 pub const DUGOUT_DEPTH: f64 = 2.5;
 pub const DUGOUT_GAP: f64 = 6.0;
+/// a screen hung under a roof edge keeps at least this much air below it (m)
+pub const SCREEN_HANG_CLEARANCE: f64 = 6.0;
+/// lowest edge of a centre-hung screen over the pitch (m)
+pub const SCREEN_CENTRE_CLEARANCE: f64 = 18.0;
+/// lowest roof edge a roof floodlight ribbon is mounted on (m)
+pub const ROOF_LIGHTS_MIN_HEIGHT: f64 = 10.0;
+/// The main TV camera sits at least this high; a lower tier front gets a gantry under the roof
+/// edge or a platform at the back of the stand instead.
+pub const CAMERA_MIN_HEIGHT: f64 = 12.0;
+/// Highest front girder a goalpost roof is built with; taller stands get a cantilever.
+pub const GOALPOST_MAX_HEIGHT: f64 = 25.0;
 
 /// A texture the renderer composes at runtime.
 #[derive(Clone, Debug, PartialEq)]
@@ -193,6 +204,8 @@ struct StandsOut {
     roofs: Vec<(String, roofs::RoofOut)>,
     facade_lines: Vec<(String, f64)>,
     camera_mount: Option<DVec3>,
+    /// Some(radius) for a curved bowl
+    corner_r: Option<f64>,
 }
 
 /// Python truthiness of a JSON value (`if cfg.get("carpets"):` in the Blender code).
@@ -289,6 +302,8 @@ pub fn build(layout: &Value, cat: &Catalog) -> Result<Stadium, String> {
 pub type ImageLoader<'a> = dyn Fn(&str) -> Option<Picture> + 'a;
 
 pub fn build_with_images(layout: &Value, cat: &Catalog, images: &ImageLoader) -> Result<Stadium, String> {
+    let (layout, fixes) = crate::sanitize::sanitize(layout, cat);
+    let layout = &layout;
     let night = layout.get("lighting").and_then(|v| v.as_str()) == Some("night");
     let pitch = Pitch::resolve(layout.get("pitch").unwrap_or(&Value::Null), Some(cat));
     let mut st = Stadium {
@@ -300,7 +315,7 @@ pub fn build_with_images(layout: &Value, cat: &Catalog, images: &ImageLoader) ->
         spots: Vec::new(),
         sockets: Vec::new(),
         camera: placement::main_camera(&pitch, None),
-        report: Report { grass: pitch.grass_spec.clone(), ..Default::default() },
+        report: Report { grass: pitch.grass_spec.clone(), warnings: fixes, ..Default::default() },
     };
     build_pitch(&mut st);
     build_goals_and_flags(&mut st, layout, cat)?;
@@ -326,7 +341,7 @@ pub fn build_with_images(layout: &Value, cat: &Catalog, images: &ImageLoader) ->
         build_screens(&mut st, sc, stands.as_ref())?;
     }
     if let Some(d) = dug {
-        build_dugouts(&mut st, d, cat)?;
+        build_dugouts(&mut st, d, cat, stands.as_ref())?;
     }
     if let Some(t) = tun {
         build_tunnel(&mut st, t, stands.as_ref());
@@ -382,8 +397,9 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
         let spec = cat.corner_flags.get(&preset).ok_or_else(|| format!("unknown corner flag preset {preset:?}"))?;
         let spec = merge(spec, &flags);
         let mut tints = Vec::new();
-        if let Some(c) = spec["pole_colors"].as_array().and_then(|a| a.first()).and_then(|c| c.as_str()) {
-            tints.push(("TINT_pole_a".to_string(), patterns::hex_rgb(c)));
+        let poles = spec["pole_colors"].as_array().cloned().unwrap_or_default();
+        for (slot, c) in ["TINT_pole_a", "TINT_pole_b"].iter().zip(poles.iter().filter_map(|c| c.as_str())) {
+            tints.push((slot.to_string(), patterns::hex_rgb(c)));
         }
         let items = pitch::sockets(&st.pitch).into_iter().filter(|s| s.0 == "corner_flag").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
         st.props.push(PropSet { key: format!("corner_flag.{preset}"), items, tints, net: None });
@@ -392,6 +408,86 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
 }
 
 // -- stands -------------------------------------------------------------------------------------
+
+/// Floor height of the stand at depth `s` (the highest tread in front of it).
+fn floor_at(tiers: &[Tier], s: f64) -> f64 {
+    let mut z: f64 = 0.0;
+    for t in tiers {
+        for (i, &si) in t.s.iter().enumerate() {
+            if si - t.tread <= s {
+                z = z.max(t.h[i]);
+            }
+        }
+    }
+    z
+}
+
+enum Gantry {
+    /// hung from the roof's front edge at this height
+    Hung(f64),
+    /// a scaffold platform standing on the treads at this height
+    Standing(f64),
+}
+
+/// Where the main camera goes when the tier front is too low: (depth, eye height, structure).
+/// roof_edge: (depth of the leading edge, its underside, its top, where a gantry may hang).
+fn high_camera(tiers: &[Tier], roof_edge: Option<(f64, f64, f64, f64)>) -> (f64, f64, Gantry) {
+    if let Some((s_front, z_edge, edge_top, s_hang)) = roof_edge {
+        if z_edge - 2.2 >= CAMERA_MIN_HEIGHT - 2.0 {
+            // a gantry slung under the roof's leading edge, clear of the treads below and low
+            // enough that the edge and any floodlights on it stay above the shot
+            let s = s_hang;
+            let z = (z_edge - 2.2).max(floor_at(tiers, s) + 2.2).min(z_edge - 0.3);
+            return (s, z, Gantry::Hung(z_edge));
+        }
+        // a low roof: a gantry standing on its leading edge
+        return (s_front + 0.6, (edge_top + 1.6).max(CAMERA_MIN_HEIGHT), Gantry::Standing(edge_top));
+    }
+    // a platform over the back rows, reaching the minimum height
+    let top = tiers.last().unwrap();
+    let s = top.s_back - 1.2;
+    let floor = floor_at(tiers, s);
+    (s, (floor + 1.6).max(CAMERA_MIN_HEIGHT), Gantry::Standing(floor))
+}
+
+/// The camera platform: a 3 x 2.4 m deck 1.6 m below the lens, the lens at its open front edge
+/// (rails on the sides and back only, out of shot), and hangers to the roof edge or legs down to
+/// the treads or the roof.
+fn gantry_part(run: &Run, t: f64, s_cam: f64, z: f64, g: Gantry) -> Part {
+    let deck = z - 1.6;
+    let s = s_cam + 1.0;
+    let mut lines: Vec<Polyline> = Vec::new();
+    let corners = [(-1.5, -1.2), (1.5, -1.2), (1.5, 1.2), (-1.5, 1.2)];
+    let at = |dt: f64, ds: f64, zz: f64| run.world(t + dt, s + ds, zz);
+    let mut ring: Vec<DVec3> = corners.iter().map(|&(a, b)| at(a, b, deck)).collect();
+    ring.push(ring[0]);
+    lines.push((ring, 0.05));
+    lines.push(([1, 2, 3, 0].iter().map(|&k| at(corners[k].0, corners[k].1, deck + 1.1)).collect(), 0.025));
+    for &(a, b) in &corners {
+        lines.push((vec![at(a, b, deck), at(a, b, deck + 1.1)], 0.025));
+        match g {
+            Gantry::Hung(top) => lines.push((vec![at(a, b, deck), at(a, b, top)], 0.04)),
+            Gantry::Standing(floor) if deck - floor > 0.3 => lines.push((vec![at(a, b, floor), at(a, b, deck)], 0.05)),
+            _ => {}
+        }
+    }
+    if let Gantry::Standing(floor) = g {
+        // cross bracing every 2 m on the legs
+        let mut zz = floor;
+        while zz + 2.0 < deck {
+            for k in 0..4 {
+                let (a0, b0) = corners[k];
+                let (a1, b1) = corners[(k + 1) % 4];
+                lines.push((vec![at(a0, b0, zz), at(a1, b1, zz + 2.0)], 0.03));
+            }
+            zz += 2.0;
+        }
+    }
+    let mut mesh = tube_lines(&lines, 8);
+    let sec = Section::uniform(vec![DVec2::new(s - 1.2, deck - 0.12), DVec2::new(s + 1.2, deck - 0.12), DVec2::new(s + 1.2, deck), DVec2::new(s - 1.2, deck)], 0);
+    mesh.add_prism(run, t - 1.5, t + 1.5, &sec, 0);
+    Part { name: "CameraGantry".into(), mesh, mats: vec![Mat::named("Galvanised")], smooth_deg: 60.0 }
+}
 
 struct Side {
     name: String,
@@ -474,9 +570,17 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
     }
     let gap = num(cfg, "front_gap", 3.0);
     let curved = text(cfg, "corners", "open") == "curved";
-    let r_corner = num(cfg, "corner_radius", 14.0);
+    let mut r_corner = num(cfg, "corner_radius", 14.0);
     let a = p.length / 2.0 + p.runoff_end + gap;
     let b = p.width / 2.0 + p.runoff_side + gap;
+    let mut early_warnings = Vec::new();
+    if curved {
+        let r_max = crate::runs::max_corner_radius(a, b, p.length / 2.0, p.width / 2.0, 2.0);
+        if r_corner > r_max {
+            early_warnings.push(format!("corner radius {} m would put the corner stands on the pitch; using {:.1} m", r_corner, r_max));
+            r_corner = r_max;
+        }
+    }
     if curved {
         let profs: std::collections::BTreeSet<&str> = sides.iter().map(|s| s.profile.as_str()).collect();
         if sides.len() < 4 || profs.len() != 1 {
@@ -498,13 +602,23 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
     let mut tier_rows: Vec<Vec<usize>> = Vec::new();
     let mut vom_top: Vec<Vec<Option<usize>>> = Vec::new();
     let mut standing = 0.0;
-    let mut out = StandsOut { a, b, runs: Vec::new(), roofs: Vec::new(), facade_lines: Vec::new(), camera_mount: None };
-    let mut warnings: Vec<String> = Vec::new();
+    let mut out = StandsOut { a, b, runs: Vec::new(), roofs: Vec::new(), facade_lines: Vec::new(), camera_mount: None, corner_r: curved.then_some(r_corner) };
+    let mut warnings: Vec<String> = early_warnings;
+    let mut tall_goalposts: Vec<String> = Vec::new();
     for (ri, run) in run_defs.iter().enumerate() {
         let sc = sides.iter().find(|s| s.name == run.name).unwrap_or(&sides[0]);
         let df = if curved { focal("south").min(focal("east")) } else { focal(&run.name) };
-        let mut tiers = solve_profile(&cat.profiles[&sc.profile], df);
         let style = text(&sc.cfg, "seat", "tipup_classic").to_string();
+        // rows as deep as the seat needs for a 305 mm seatway (padded seats need wider treads)
+        let mut prof = cat.profiles[&sc.profile].clone();
+        for ts in prof.tiers.iter_mut().filter(|ts| ts.kind != "standing") {
+            let s = if ts.hospitality.unwrap_or(false) { &hosp_seat } else { &style };
+            let min_tread = num(seat_spec(cat, s)?, "min_tread", 0.7);
+            if ts.tread.unwrap_or(0.80) < min_tread - 1e-9 {
+                ts.tread = Some(min_tread);
+            }
+        }
+        let mut tiers = solve_profile(&prof, df);
         let mut tier_styles = Vec::new();
         for t in tiers.iter_mut() {
             let s = if t.hospitality { hosp_seat.clone() } else { style.clone() };
@@ -521,10 +635,21 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
         }
         let o = stands::build_run(run, ri, &tiers);
         st.parts.push(Part { name: format!("Stand_{}", run.name), mesh: o.mesh.clone(), mats: mats.clone(), smooth_deg: if run.curved() { 35.0 } else { 0.0 } });
-        let far = if run.name == "north" || run.name == "south" || run.curved() { p.width } else { p.length };
+        // a bowl's ring roof sights the longer span all round, so its edge is one level
+        let far = if curved { p.width.max(p.length) } else if run.name == "north" || run.name == "south" { p.width } else { p.length };
         let roof_spec = sc.cfg.get("roof").or_else(|| cfg.get("roof")).cloned().unwrap_or(Value::Null);
-        let roof_spec = resolve_preset(&cat.roofs, &roof_spec)?;
+        let mut roof_spec = resolve_preset(&cat.roofs, &roof_spec)?;
+        // goalpost roofs suit single low stands; over a tall stand the posts would be 30-60 m
+        // columns in the front row, so such stands get a cantilever instead
+        if let Some(rs) = roof_spec.as_mut() {
+            if roofs::kind_of(rs) == roofs::RoofKind::Goalpost && roofs::solve(&tiers, rs, df, far).z_front > GOALPOST_MAX_HEIGHT {
+                tall_goalposts.push(run.name.clone());
+                rs["type"] = json!("cantilever");
+            }
+        }
         let mut roof_info = None;
+        let mut roof_edge = None;
+        let mut roof_posts = None;
         if let Some(rs) = &roof_spec {
             let roof = roofs::solve(&tiers, rs, df, far);
             let ro = roofs::build(run, &roof, &o.bay_list, !run.curved());
@@ -544,6 +669,13 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             st.sockets.extend(ro.sockets.iter().cloned());
             st.report.roofs.push((run.name.clone(), roof.raised_for_sightline, roof.raised_for_headroom, roof.clearance_to_sightline));
             roof_info = Some(RoofInfo { tail_s: ro.tail_s, tail_top: ro.tail_top });
+            let z_edge = ro.edge_line.iter().map(|q| q.z).fold(f64::MAX, f64::min);
+            if z_edge.is_finite() {
+                // (a goalpost roof's posts stand in the front row: a gantry goes in front of them)
+                let s_hang = if roof.kind == roofs::RoofKind::Goalpost { roof.s_post - 0.8 } else { roof.s_front + 1.0 };
+                roof_edge = Some((roof.s_front, z_edge, ro.edge_top, s_hang));
+                roof_posts = (roof.kind == roofs::RoofKind::Goalpost).then_some(roof.s_post);
+            }
             out.roofs.push((run.name.clone(), ro));
         }
         let facade_spec = sc.cfg.get("facade").or_else(|| cfg.get("facade")).cloned().unwrap_or(Value::Null);
@@ -555,6 +687,15 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             }
             st.sockets.extend(fo.sockets);
             out.facade_lines.push((run.name.clone(), fo.line_s));
+        } else if !curved && tiers.len() > 1 {
+            // no facade gables: close the exposed ends of a multi-tier stand with a concrete wall,
+            // or the concourse void under the upper tier shows as a hole
+            let hull = Section::uniform(stands::convex_hull(stands::section_hull(&tiers)), 0);
+            let d = 0.3 / run.metric(0.0);
+            let mut ends = MeshAcc::new();
+            ends.add_prism(run, run.t0 - d, run.t0, &hull, 0);
+            ends.add_prism(run, run.t1, run.t1 + d, &hull, 0);
+            st.parts.push(Part { name: format!("StandEnds_{}", run.name), mesh: ends, mats: vec![mats[0].clone()], smooth_deg: 0.0 });
         }
         // balustrade glass on the tier fronts
         let mut glass = MeshAcc::new();
@@ -595,13 +736,26 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             let t = tiers.iter().min_by(|x, y| (x.h[0] - 16.0).abs().partial_cmp(&(y.h[0] - 16.0).abs()).unwrap()).unwrap();
             let (pnt, n) = run.frame(0.5 * (run.t0 + run.t1));
             let q = pnt + n * (t.s0 - 1.2);
-            let m = DVec3::new(q.x, q.y, t.h[0] + t.parapet + 1.6);
+            let mut m = DVec3::new(q.x, q.y, t.h[0] + t.parapet + 1.6);
+            // a goalpost roof's front-row posts would stand in the shot of a camera behind them
+            let behind_posts = roof_posts.is_some_and(|sp| t.s0 - 1.2 > sp);
+            if m.z < CAMERA_MIN_HEIGHT || behind_posts {
+                let (s, z, gantry) = high_camera(&tiers, roof_edge);
+                if z > m.z || behind_posts {
+                    let q = pnt + n * s;
+                    m = DVec3::new(q.x, q.y, z);
+                    st.parts.push(gantry_part(run, 0.5 * (run.t0 + run.t1), s, z, gantry));
+                }
+            }
             out.camera_mount = Some(m);
             st.sockets.push(Socket { kind: "camera", id: "main".into(), loc: m, n: DVec2::new(0.0, -1.0), props: vec![] });
         }
         out.runs.push((run.clone(), tiers));
     }
 
+    if !tall_goalposts.is_empty() {
+        warnings.push(format!("a goalpost roof would stand over {GOALPOST_MAX_HEIGHT:.0} m on {}; cantilever used there", tall_goalposts.join(", ")));
+    }
     // seat colours: base pattern per run, mosaics, finish
     let run_index = |name: &str| out.runs.iter().position(|(r, _)| r.name == name);
     let default = cfg.get("colors").cloned().unwrap_or(json!({"pattern": "solid", "color": "#c8102e"}));
@@ -648,7 +802,7 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             },
             None => mz.get("pixels").and_then(picture_from_json),
         };
-        patterns::apply_mosaic(&mut colors, &all, &mz, ri, run_lengths[ri], &tier_rows[ri], pic.as_ref());
+        patterns::apply_mosaic(&mut colors, &all, &mz, ri, run_lengths[ri], &tier_rows[ri], pic.as_ref(), &mut warnings);
     }
     let finished = patterns::finish(&colors, num(cfg, "seat_fade", 0.0), 0);
     let mut by_style: BTreeMap<String, usize> = BTreeMap::new();
@@ -676,11 +830,29 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
     let (ix, iy) = (p.length / 2.0 + p.runoff_end, p.width / 2.0 + p.runoff_side);
     let n = 360;
     let mut apron = MeshAcc::new();
+    let front_r = if curved { r_corner } else { 0.0 };
     for k in 0..n {
         let ang = 2.0 * PI * k as f64 / n as f64;
         let d = DVec2::new(ang.cos(), ang.sin());
+        // (a tight bowl's corner stands come in over the run-off corners: stop at their front)
         let q = rect_hit(d, ix, iy, 0.0);
+        let f = rect_hit(d, a + 0.3, b + 0.3, front_r);
+        let q = if q.length() > f.length() { f } else { q };
         apron.verts.push(DVec3::new(q.x, q.y, -0.005));
+    }
+    // ... and the run-off turf stops there too instead of poking out behind them
+    if curved {
+        if let Some(surf) = st.parts.iter_mut().find(|pt| pt.name == "PitchSurface") {
+            for v in surf.mesh.verts.iter_mut() {
+                let r = v.truncate().length();
+                if r > 1e-9 {
+                    let f = rect_hit(v.truncate() / r, a + 0.3, b + 0.3, front_r);
+                    if r > f.length() {
+                        *v = DVec3::new(f.x, f.y, p.crown_z(f.x, f.y));
+                    }
+                }
+            }
+        }
     }
     for k in 0..n {
         let ang = 2.0 * PI * k as f64 / n as f64;
@@ -802,12 +974,18 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
     let kind = text(&per, "type", "led").to_string();
     let carpets_on = cfg.get("carpets").is_some_and(truthy);
     let carpet_width = cfg.get("carpets").map(|c| num(c, "width", 5.0)).unwrap_or(5.0);
+    // the end boards stay behind the goal nets and in front of the end stands
+    let reach = stands.map(|s| s.a - p.length / 2.0 - 0.8).unwrap_or(p.runoff_end + 3.0);
     let end_off = match per.get("end_offset") {
-        Some(Value::Number(n)) => n.as_f64().unwrap_or(placement::BOARD_END_OFFSET),
-        _ if carpets_on => {
-            let reach = stands.map(|s| s.a - p.length / 2.0 - 0.8).unwrap_or(p.runoff_end + 3.0);
-            placement::end_board_offset(cam, &p, carpet_width, reach, placement::CARPET_HEIGHT)
+        Some(Value::Number(n)) => {
+            let want = n.as_f64().unwrap_or(placement::BOARD_END_OFFSET);
+            let got = want.min(reach).max(placement::BOARD_END_MIN.min(reach));
+            if (got - want).abs() > 1e-9 {
+                st.report.warnings.push(format!("end boards {want} m behind the goal line don't fit; using {got:.2} m"));
+            }
+            got
         }
+        _ if carpets_on => placement::end_board_offset(cam, &p, carpet_width, reach, placement::CARPET_HEIGHT),
         _ => placement::BOARD_END_OFFSET,
     };
     st.report.end_boards_m = end_off;
@@ -875,6 +1053,13 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
         for (k, (_, _, base)) in placement::carpet_spots(&p, width, 0.8).into_iter().enumerate() {
             let bk = ckeys[k % ckeys.len()].clone();
             let (base, h) = placement::place_carpet(cam, base, width, 1.1, &p, limit);
+            if !placement::carpet_fits(cam, base, width, h, limit) {
+                let w = "no room for 3D carpets between the goals and the end boards; carpets left out".to_string();
+                if !st.report.warnings.contains(&w) {
+                    st.report.warnings.push(w);
+                }
+                continue;
+            }
             let pc = p.clone();
             let (v, f, uv) = placement::carpet(cam, base, width, h, 32, 10, &move |x, y| pc.crown_z(x, y));
             let mut m = MeshAcc::new();
@@ -922,6 +1107,12 @@ fn screen_model(w: f64, h: f64) -> MeshAcc {
     let depth = 0.9;
     let mut m = MeshAcc::new();
     add_box(&mut m, DVec3::new(-(w + 0.5) / 2.0, -depth, -(h + 0.5) / 2.0), DVec3::new((w + 0.5) / 2.0, 0.0, (h + 0.5) / 2.0), 0);
+    // service rails across the back every metre: the back reads as a cabinet, not a hole
+    let mut z = -h / 2.0 + 0.5;
+    while z < h / 2.0 {
+        add_box(&mut m, DVec3::new(-w / 2.0, -depth - 0.08, z - 0.06), DVec3::new(w / 2.0, -depth, z + 0.06), 2);
+        z += 1.0;
+    }
     let b = m.verts.len() as u32;
     m.verts.extend([DVec3::new(-w / 2.0, 0.01, -h / 2.0), DVec3::new(w / 2.0, 0.01, -h / 2.0), DVec3::new(w / 2.0, 0.01, h / 2.0), DVec3::new(-w / 2.0, 0.01, h / 2.0)]);
     // wound to face +Y; seen from the front local -X is the viewer's right, so u runs +X -> -X
@@ -929,12 +1120,26 @@ fn screen_model(w: f64, h: f64) -> MeshAcc {
     m
 }
 
+/// The point halfway along a polyline (by length).
+fn midpoint(line: &[DVec3]) -> DVec3 {
+    let total: f64 = line.windows(2).map(|w| (w[1] - w[0]).length()).sum();
+    let mut left = total / 2.0;
+    for w in line.windows(2) {
+        let d = (w[1] - w[0]).length();
+        if d >= left && d > 0.0 {
+            return w[0] + (w[1] - w[0]) * (left / d);
+        }
+        left -= d;
+    }
+    line[line.len() / 2]
+}
+
 fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> Result<(), String> {
     let p = st.pitch.clone();
     let (w, h) = (num(cfg, "width", 18.0), num(cfg, "height", 8.0));
     let (l, wp) = (p.length, p.width);
     let led = Mat { key: "Screen_LED".into(), color: None, emission: Some((DVec3::ONE, if st.night { 1.6 } else { 3.5 })), texture: Some(Tex::Scoreboard) };
-    let mats = vec![Mat::named("Screen_Body"), led];
+    let mats = vec![Mat::named("Screen_Body"), led, Mat::named("Galvanised")];
     let mut tubes: Vec<Polyline> = Vec::new();
     let mut count = 0;
     let mut put = |st: &mut Stadium, name: String, pos: DVec3, yaw: f64, tilt: f64| {
@@ -945,9 +1150,8 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
         count += 1;
     };
     let yaw_to_centre = |x: f64, y: f64| x.atan2(-y);
-    let roof_line = |name: &str| stands.and_then(|s| s.roofs.iter().find(|r| r.0 == name)).map(|r| r.1.edge_line.clone());
     let hang = |st: &mut Stadium, tubes: &mut Vec<Polyline>, put: &mut dyn FnMut(&mut Stadium, String, DVec3, f64, f64), name: String, line: &[DVec3]| {
-        let mid = line[line.len() / 2];
+        let mid = midpoint(line);
         let inward = -DVec2::new(mid.x, mid.y) / mid.x.hypot(mid.y);
         let top = mid.z - 0.6;
         let centre = DVec3::new(mid.x + inward.x * 1.5, mid.y + inward.y * 1.5, top - h / 2.0);
@@ -964,30 +1168,66 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
         put(st, name, DVec3::new(xy.x, xy.y, bottom + h / 2.0 + 0.25), yaw, (-4.0f64).to_radians());
         let side = DVec2::new(yaw.cos(), yaw.sin());
         let back = -DVec2::new(-yaw.sin(), yaw.cos());
-        for sgn in [-0.38, 0.38] {
-            let q = xy + side * sgn * w + back * 1.2;
+        // a leg every ~8 m with struts to the screen, tied by rails and cross braces behind it
+        let n_legs = 2usize.max((w / 8.0).ceil() as usize + 1);
+        let legs: Vec<DVec2> = linspace(-0.42 * w, 0.42 * w, n_legs).iter().map(|&u| xy + side * u + back * 1.2).collect();
+        for &q in &legs {
             let r = q - back * 1.1;
             tubes.push((vec![DVec3::new(q.x, q.y, ground), DVec3::new(q.x, q.y, bottom + h)], 0.22));
             tubes.push((vec![DVec3::new(q.x, q.y, bottom + 0.2), DVec3::new(r.x, r.y, bottom + 0.2)], 0.08));
             tubes.push((vec![DVec3::new(q.x, q.y, bottom + h), DVec3::new(r.x, r.y, bottom + h)], 0.08));
         }
+        for pair in legs.windows(2) {
+            let (a, b) = (pair[0], pair[1]);
+            for z in [bottom + 0.2, bottom + h] {
+                tubes.push((vec![DVec3::new(a.x, a.y, z), DVec3::new(b.x, b.y, z)], 0.07));
+            }
+            tubes.push((vec![DVec3::new(a.x, a.y, bottom + 0.2), DVec3::new(b.x, b.y, bottom + h)], 0.06));
+            if bottom - ground > 2.0 {
+                tubes.push((vec![DVec3::new(a.x, a.y, ground + 0.3), DVec3::new(b.x, b.y, bottom + 0.2)], 0.06));
+            }
+        }
+    };
+    // A screen hangs under a roof edge only with real clearance below it; otherwise it stands on
+    // a frame on top of its stand (on top of the roof if there is one), and with no stand on a
+    // freestanding frame. Centre-hung screens need a roof high enough to clear the play.
+    let can_hang = |line: &[DVec3]| midpoint(line).z - 0.6 - h >= SCREEN_HANG_CLEARANCE;
+    let run_of = |name: &str| stands.and_then(|s| s.runs.iter().find(|r| r.0.name == name));
+    let roof_of = |name: &str| stands.and_then(|s| s.roofs.iter().find(|r| r.0 == name)).map(|r| &r.1);
+    let top_mount = |st: &mut Stadium, tubes: &mut Vec<Polyline>, put: &mut dyn FnMut(&mut Stadium, String, DVec3, f64, f64), name: String, run_name: &str| -> bool {
+        let Some((run, tiers)) = run_of(run_name) else { return false };
+        let (q, n) = run.frame(0.5 * (run.t0 + run.t1));
+        let mut base = tiers.iter().map(|t| t.h_last()).fold(f64::MIN, f64::max) + 1.1;
+        let mut foot = base;
+        if let Some(r) = roof_of(run_name) {
+            base = base.max(r.top + 0.3);
+            foot = foot.max(r.tail_top);
+        }
+        let xy = q + n * (stand_depth(tiers) - 1.0);
+        on_frame(st, tubes, put, name, xy, base + 1.0, foot);
+        true
     };
     let placement_kind = text(cfg, "placement", "ends").to_string();
-    match placement_kind.as_str() {
+    let mut kind = placement_kind.as_str();
+    if kind == "center" {
+        let roofs = stands.map(|s| &s.roofs[..]).unwrap_or(&[]);
+        let z_edge = roofs.iter().map(|r| r.1.edge_line.iter().map(|q| q.z).fold(f64::MAX, f64::min)).fold(f64::MAX, f64::min);
+        if roofs.is_empty() {
+            st.report.warnings.push("a centre-hung screen needs roofs to hang from; screens placed at the ends instead".into());
+            kind = "ends";
+        } else if (z_edge - 6.0 - h).min(25.0) < SCREEN_CENTRE_CLEARANCE {
+            st.report.warnings.push(format!("the roofs are too low for a {h:.0} m centre-hung screen; screens placed at the ends instead"));
+            kind = "ends";
+        }
+    }
+    match kind {
         "ends" | "stand_top" => {
             for (side, x) in [("east", 1.0), ("west", -1.0)] {
                 let name = format!("Screen_{side}");
-                let run = stands.and_then(|s| s.runs.iter().find(|r| r.0.name == side));
-                if placement_kind == "ends" && roof_line(side).is_some() {
-                    hang(st, &mut tubes, &mut put, name, &roof_line(side).unwrap());
-                } else if let Some((run, tiers)) = run {
-                    let t_mid = 0.5 * (run.t0 + run.t1);
-                    let (q, n) = run.frame(t_mid);
-                    let s = stand_depth(tiers) - 1.0;
-                    let top = tiers.iter().map(|t| t.h_last()).fold(f64::MIN, f64::max) + 1.1;
-                    let xy = q + n * s;
-                    on_frame(st, &mut tubes, &mut put, name, xy, top + 1.5, top);
-                } else {
+                let line = roof_of(side).map(|r| r.edge_line.clone());
+                if kind == "ends" && line.as_ref().is_some_and(|l| can_hang(l)) {
+                    hang(st, &mut tubes, &mut put, name, line.as_ref().unwrap());
+                } else if !top_mount(st, &mut tubes, &mut put, name.clone(), side) {
                     on_frame(st, &mut tubes, &mut put, name, DVec2::new(x * (l / 2.0 + p.runoff_end + 4.0), 0.0), 4.0, 0.0);
                 }
             }
@@ -995,19 +1235,20 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
         "corners" => {
             for (sx, sy, arc) in [(1.0, 1.0, "NE"), (-1.0, -1.0, "SW")] {
                 let name = format!("Screen_{arc}");
-                if let Some(line) = roof_line(arc) {
-                    hang(st, &mut tubes, &mut put, name, &line);
-                } else {
+                let line = roof_of(arc).map(|r| r.edge_line.clone());
+                if line.as_ref().is_some_and(|l| can_hang(l)) {
+                    hang(st, &mut tubes, &mut put, name, line.as_ref().unwrap());
+                } else if !top_mount(st, &mut tubes, &mut put, name.clone(), arc) {
+                    // freestanding in the open corner, far enough out that its width clears both stands
                     let (a, b) = stands.map(|s| (s.a, s.b)).unwrap_or((l / 2.0 + 10.0, wp / 2.0 + 8.0));
-                    on_frame(st, &mut tubes, &mut put, name, DVec2::new(sx * (a + 4.0), sy * (b + 4.0)), 8.0, 0.0);
+                    let d = (4.0 * std::f64::consts::SQRT_2).max(w / 2.0 + 2.0);
+                    let xy = DVec2::new(sx * (a + d / std::f64::consts::SQRT_2), sy * (b + d / std::f64::consts::SQRT_2));
+                    on_frame(st, &mut tubes, &mut put, name, xy, 8.0, 0.0);
                 }
             }
         }
         "center" => {
             let roofs = stands.map(|s| &s.roofs[..]).unwrap_or(&[]);
-            if roofs.is_empty() {
-                return Err("a centre-hung screen needs roofs to hang from".into());
-            }
             let z_edge = roofs.iter().map(|r| r.1.edge_line.iter().map(|q| q.z).fold(f64::MAX, f64::min)).fold(f64::MAX, f64::min);
             let cz = (z_edge - 6.0 - h / 2.0).min(25.0 + h / 2.0);
             let half = w / 2.0 + 0.3;
@@ -1021,7 +1262,7 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
                 put(st, format!("Screen_centre_{k}"), DVec3::new(ux * half, uy * half, cz), (-ux).atan2(uy), 0.0);
             }
             for r in roofs {
-                let mid = r.1.edge_line[r.1.edge_line.len() / 2];
+                let mid = midpoint(&r.1.edge_line);
                 tubes.push((vec![DVec3::new(0.0, 0.0, cz + h / 2.0 + 0.5), mid], 0.035));
             }
         }
@@ -1043,6 +1284,15 @@ struct DugoutCfg {
     color: String,
 }
 
+/// Dugout fronts sit 4.3 m behind the touchline, closer (not under 1.5 m) when the main stand's
+/// front is near (see dugout.front_from_touchline).
+fn dugout_front(p: &Pitch, stands: Option<&StandsOut>) -> f64 {
+    match stands {
+        Some(s) if s.runs.iter().any(|r| r.0.name == "south") => (s.b - p.width / 2.0 - DUGOUT_DEPTH - 0.65).min(DUGOUT_FRONT).max(1.5),
+        _ => DUGOUT_FRONT,
+    }
+}
+
 fn dugout_cfg(cfg: &Value) -> DugoutCfg {
     let style = text(cfg, "style", "shell").to_string();
     let seat = match cfg.get("seat").and_then(|v| v.as_str()) {
@@ -1059,11 +1309,12 @@ pub fn dugout_length(cfg: &Value, cat: &Catalog) -> Result<f64, String> {
     Ok(per_row as f64 * num(seat_spec(cat, &d.seat)?, "width", 0.5) + 1.0)
 }
 
-fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<(), String> {
+fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&StandsOut>) -> Result<(), String> {
     let d = dugout_cfg(cfg);
     let lx = dugout_length(cfg, cat)?;
     let w_p = st.pitch.width;
-    let y = -(w_p / 2.0 + DUGOUT_FRONT);
+    let front = dugout_front(&st.pitch, stands);
+    let y = -(w_p / 2.0 + front);
     let xs = [-(DUGOUT_GAP / 2.0 + lx / 2.0), DUGOUT_GAP / 2.0 + lx / 2.0];
     let depth = DUGOUT_DEPTH;
     // one model, front centre at the origin, +Y towards the pitch
@@ -1158,7 +1409,7 @@ fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog) -> Result<(), Str
     }
     // technical areas: dashed lines 1 m beyond the seats each side, to 1 m from the touchline
     let y_front = -(w_p / 2.0 + 1.0);
-    let y_back = -(w_p / 2.0 + DUGOUT_FRONT);
+    let y_back = -(w_p / 2.0 + front);
     let mut paint = MeshAcc::new();
     for xc in xs {
         let (x0, x1) = (xc - lx / 2.0 - 1.0, xc + lx / 2.0 + 1.0);
@@ -1185,7 +1436,7 @@ fn build_tunnel(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) {
     let style = text(cfg, "style", "telescopic").to_string();
     let color = hexv(cfg, "color", "#c8102e");
     let (w, h) = (num(cfg, "width", 3.6), num(cfg, "height", 2.7));
-    let y_end = -(st.pitch.width / 2.0 + DUGOUT_FRONT);
+    let y_end = -(st.pitch.width / 2.0 + dugout_front(&st.pitch, stands));
     let has_stand = stands.is_some_and(|s| s.runs.iter().any(|r| r.0.name == "south"));
     let y_wall = if has_stand { -stands.unwrap().b } else { y_end - 3.0 };
     let mut m = MeshAcc::new();
@@ -1239,14 +1490,32 @@ fn build_tunnel(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) {
 // -- floodlights -------------------------------------------------------------------------------
 
 fn build_floodlights(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&StandsOut>) -> Result<(), String> {
-    let spec = resolve_preset(&cat.floodlights, cfg)?.unwrap_or_default();
+    let mut spec = resolve_preset(&cat.floodlights, cfg)?.unwrap_or_default();
+    // a roof ribbon needs roof edges high enough to light the pitch from; under low roofs the
+    // lamps would sit a few metres above the grass, so light it from corner pylons instead
+    if text(&spec, "type", "") == "roof" {
+        let low = stands.map(|s| s.roofs.iter().flat_map(|r| r.1.edge_line.iter().map(|q| q.z)).fold(f64::MAX, f64::min)).unwrap_or(f64::MAX);
+        if low < ROOF_LIGHTS_MIN_HEIGHT {
+            st.report.warnings.push(format!("roof edges at {low:.1} m are too low for roof floodlights; using corner pylons"));
+            spec["type"] = json!("corner_pylons");
+            spec["fixture"] = json!("led");
+        }
+    }
     let on = spec.get("on").and_then(|v| v.as_bool()).unwrap_or(st.night);
     let info = stands.map(|s| StandInfo {
         a: s.a,
         b: s.b,
-        reach: s.facade_lines.iter().map(|f| f.1).fold(10.0, f64::max),
+        // how far out the structures go: facades, the stands themselves, roof back spans
+        reach: s
+            .facade_lines
+            .iter()
+            .map(|f| f.1)
+            .chain(s.runs.iter().map(|r| stand_depth(&r.1)))
+            .chain(s.roofs.iter().map(|r| r.1.tail_s))
+            .fold(10.0, f64::max),
         roof_top: s.roofs.iter().map(|r| r.1.tail_top).fold(0.0, f64::max),
         roof_edges: s.roofs.iter().map(|r| r.1.edge_line.clone()).collect(),
+        corner_r: s.corner_r,
     });
     let p = &st.pitch;
     let d = floodlights::design(&spec, p.length, p.width, p.runoff_side, info.as_ref())?;

@@ -19,6 +19,12 @@ BOARD_SIDE_OFFSET = 4.0
 BOARD_END_OFFSET = 5.5
 BOARD_HEIGHT = 0.9
 CARPET_HEIGHT = 1.0     # virtual board height of a broadcast 3D carpet
+CARPET_MIN_HEIGHT = 0.35  # a carpet squeezed lower than this is left out
+BOARD_END_MIN = 3.0     # the end boards stand at least this far behind the goal line (clear of the nets)
+# a carpet keeps this far from the goal: behind the goal line (net depth 2 m + 0.5 m) and to the
+# side of the centre line (half the goal 3.66 m + net and 0.6 m)
+GOAL_CLEAR_X = 2.5
+GOAL_CLEAR_Y = 4.26
 
 
 def main_camera(pitch, stands=None):
@@ -93,6 +99,12 @@ def carpet_spots(pitch, width=5.0, behind=0.8):
     return out
 
 
+def carpet_fits(cam, base, width, h, limit_x):
+    """A placed carpet is usable: tall enough to read and wholly in front of the end boards."""
+    V, _, _ = carpet(cam, base, width, h, 4, 2)
+    return h >= CARPET_MIN_HEIGHT and bool(np.all(np.abs(V[:, 0]) <= limit_x + 1e-6))
+
+
 def place_carpet(cam, base, width, height, pitch, limit_x, margin=0.3):
     """Keep a carpet off the field of play: push it back until its whole footprint lies behind the
     goal line (the virtual board faces the camera, so its base runs diagonally and would otherwise
@@ -107,12 +119,18 @@ def place_carpet(cam, base, width, height, pitch, limit_x, margin=0.3):
         V, _, _ = carpet(cam, base, width, h, 4, 2)
         inner = (s * V[:, 0]).min() - (L / 2 + margin)
         side = np.abs(V[:, 1]).max() - (W / 2 - 0.5)
-        if inner >= -1e-6 and side <= 1e-6:
+        # clear of the goal: no corner within the net's footprint (plus a margin)
+        sy = np.sign(base[1])
+        near = (s * V[:, 0] < L / 2 + GOAL_CLEAR_X) & (V[:, 1] * sy > -GOAL_CLEAR_Y)
+        goal = max([0.0] + list(GOAL_CLEAR_Y - V[near, 1] * sy))
+        if inner >= -1e-6 and side <= 1e-6 and goal <= 1e-6:
             break
         if inner < 0:
             base[0] += s * (-inner)
-        if side > 0:
-            base[1] -= np.sign(base[1]) * side
+        if goal > 0:
+            base[1] += sy * goal
+        elif side > 0:
+            base[1] -= sy * side
     return base, h
 
 

@@ -13,7 +13,7 @@ from ..core import materials as MAT
 from ..core.nodes import material, srgb
 from ..core.scene import collection, empty, mesh_object, set_params
 from ..core.sockets import socket
-from .dugout import FRONT_FROM_TOUCHLINE, _box
+from .dugout import _box, front_from_touchline
 from .stand import _tubes_mesh, concrete, painted
 
 
@@ -37,7 +37,7 @@ def build(cfg, pitch, stands, col=None):
     root = empty("Tunnel", col, size=1.0)
     set_params(root, f"tunnel.{p['style']}", "tunnel", "stadium_origin", p)
     W, w, h = pitch["width"], p["width"], p["height"]
-    y_end = -(W / 2 + FRONT_FROM_TOUCHLINE)
+    y_end = -(W / 2 + front_from_touchline(pitch, stands))
     has_stand = bool(stands) and "south" in (stands.get("runs") or {})
     y_wall = -stands["B"] if has_stand else y_end - 3.0
     dark = MAT.painted_metal("Tunnel_Mouth", "#050506", rough=0.9, dirt=0.0, scuffs=0.0)

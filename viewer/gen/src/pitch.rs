@@ -107,6 +107,13 @@ pub fn arc(c: DVec2, r: f64, a0: f64, a1: f64, step: f64) -> Vec<DVec2> {
     linspace(a0, a1, n).iter().map(|a| DVec2::new(c.x + r * a.cos(), c.y + r * a.sin())).collect()
 }
 
+/// Resampling step for a marking: `base`, but at least 24 segments on short curves (the 1 m corner
+/// arcs would otherwise turn into a three-segment polyline).
+pub fn line_step(p: &[DVec2], base: f64) -> f64 {
+    let len: f64 = p.windows(2).map(|w| (w[1] - w[0]).length()).sum();
+    base.min((len / 24.0).max(0.05))
+}
+
 pub fn resample(p: &[DVec2], step: f64) -> Vec<DVec2> {
     let mut s = vec![0.0];
     for w in p.windows(2) {
@@ -187,7 +194,7 @@ pub fn wobble(pts: &[DVec2], closed: bool, amp: f64, seed: u64) -> Vec<DVec2> {
     if closed {
         q.push(pts[0]);
     }
-    let q = resample(&q, 0.4);
+    let q = resample(&q, line_step(&q, 0.4));
     let n = q.len();
     let d: Vec<DVec2> = (0..n)
         .map(|i| {
@@ -261,11 +268,11 @@ pub fn markings_mesh(p: &Pitch) -> MeshAcc {
         let pts = if *closed {
             let mut c = pts.clone();
             c.push(pts[0]);
-            let mut r = resample(&c, 0.5);
+            let mut r = resample(&c, line_step(&c, 0.5));
             r.pop();
             r
         } else {
-            resample(&pts, 0.5)
+            resample(&pts, line_step(&pts, 0.5))
         };
         let (v, q, uv) = strip(&pts, width, *closed);
         let base = acc.verts.len() as u32;

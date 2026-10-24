@@ -159,17 +159,15 @@ def bowl_assembles_with_capacity_and_sockets():
 
 
 @test
-def curved_corners_reject_mixed_profiles():
+def curved_corners_with_mixed_profiles_fall_back_to_open():
     reset()
-    try:
-        assemble({"pitch": {}, "goals": None, "corner_flags": None,
-                  "stands": {"corners": "curved", "sides": {"north": {"profile": "single_tier_20"},
-                                                            "south": {"profile": "two_tier_22_18"},
-                                                            "east": {"profile": "single_tier_20"},
-                                                            "west": {"profile": "single_tier_20"}}}})
-    except ValueError:
-        return
-    raise AssertionError("mixed profiles with curved corners should be refused")
+    state = assemble({"pitch": {}, "goals": None, "corner_flags": None,
+                      "stands": {"corners": "curved", "sides": {"north": {"profile": "single_tier_20"},
+                                                                "south": {"profile": "two_tier_22_18"},
+                                                                "east": {"profile": "single_tier_20"},
+                                                                "west": {"profile": "single_tier_20"}}}})
+    assert any("open corners" in w for w in state["warnings"]), state["warnings"]
+    assert state["stands"]["corner_radius"] is None, "a mixed bowl is built with open corners"
 
 
 @test
