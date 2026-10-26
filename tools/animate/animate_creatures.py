@@ -243,7 +243,9 @@ def plant_feet(rig):
         targets[side] = (e, rest)
         c = rig.pbone(ik).constraints.new("IK")
         c.target = e
-        c.chain_count = 2
+        # the whole leg from the hip down to the IK bone: with only the two lower bones, a
+        # target ahead of the foot is out of reach and the foot lands frames late
+        c.chain_count = chain.index(ik) + 1 if ik in chain else 2
         # The foot (or toes) keeps its rest orientation, so it lands flat instead of tipping
         # with the shin.
         lock = leg.get("lock", chain[3] if len(chain) > 3 else None)
