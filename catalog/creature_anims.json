@@ -203,6 +203,9 @@
     }
    },
    "actions": {
+    "idle": {
+     "frames": 96
+    },
     "flap": {
      "frames": 10,
      "amplitude": 38

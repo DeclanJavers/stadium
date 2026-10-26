@@ -245,6 +245,19 @@ def alert(rig, p, f, n, act):
         p.rot(i, rig.left, -8 * up * rig.sign(i, rig.left, -rig.up) / (1 + j))
 
 
+def wing_balance(rig, p, f, n):
+    """Raised wings held, not frozen: slow uneven swaying at the shoulder, the two sides a little
+    out of step, and one small half-beat midway, as a bird balancing in a breeze."""
+    u = f / n
+    for k, chain in enumerate(rig.spec["wings"].values()):
+        tip = rig.tail(chain[-1])
+        sway = 4 * math.sin(TAU * (u * 2 + 0.17 * k)) + 2 * math.sin(TAU * (u * 3 + 0.4 * k))
+        beat = 14 * math.exp(-((u - 0.55) * 18) ** 2)
+        s = rig.sign(chain[0], rig.fwd, -rig.up, tip=tip)
+        p.rot(chain[0], rig.fwd, (sway - beat) * s)
+        p.rot(chain[1], rig.fwd, 0.5 * sway * rig.sign(chain[1], rig.fwd, -rig.up, tip=tip))
+
+
 # ---------------------------------------------------------------- IK walk
 
 def plant_feet(rig):
@@ -353,6 +366,8 @@ def build(rig, name, act):
                 breathe(rig, p, f, n / 2)
                 look_around(rig, p, f, n)
                 tail_flick(rig, p, f, n)
+                if "wings" in rig.spec:
+                    wing_balance(rig, p, f, n)
             elif name == "peck":
                 peck(rig, p, f, n)
             elif name == "flap":
