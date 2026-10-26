@@ -214,6 +214,29 @@ A mosaic is text (`"text"`) or a picture (`"image": "layouts/mosaics/crest_12.pn
 the repository root, one pixel per block of seats, transparent pixels left alone); the editor
 writes such images under `layouts/mosaics/` with an `image_master` copy for resizing.
 
+## Animated props (`tools/animate/`)
+
+The living props generated from prompts (`genprop.*`: pigeons, gulls) are rigged and given looping cycles:
+
+| step | where | what |
+|---|---|---|
+| `colab_setup_anim.sh`, `run_unirig.sh` | Colab L4 | UniRig (MIT) predicts a skeleton and skin weights for a texture-free copy of each prop |
+| `rig_inspect.py` | local Blender | copies the weights onto the textured prop, dumps the bones (`out/animate/rigs/<id>.bones.json`) and renders them numbered, for labelling |
+| `catalog/creature_anims.json` | data | per creature: which bones are root, spine, neck, head, tail, legs and wings; facing; the actions and their timing |
+| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks plant the feet with IK targets on a stance/swing path and bake to bone keys, in place, with `root_speed` (m/s) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action) |
+| `review_anims.py` | local Blender | film strips and looping MP4s per action in `out/review/anims/` |
+
+UniRig bones carry no names and arbitrary roll, so rotations are given about kit-space axes with
+the sign read from the rest geometry ("turn the neck so the head goes down"). UniRig sometimes
+doubles a leg chain: `copy` drives the duplicate like the original.
+
+UniMate (`run_unimate.sh`, `run_unimate_all.sh`) generated text-prompted motions on the same rigs
+for comparison: its walks are plausible, its flap and peck are not, and its checkpoints are
+CC BY-NC 4.0, so its output is reference only. Its rule labeller mislabels UniRig skeletons; the
+reviewed labels and facing pairs are in `creature_anims.json` (`unimate`), turned into a patch by
+`make_unimate_patch.py` and applied on Colab by `apply_unimate_labels.py`. Its animate step needs a `blender` command, supplied by
+`blender_shim.py` over the pip `bpy` module.
+
 ## Game-readiness
 
 - `.glb` per asset in `out/assets/`, plus `out/manifest.json` (ids, dims, sockets, triangle
