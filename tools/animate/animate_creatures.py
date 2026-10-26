@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb: the textured, skinned prop with one glTF
-animation per action ("idle", "walk", "trot", "peck", "flap"). Walk and trot cycles plant the feet with IK
+animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -82,6 +82,13 @@ class Pose:
 
     def __init__(self, rig):
         self.rig, self.q, self.root = rig, {}, Vector()
+        # Rest-pose correction applied before any motion: a generated prop posed looking at the
+        # camera (head_forward off the body's forward) turns its head to face where it goes.
+        turn = rig.spec.get("head_turn")
+        if turn:
+            face = rig.tail(rig.spec["head"][-1]) + Vector(rig.spec["head_forward"]) * rig.size * 0.12
+            for i, share in ((rig.spec["neck"][0], 0.15), (rig.spec["head"][0], 0.85)):  # twist at the skull, not the throat
+                self.rot(i, rig.up, turn * share * rig.sign(i, rig.up, rig.fwd, tip=face))
 
     def rot(self, i, axis, deg):
         self.q[i] = self.rig.local_q(i, axis, deg) @ self.q.get(i, Quaternion())
@@ -158,24 +165,58 @@ def wings_flap(rig, p, t, n, amp):
 
 # ---------------------------------------------------------------- IK walk
 
-def walk(rig, act):
-    n, stride, lift = act["frames"], act["stride"], act["lift"]
-    legs = rig.spec["legs"]
+def plant_feet(rig):
+    """IK targets at each foot's rest position (the walk animates them; other actions leave
+    them planted) and the foot/toe locks. Returns {side: (target, rest)} and the helpers."""
     scene = bpy.context.scene
-    targets = {}
-    for side, leg in legs.items():
+    targets, helpers = {}, []
+    for side, leg in rig.spec["legs"].items():
         chain = leg["chain"]
-        ik = chain[2] if len(chain) > 2 else chain[-1]
+        ik = leg.get("ik", chain[2] if len(chain) > 2 else chain[-1])
         e = bpy.data.objects.new(f"ik_{side}", None)
         scene.collection.objects.link(e)
-        targets[side] = (e, rig.tail(ik))
+        helpers.append(e)
+        e.location = rest = rig.tail(ik)
+        targets[side] = (e, rest)
         c = rig.pbone(ik).constraints.new("IK")
         c.target = e
         c.chain_count = 2
+        # The foot (or toes) keeps its rest orientation, so it lands flat instead of tipping
+        # with the shin.
+        lock = leg.get("lock", chain[3] if len(chain) > 3 else None)
+        if lock is not None:
+            r = bpy.data.objects.new(f"lock_{side}", None)
+            scene.collection.objects.link(r)
+            helpers.append(r)
+            r.rotation_mode = "QUATERNION"
+            r.rotation_quaternion = (rig.arm.matrix_world @ rig.bone(lock).matrix_local).to_quaternion()
+            cr = rig.pbone(lock).constraints.new("COPY_ROTATION")
+            cr.target = r
+            cr.target_space = cr.owner_space = "WORLD"
         for dup, src in leg.get("copy", {}).items():
             cr = rig.pbone(int(dup)).constraints.new("COPY_ROTATION")
             cr.target, cr.subtarget = rig.arm, rig.names[src]
             cr.target_space = cr.owner_space = "WORLD"
+    return targets, helpers
+
+
+def bake(rig, n, helpers):
+    """Bake IK and copy constraints to plain keys, then drop the helpers."""
+    bpy.context.view_layer.objects.active = rig.arm
+    rig.arm.select_set(True)
+    bpy.ops.object.mode_set(mode="POSE")
+    bpy.ops.pose.select_all(action="SELECT")
+    bpy.ops.nla.bake(frame_start=0, frame_end=n, only_selected=False, visual_keying=True,
+                     clear_constraints=True, use_current_action=True, bake_types={"POSE"})
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for e in helpers:
+        bpy.data.objects.remove(e)
+
+
+def walk(rig, act):
+    n, stride, lift = act["frames"], act["stride"], act["lift"]
+    legs = rig.spec["legs"]
+    targets, helpers = plant_feet(rig)
     duty = act.get("duty", 0.62)  # share of the cycle a foot is on the ground
     for f in range(n + 1):
         t = f / n
@@ -202,16 +243,7 @@ def walk(rig, act):
             head_bob(rig, p, f, n / 2, act["head_bob"])
         tail_flick(rig, p, f, n, at=0.5, deg=4)
         p.apply(f)
-    # Bake IK and copy constraints to plain keys, then drop the helpers.
-    bpy.context.view_layer.objects.active = rig.arm
-    rig.arm.select_set(True)
-    bpy.ops.object.mode_set(mode="POSE")
-    bpy.ops.pose.select_all(action="SELECT")
-    bpy.ops.nla.bake(frame_start=0, frame_end=n, only_selected=False, visual_keying=True,
-                     clear_constraints=True, use_current_action=True, bake_types={"POSE"})
-    bpy.ops.object.mode_set(mode="OBJECT")
-    for e, _ in targets.values():
-        bpy.data.objects.remove(e)
+    bake(rig, n, helpers)
     # A planted foot slides back one stride while it is down (duty of the cycle): that is the
     # ground speed the body must travel at for the feet not to skate.
     return stride / (duty * n / FPS)
@@ -228,6 +260,9 @@ def build(rig, name, act):
     if name in ("walk", "trot"):
         speed = walk(rig, act)
     else:
+        planted = act.get("plant") and rig.spec.get("legs")
+        if planted:
+            targets, helpers = plant_feet(rig)
         for f in range(n + 1):
             p = Pose(rig)
             if name == "idle":
@@ -238,7 +273,13 @@ def build(rig, name, act):
                 peck(rig, p, f, n)
             elif name == "flap":
                 wings_flap(rig, p, f, n, act["amplitude"])
+            elif name == "sniff":
+                sniff(rig, p, f, n)
+            elif name == "call":
+                long_call(rig, p, f, n)
             p.apply(f)
+        if planted:
+            bake(rig, n, helpers)
     action = rig.arm.animation_data.action
     action.name = name
     action.use_fake_user = True
@@ -264,6 +305,52 @@ def peck(rig, p, f, n):
     p.root = rig.up * (-0.012 * rig.size * jab)  # the body dips into each jab
     p.rot(rig.spec["head"][0], rig.up, 18 * lift * math.sin(TAU * u * 2))
     tail_flick(rig, p, f, n, at=0.2, deg=6)
+
+
+def nose(rig):
+    """A point just in front of the head: what "head down" or "beak up" is judged by."""
+    return rig.tail(rig.spec["head"][-1]) + rig.fwd * rig.size * 0.12
+
+
+def neck_pitch(rig, p, deg, head_deg=0.0):
+    """Bend the neck so the nose goes down (positive deg) or up, spread over the neck bones,
+    and tip the head itself by head_deg the same way."""
+    neck = rig.spec["neck"]
+    for i in neck:
+        p.rot(i, rig.left, deg * rig.sign(i, rig.left, -rig.up, tip=nose(rig)) / len(neck))
+    h = rig.spec["head"][0]
+    p.rot(h, rig.left, head_deg * rig.sign(h, rig.left, -rig.up, tip=nose(rig)))
+
+
+def sniff(rig, p, f, n):
+    """The shoulders drop (front legs bend: the feet stay planted), the nose goes to the
+    ground for a run of quick sniffs and sweeps a little side to side, then comes back up."""
+    u = f / n
+    down = smooth((u - 0.06) / 0.2) * (1 - smooth((u - 0.76) / 0.18))
+    sniffs = 4 * math.sin(TAU * u * 10) * smooth((u - 0.26) / 0.05) * (1 - smooth((u - 0.70) / 0.05))
+    spine = rig.spec.get("spine", [])
+    for i in spine:  # pitch the back so the shoulders go down
+        p.rot(i, rig.left, 30 * down * rig.sign(i, rig.left, -rig.up, tip=rig.tail(spine[-1])) / len(spine))
+    neck_pitch(rig, p, 55 * down + sniffs, head_deg=5 * down)
+    sweep = 10 * down * math.sin(TAU * (u - 0.26) * 1.2)
+    for i in rig.spec["neck"]:
+        p.rot(i, rig.up, sweep / len(rig.spec["neck"]))
+    p.root = rig.up * (-0.07 * rig.size * down)
+    for j, i in enumerate(rig.spec.get("tail", [])):
+        p.rot(i, rig.up, 6 * math.sin(TAU * u - 0.5 * j) / (1 + j))
+
+
+def long_call(rig, p, f, n):
+    """A gull's long call: the head dips, then is thrown back with the beak to the sky and held
+    while calling (a fast shiver), then settles."""
+    u = f / n
+    dip = smooth(u / 0.16) * (1 - smooth((u - 0.16) / 0.10))
+    up = smooth((u - 0.22) / 0.10) * (1 - smooth((u - 0.74) / 0.16))
+    shake = 3 * math.sin(TAU * u * 16) * up
+    neck_pitch(rig, p, 26 * dip - 22 * up, head_deg=22 * dip - 62 * up + shake)
+    for i in rig.spec.get("spine", []):
+        p.rot(i, rig.left, -6 * up * rig.sign(i, rig.left, -rig.up, tip=nose(rig)))
+    breathe(rig, p, f, n, deg=1.0)
 
 
 def export(rig):
