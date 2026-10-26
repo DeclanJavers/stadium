@@ -1,0 +1,233 @@
+{
+ "_doc": "Looping cycles for rigged generated props (tools/animate/animate_creatures.py). Bones are indices into out/animate/rigs/<id>.bones.json (UniRig skeletons have no names). forward: the way the creature faces, in kit space (Z up). legs: [hip, knee, ankle, toes]; copy: duplicate bones UniRig put over a leg, driven like it. walk: cycle frames at 24 fps, stride and lift in metres; the loop plays in place and root_speed (m/s) is how fast the game should move it. unimate: reviewed joint labels (UniMate's vocabulary) and the facing pair [right, left] for the UniMate comparison.",
+ "fps": 24,
+ "creatures": {
+  "pigeon_standing": {
+   "forward": [1, 0, 0],
+   "root": 0,
+   "spine": [1],
+   "neck": [2, 3],
+   "head": [4, 5],
+   "tail": [14, 15, 16],
+   "legs": {
+    "l": {
+     "chain": [6, 7, 8, 9],
+     "copy": {
+      "17": 7,
+      "18": 8,
+      "19": 9
+     }
+    },
+    "r": {
+     "chain": [10, 11, 12, 13]
+    }
+   },
+   "actions": {
+    "idle": {
+     "frames": 96
+    },
+    "walk": {
+     "frames": 14,
+     "stride": 0.06,
+     "lift": 0.022,
+     "head_bob": 16
+    }
+   },
+   "unimate": {
+    "labels": {
+     "0": "Hips",
+     "1": "Spine",
+     "2": "Neck",
+     "3": "Neck",
+     "4": "Head",
+     "5": "Head End",
+     "6": "Left Thigh",
+     "7": "Left Shin",
+     "8": "Left Foot",
+     "9": "Left Toe",
+     "10": "Right Thigh",
+     "11": "Right Shin",
+     "12": "Right Foot",
+     "13": "Right Toe",
+     "14": "Tail",
+     "15": "Tail",
+     "16": "Tail",
+     "17": "Left Shin",
+     "18": "Left Foot",
+     "19": "Left Toe"
+    },
+    "face": [11, 7]
+   }
+  },
+  "pigeon_pecking": {
+   "forward": [-1, 0, 0],
+   "root": 0,
+   "neck": [1, 2, 3],
+   "head": [4, 5],
+   "tail": [14, 15, 16],
+   "legs": {
+    "l": {
+     "chain": [10, 11, 12, 13]
+    },
+    "r": {
+     "chain": [6, 7, 8, 9]
+    }
+   },
+   "actions": {
+    "peck": {
+     "frames": 48
+    }
+   },
+   "unimate": {
+    "labels": {
+     "0": "Hips",
+     "1": "Neck",
+     "2": "Neck",
+     "3": "Neck",
+     "4": "Head",
+     "5": "Head End",
+     "6": "Right Thigh",
+     "7": "Right Shin",
+     "8": "Right Foot",
+     "9": "Right Toe",
+     "10": "Left Thigh",
+     "11": "Left Shin",
+     "12": "Left Foot",
+     "13": "Left Toe",
+     "14": "Tail",
+     "15": "Tail",
+     "16": "Tail",
+     "17": "Tail",
+     "18": "Tail",
+     "19": "Right Wing",
+     "20": "Right Wing",
+     "21": "Right Wing",
+     "22": "Left Wing",
+     "23": "Left Wing",
+     "24": "Left Wing",
+     "25": "Tail"
+    },
+    "face": [7, 11]
+   }
+  },
+  "seagull_standing": {
+   "forward": [-1, 0, 0],
+   "root": 0,
+   "spine": [1],
+   "neck": [2, 3],
+   "head": [4],
+   "tail": [5, 6, 7],
+   "legs": {
+    "l": {
+     "chain": [8, 9, 10]
+    },
+    "r": {
+     "chain": [11, 12, 13]
+    }
+   },
+   "actions": {
+    "idle": {
+     "frames": 96
+    },
+    "walk": {
+     "frames": 20,
+     "stride": 0.085,
+     "lift": 0.026,
+     "waddle": 7
+    }
+   },
+   "unimate": {
+    "labels": {
+     "0": "Hips",
+     "1": "Spine",
+     "2": "Neck",
+     "3": "Neck",
+     "4": "Head",
+     "5": "Tail",
+     "6": "Tail",
+     "7": "Tail",
+     "8": "Left Thigh",
+     "9": "Left Shin",
+     "10": "Left Foot",
+     "11": "Right Thigh",
+     "12": "Right Shin",
+     "13": "Right Foot"
+    },
+    "face": [12, 9]
+   }
+  },
+  "seagull_wings_up": {
+   "forward": [0, 1, 0],
+   "root": 0,
+   "spine": [1, 2],
+   "neck": [3, 4],
+   "head": [5],
+   "tail": [38, 39, 40],
+   "head_extra": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+   "wings": {
+    "l": [21, 22, 23, 24],
+    "r": [26, 27, 28, 29]
+   },
+   "legs": {
+    "l": {
+     "chain": [30, 31, 32, 33]
+    },
+    "r": {
+     "chain": [34, 35, 36, 37]
+    }
+   },
+   "actions": {
+    "flap": {
+     "frames": 10,
+     "amplitude": 38
+    }
+   },
+   "unimate": {
+    "labels": {
+     "0": "Hips",
+     "1": "Spine",
+     "2": "Spine",
+     "3": "Neck",
+     "4": "Neck",
+     "5": "Head",
+     "6": "Head",
+     "7": "Head",
+     "8": "Head",
+     "9": "Head",
+     "10": "Head",
+     "11": "Head",
+     "12": "Head",
+     "13": "Head",
+     "14": "Head",
+     "15": "Head",
+     "16": "Head",
+     "17": "Head",
+     "18": "Head",
+     "19": "Head",
+     "20": "Left Wing",
+     "21": "Left Wing",
+     "22": "Left Wing",
+     "23": "Left Wing",
+     "24": "Left Wing",
+     "25": "Right Wing",
+     "26": "Right Wing",
+     "27": "Right Wing",
+     "28": "Right Wing",
+     "29": "Right Wing",
+     "30": "Left Thigh",
+     "31": "Left Shin",
+     "32": "Left Foot",
+     "33": "Left Toe",
+     "34": "Right Thigh",
+     "35": "Right Shin",
+     "36": "Right Foot",
+     "37": "Right Toe",
+     "38": "Tail",
+     "39": "Tail",
+     "40": "Tail"
+    },
+    "face": [34, 30]
+   }
+  }
+ }
+}
