@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from kit.core.render import camera, setup_cycles, setup_sky, surroundings  # noqa: E402
+from kit.core.scene import look_at_rotation  # noqa: E402
 
 CFG = json.loads((ROOT / "catalog" / "creature_anims.json").read_text())
 DIR = ROOT / "out" / "review" / "anims"
@@ -63,7 +64,29 @@ def fcurves(act):
         yield from act.fcurves
 
 
+def frame_path(cam, arm, mesh, act, f0, f1, d, size, center):
+    """Aim the camera at the action: in-place actions keep the standard framing; one whose root
+    travels (take-off, landing) is framed to the whole path the prop covers."""
+    if not getattr(frame_path, "base", None):
+        frame_path.base = (cam.location.copy(), cam.rotation_euler.copy())
+    root = arm.pose.bones[0]
+    pts = []
+    for f in range(f0, f1 + 1, max(1, (f1 - f0) // 12)):
+        bpy.context.scene.frame_set(f)
+        pts.append(arm.matrix_world @ root.head)
+    lo = Vector([min(q[i] for q in pts) for i in range(3)])
+    hi = Vector([max(q[i] for q in pts) for i in range(3)])
+    if (hi - lo).length < 0.5 * size:
+        cam.location, cam.rotation_euler = frame_path.base
+        return
+    mid = (lo + hi) / 2 + Vector((0, 0, center.z))
+    reach = max((hi - lo).length / 2 + size, size)
+    cam.location = mid + (d * math.cos(math.radians(10)) + Vector((0, 0, math.sin(math.radians(10))))) * reach * 2.6
+    cam.rotation_euler = look_at_rotation(cam.location, mid)
+
+
 def review(pid, n_frames, mp4, glb=None, fwd=None):
+    frame_path.base = None
     bpy.ops.wm.read_factory_settings(use_empty=True)
     setup_cycles(samples=48, res=(SIZE, SIZE))
     setup_sky(sun_elevation=40, sun_azimuth=150)
@@ -93,6 +116,7 @@ def review(pid, n_frames, mp4, glb=None, fwd=None):
         if hasattr(arm.animation_data, "action_slot") and act.slots:
             arm.animation_data.action_slot = act.slots[0]
         f0, f1 = (int(v) for v in act.frame_range)
+        frame_path(cam, arm, mesh, act, f0, f1, d, size, center)
         tiles = []
         for k in range(n_frames):
             f = f0 + round((f1 - f0) * k / n_frames)
