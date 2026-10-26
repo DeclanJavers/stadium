@@ -233,7 +233,7 @@ What each creature can do (`catalog/creature_anims.json`):
 |---|---|---|---|
 | `urban_fox` | idle, trot (0.71 m/s), gallop (3.4 m/s), sniff | alert, turn_left, turn_right | - |
 | `pigeon_standing` | idle, walk (0.17 m/s), run (0.57 m/s) | startle, turn_left, turn_right | blue_bar, dark, ash_red, pale |
-| `pigeon_pecking` | peck, walk (0.11 m/s, foraging) | - | blue_bar, dark, ash_red, pale |
+| `pigeon_pecking` | peck, walk (0.11 m/s, foraging) | turn_left, turn_right | blue_bar, dark, ash_red, pale |
 | `seagull_standing` | idle, walk (0.17 m/s), call | startle, turn_left, turn_right | herring, lesser_black_backed, juvenile |
 | `seagull_wings_up` | idle, flap | takeoff, land | herring, lesser_black_backed, juvenile |
 
