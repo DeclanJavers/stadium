@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb (and .anim.lod1/.anim.lod2 from the static LODs):
-the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle", "alert", "turn_left", "turn_right"). Walk and trot cycles plant the feet with IK
+the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle", "alert", "turn_left", "turn_right", "gallop"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -354,7 +354,7 @@ def walk(rig, act):
         t = f / n
         for k, (side, (e, rest)) in enumerate(targets.items()):
             # two legs alternate by default; a trot pairs diagonals via each leg's "phase"
-            u = (t + legs[side].get("phase", 0.5 * k)) % 1.0
+            u = (t + act.get("phases", {}).get(side, legs[side].get("phase", 0.5 * k))) % 1.0
             if u < duty:  # stance: the foot is planted and slides back as the body passes
                 x, z = 0.5 - u / duty, 0.0
             else:          # swing: lift and carry forward
@@ -368,6 +368,10 @@ def walk(rig, act):
         if "waddle" in act:
             for i in rig.spec.get("spine", [rig.spec["root"]]):
                 p.rot(i, rig.fwd, act["waddle"] * math.sin(TAU * t))
+        if "spine_flex" in act:  # a gallop: the back bends and stretches once a stride, the body bounds
+            for i in rig.spec.get("spine", []):
+                p.rot(i, rig.left, act["spine_flex"] * math.sin(TAU * t) * rig.sign(i, rig.left, rig.up, tip=nose(rig)))
+            p.root += rig.up * (act.get("bound", 0.0) * max(0.0, math.sin(TAU * t + 0.6)))
         if "tail_sway" in act:  # a trotting tail swings side to side, once per stride
             for j, i in enumerate(rig.spec.get("tail", [])):
                 p.rot(i, rig.up, act["tail_sway"] * math.sin(TAU * t - 0.6 * j) / (1 + j))
@@ -389,7 +393,7 @@ def build(rig, name, act):
     rig.arm.animation_data_create()
     rig.arm.animation_data.action = action
     speed = 0.0
-    if name in ("walk", "trot"):
+    if name in ("walk", "trot", "gallop"):
         speed = walk(rig, act)
     elif name.startswith("turn"):
         turn(rig, act)
