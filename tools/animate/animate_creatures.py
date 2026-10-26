@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb (and .anim.lod1/.anim.lod2 from the static LODs):
-the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle"). Walk and trot cycles plant the feet with IK
+the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle", "alert"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -226,6 +226,25 @@ def startle(rig, p, f, n, act):
     tail_flick(rig, p, f, n, at=0.2, deg=14)
 
 
+def alert(rig, p, f, n, act):
+    """One shot, in place: the body freezes and rises a little onto straighter legs, the head lifts
+    and turns sharply towards a sound, holds a long still stare (one small ear-twitch of the
+    head), then turns back and relaxes. The tail goes still and low."""
+    u = f / n
+    up = smooth(u / 0.12) * (1 - smooth((u - 0.78) / 0.18))
+    turn = smooth((u - 0.06) / 0.08) * (1 - smooth((u - 0.74) / 0.12))
+    neck_pitch(rig, p, -18 * up, head_deg=-6 * up)
+    side = act.get("side", 1)
+    for i in rig.spec["neck"]:
+        p.rot(i, rig.up, side * 35 * turn / len(rig.spec["neck"]))
+    p.rot(rig.spec["head"][0], rig.up, side * 15 * turn)
+    twitch = math.exp(-((u - 0.45) * 40) ** 2)
+    p.rot(rig.spec["head"][0], rig.fwd, 6 * twitch)
+    p.root = rig.up * (0.012 * rig.size * up)
+    for j, i in enumerate(rig.spec.get("tail", [])):
+        p.rot(i, rig.left, -8 * up * rig.sign(i, rig.left, -rig.up) / (1 + j))
+
+
 # ---------------------------------------------------------------- IK walk
 
 def plant_feet(rig):
@@ -348,6 +367,8 @@ def build(rig, name, act):
                 land(rig, p, f, n, act)
             elif name == "startle":
                 startle(rig, p, f, n, act)
+            elif name == "alert":
+                alert(rig, p, f, n, act)
             p.apply(f)
         if planted:
             bake(rig, n, helpers)

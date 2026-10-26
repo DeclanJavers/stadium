@@ -310,6 +310,13 @@
     "sniff": {
      "frames": 72,
      "plant": true
+    },
+    "alert": {
+     "frames": 72,
+     "side": 1,
+     "one_shot": true,
+     "root_motion": false,
+     "plant": true
     }
    },
    "head_forward": [0, 1, 0],
