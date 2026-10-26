@@ -359,6 +359,7 @@ def export(rig, actions):
     the prop while a cycle plays) goes on the armature node's extras as "actions"."""
     rig.arm["actions"] = json.dumps({name: dict(a, loop=True) for name, a in actions.items()}, sort_keys=True)
     rig.arm["fps"] = FPS
+    rig.mesh.data.name = rig.mesh.name  # a game sees mesh names: not the generator's temp file name
     bpy.ops.object.select_all(action="DESELECT")
     rig.arm.select_set(True)
     rig.mesh.select_set(True)
