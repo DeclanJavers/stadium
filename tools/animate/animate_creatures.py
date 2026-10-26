@@ -527,6 +527,10 @@ def plumage(rgb, rule):
         new = rgb * rule.get("value", 0.45)
     elif rule["kind"] == "tint":
         new = lum * np.array(rule["rgb"]) * rule.get("gain", 1.1)
+    elif rule["kind"] == "mantle":  # darken the mid-grey (back and wings) only; white stays white
+        mid = np.clip(1 - np.abs(lum - 0.55) / 0.3, 0, 1)
+        f = 1 - (1 - rule.get("value", 0.4)) * mid
+        new = rgb * f
     elif rule["kind"] == "pale":
         new = lum * (1 - rule.get("lift", 0.5)) + rule.get("lift", 0.5) * np.array(rule.get("rgb", [0.9, 0.9, 0.88]))
     return np.clip(rgb * (1 - grey) + new * grey, 0, 1)
