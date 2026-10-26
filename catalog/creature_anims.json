@@ -53,6 +53,13 @@
      "steps": 3,
      "swing": 0.18,
      "one_shot": true
+    },
+    "run": {
+     "frames": 8,
+     "stride": 0.085,
+     "lift": 0.026,
+     "duty": 0.45,
+     "head_bob": 6
     }
    },
    "unimate": {

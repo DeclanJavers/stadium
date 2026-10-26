@@ -393,7 +393,7 @@ def build(rig, name, act):
     rig.arm.animation_data_create()
     rig.arm.animation_data.action = action
     speed = 0.0
-    if name in ("walk", "trot", "gallop"):
+    if name in ("walk", "trot", "gallop", "run"):
         speed = walk(rig, act)
     elif name.startswith("turn"):
         turn(rig, act)
