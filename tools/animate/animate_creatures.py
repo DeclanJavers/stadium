@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb: the textured, skinned prop with one glTF
-animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff"). Walk and trot cycles plant the feet with IK
+animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -183,6 +183,30 @@ def takeoff(rig, p, f, n, act):
         p.rot(hip, rig.left, 70 * tuck * rig.sign(hip, rig.left, -rig.fwd))
 
 
+def land(rig, p, f, n, act):
+    """One shot, with root motion, ending at the prop's origin: a level glide in from behind and
+    above on shallow beats, a flare (body swings upright, big braking beats, legs reach down),
+    touchdown at 70% of the clip, then the wings settle to rest and the body bobs once."""
+    u = f / n
+    touch = 0.7
+    air = 1 - smooth(u / touch)  # 1 = still at the start of the approach, 0 = on the ground
+    flare = smooth((u - 0.35) / 0.3)
+    p.root = (rig.up * (act["height"] * air ** 1.3) - rig.fwd * (act["distance"] * air ** 1.6))
+    settle = max(0.0, (u - touch) / (1 - touch))
+    p.root += rig.up * (-0.04 * rig.size * math.sin(math.pi * min(1.0, settle * 1.6)))
+    beat = act.get("beat", 9)
+    amp = act["amplitude"] * (0.35 + 0.85 * flare) * (1 - smooth(settle / 0.6))
+    root_shift = p.root.copy()
+    wings_flap(rig, p, f, beat, amp)
+    p.root = root_shift  # wings_flap sets a flap bob; the glide path wins here
+    root = rig.spec["root"]
+    p.rot(root, rig.left, act.get("pitch", 55) * (1 - flare) * rig.sign(root, rig.left, rig.fwd, tip=nose(rig)))
+    tuck = 1 - smooth((u - 0.3) / 0.3)
+    for leg in rig.spec.get("legs", {}).values():
+        hip = leg["chain"][0]
+        p.rot(hip, rig.left, 70 * tuck * rig.sign(hip, rig.left, -rig.fwd))
+
+
 # ---------------------------------------------------------------- IK walk
 
 def plant_feet(rig):
@@ -299,6 +323,8 @@ def build(rig, name, act):
                 long_call(rig, p, f, n)
             elif name == "takeoff":
                 takeoff(rig, p, f, n, act)
+            elif name == "land":
+                land(rig, p, f, n, act)
             p.apply(f)
         if planted:
             bake(rig, n, helpers)

@@ -196,6 +196,14 @@
      "height": 1.4,
      "distance": 1.6,
      "one_shot": true
+    },
+    "land": {
+     "frames": 60,
+     "amplitude": 44,
+     "beat": 9,
+     "height": 1.4,
+     "distance": 1.8,
+     "one_shot": true
     }
    },
    "unimate": {
