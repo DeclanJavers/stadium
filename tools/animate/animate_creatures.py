@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb (and .anim.lod1/.anim.lod2 from the static LODs):
-the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle", "alert"). Walk and trot cycles plant the feet with IK
+the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle", "alert", "turn_left", "turn_right"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -311,6 +311,40 @@ def bake(rig, n, helpers):
         bpy.data.objects.remove(e)
 
 
+def turn(rig, act):
+    """One shot: turn on the spot by act["degrees"] (positive = left, about +Z). The body yaws
+    about the root smoothly; each foot steps round its own arc in act["steps"] steps, lifted in
+    its swing windows and planted (by IK) in between, so no foot slides while it is down."""
+    n, deg, lift, steps = act["frames"], act["degrees"], act["lift"], act.get("steps", 2)
+    swing = act.get("swing", 0.22)  # share of the clip each step takes
+    legs = rig.spec["legs"]
+    targets, helpers = plant_feet(rig)
+    pivot = rig.head(rig.spec["root"])
+    pivot.z = 0.0
+    root = rig.spec["root"]
+    for f in range(n + 1):
+        u = f / n
+        for k, (side, (e, rest)) in enumerate(targets.items()):
+            # steps spread over the clip, legs offset by their phase (diagonals together)
+            done, z = 0.0, 0.0
+            for j in range(steps):
+                start = (j + legs[side].get("phase", 0.5 * k)) / (steps + 1) * 0.9
+                v = (u - start) / swing
+                if v >= 1:
+                    done += 1
+                elif v > 0:
+                    done += smooth(v)
+                    z = math.sin(math.pi * v)
+            yaw = math.radians(deg) * done / steps
+            e.location = pivot + Matrix.Rotation(yaw, 3, "Z") @ (rest - pivot) + rig.up * (lift * z)
+            e.keyframe_insert("location", frame=f)
+        p = Pose(rig)
+        p.rot(root, rig.up, deg * smooth(u))
+        tail_flick(rig, p, f, n, at=0.5, deg=6)
+        p.apply(f)
+    bake(rig, n, helpers)
+
+
 def walk(rig, act):
     n, stride, lift = act["frames"], act["stride"], act["lift"]
     legs = rig.spec["legs"]
@@ -357,6 +391,8 @@ def build(rig, name, act):
     speed = 0.0
     if name in ("walk", "trot"):
         speed = walk(rig, act)
+    elif name.startswith("turn"):
+        turn(rig, act)
     else:
         planted = act.get("plant") and rig.spec.get("legs")
         if planted:
@@ -400,6 +436,8 @@ def build(rig, name, act):
     meta = {"frames": n, "seconds": round(n / FPS, 2), "root_speed": round(speed, 3)}
     if act.get("one_shot"):  # plays once; root_motion: it carries its own movement (else it ends in place)
         meta.update(loop=False, root_motion=act.get("root_motion", True))
+    if "degrees" in act:  # a turn ends facing this many degrees round (positive = left)
+        meta["root_yaw"] = act["degrees"]
     return meta
 
 
