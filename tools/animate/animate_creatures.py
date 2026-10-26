@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 import bpy
+import numpy as np
 from mathutils import Matrix, Quaternion, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -515,7 +516,65 @@ def skinned_lod(rig, src, level):
     return lod
 
 
+def plumage(rgb, rule):
+    """Recolour the low-saturation plumage of an albedo (grey body, black bars), leaving saturated
+    parts (iridescent neck, pink feet, eye) alone."""
+    mx, mn = rgb.max(-1), rgb.min(-1)
+    sat = np.where(mx > 1e-4, (mx - mn) / np.maximum(mx, 1e-4), 0)
+    grey = np.clip((0.32 - sat) / 0.12, 0, 1)[..., None]  # soft mask
+    lum = rgb.mean(-1, keepdims=True)
+    if rule["kind"] == "dark":
+        new = rgb * rule.get("value", 0.45)
+    elif rule["kind"] == "tint":
+        new = lum * np.array(rule["rgb"]) * rule.get("gain", 1.1)
+    elif rule["kind"] == "pale":
+        new = lum * (1 - rule.get("lift", 0.5)) + rule.get("lift", 0.5) * np.array(rule.get("rgb", [0.9, 0.9, 0.88]))
+    return np.clip(rgb * (1 - grey) + new * grey, 0, 1)
+
+
+def add_variants(rig, mesh):
+    """KHR_materials_variants: one alternative material per plumage in the spec's "variants",
+    sharing the mesh, normals and roughness map; a game picks one per instance."""
+    variants = rig.spec.get("variants")
+    if not variants:
+        return
+    prefs = bpy.context.preferences.addons["io_scene_gltf2"].preferences
+    if not prefs.KHR_materials_variants_ui:
+        prefs.KHR_materials_variants_ui = True
+    scene = bpy.data.scenes[0]
+    names = [v.name for v in scene.gltf2_KHR_materials_variants_variants]
+    base = mesh.data.materials[0]
+    for vname, rule in variants.items():
+        if vname not in names:
+            v = scene.gltf2_KHR_materials_variants_variants.add()
+            v.variant_idx = len(scene.gltf2_KHR_materials_variants_variants) - 1
+            v.name = vname
+            names.append(vname)
+        idx = names.index(vname)
+        mat = base
+        if rule:
+            mat = base.copy()
+            mat.name = f"{base.name}.{vname}"
+            for node in mat.node_tree.nodes:
+                if node.type == "TEX_IMAGE" and node.image and node.image.colorspace_settings.name == "sRGB":
+                    img = node.image.copy()
+                    img.name = f"{node.image.name}.{vname}"
+                    w, h = img.size
+                    px = np.empty(w * h * 4, np.float32)
+                    img.pixels.foreach_get(px)
+                    px = px.reshape(-1, 4)
+                    px[:, :3] = plumage(px[:, :3], rule)
+                    img.pixels.foreach_set(px.ravel())
+                    img.pack()
+                    node.image = img
+        prim = mesh.data.gltf2_variant_mesh_data.add()
+        prim.material_slot_index = 0
+        prim.material = mat
+        prim.variants.add().variant.variant_idx = idx
+
+
 def export_skinned(rig, mesh, path):
+    add_variants(rig, mesh)
     bpy.ops.object.select_all(action="DESELECT")
     rig.arm.select_set(True)
     mesh.select_set(True)
