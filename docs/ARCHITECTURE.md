@@ -216,14 +216,14 @@ writes such images under `layouts/mosaics/` with an `image_master` copy for resi
 
 ## Animated props (`tools/animate/`)
 
-The living props generated from prompts (`genprop.*`: pigeons, gulls) are rigged and given looping cycles:
+The living props generated from prompts (`genprop.*`: pigeons, gulls, the urban fox) are rigged and given looping cycles:
 
 | step | where | what |
 |---|---|---|
 | `colab_setup_anim.sh`, `run_unirig.sh` | Colab L4 | UniRig (MIT) predicts a skeleton and skin weights for a texture-free copy of each prop |
 | `rig_inspect.py` | local Blender | copies the weights onto the textured prop, dumps the bones (`out/animate/rigs/<id>.bones.json`) and renders them numbered, for labelling |
 | `catalog/creature_anims.json` | data | per creature: which bones are root, spine, neck, head, tail, legs and wings; facing; the actions and their timing |
-| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks plant the feet with IK targets on a stance/swing path and bake to bone keys, in place, with `root_speed` (m/s) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action) |
+| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks and trots plant the feet with IK targets on a stance/swing path (per-leg phase, so a trot moves diagonal pairs together) and bake to bone keys, in place, with `root_speed` (m/s, stride over stance time) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action) |
 | `review_anims.py` | local Blender | film strips and looping MP4s per action in `out/review/anims/` |
 
 UniRig bones carry no names and arbitrary roll, so rotations are given about kit-space axes with

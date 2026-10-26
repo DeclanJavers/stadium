@@ -1,5 +1,5 @@
 {
- "_doc": "Looping cycles for rigged generated props (tools/animate/animate_creatures.py). Bones are indices into out/animate/rigs/<id>.bones.json (UniRig skeletons have no names). forward: the way the creature faces, in kit space (Z up). legs: [hip, knee, ankle, toes]; copy: duplicate bones UniRig put over a leg, driven like it. walk: cycle frames at 24 fps, stride and lift in metres; the loop plays in place and root_speed (m/s) is how fast the game should move it. unimate: reviewed joint labels (UniMate's vocabulary) and the facing pair [right, left] for the UniMate comparison.",
+ "_doc": "Looping cycles for rigged generated props (tools/animate/animate_creatures.py). Bones are indices into out/animate/rigs/<id>.bones.json (UniRig skeletons have no names). forward: the way the creature faces, in kit space (Z up). legs: [hip, knee, ankle, toes]; copy: duplicate bones UniRig put over a leg, driven like it. walk/trot: cycle frames at 24 fps, stride and lift in metres, duty the share of the cycle a foot is down, and each leg's phase (default: two legs alternate; a trot pairs diagonals); the loop plays in place and root_speed (m/s) is how fast the game should move it. unimate: reviewed joint labels (UniMate's vocabulary) and the facing pair [right, left] for the UniMate comparison.",
  "fps": 24,
  "creatures": {
   "pigeon_standing": {
@@ -227,6 +227,44 @@
      "40": "Tail"
     },
     "face": [34, 30]
+   }
+  },
+  "urban_fox": {
+   "forward": [1, 0, 0],
+   "root": 0,
+   "spine": [1, 2],
+   "neck": [3],
+   "head": [4],
+   "tail": [13, 14, 15, 16],
+   "legs": {
+    "fl": {
+     "chain": [5, 6, 7, 8],
+     "phase": 0.0
+    },
+    "fr": {
+     "chain": [9, 10, 11, 12],
+     "phase": 0.5
+    },
+    "hl": {
+     "chain": [17, 18, 19, 20],
+     "phase": 0.5
+    },
+    "hr": {
+     "chain": [21, 22, 23, 24],
+     "phase": 0.0
+    }
+   },
+   "actions": {
+    "idle": {
+     "frames": 96
+    },
+    "trot": {
+     "frames": 14,
+     "stride": 0.2,
+     "lift": 0.055,
+     "duty": 0.48,
+     "tail_sway": 9
+    }
    }
   }
  }

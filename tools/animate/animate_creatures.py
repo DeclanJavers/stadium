@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb: the textured, skinned prop with one glTF
-animation per action ("idle", "walk", "peck", "flap"). Walk cycles plant the feet with IK
+animation per action ("idle", "walk", "trot", "peck", "flap"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -176,11 +176,12 @@ def walk(rig, act):
             cr = rig.pbone(int(dup)).constraints.new("COPY_ROTATION")
             cr.target, cr.subtarget = rig.arm, rig.names[src]
             cr.target_space = cr.owner_space = "WORLD"
+    duty = act.get("duty", 0.62)  # share of the cycle a foot is on the ground
     for f in range(n + 1):
         t = f / n
         for k, (side, (e, rest)) in enumerate(targets.items()):
-            u = (t + 0.5 * k) % 1.0
-            duty = 0.62
+            # two legs alternate by default; a trot pairs diagonals via each leg's "phase"
+            u = (t + legs[side].get("phase", 0.5 * k)) % 1.0
             if u < duty:  # stance: the foot is planted and slides back as the body passes
                 x, z = 0.5 - u / duty, 0.0
             else:          # swing: lift and carry forward
@@ -194,6 +195,9 @@ def walk(rig, act):
         if "waddle" in act:
             for i in rig.spec.get("spine", [rig.spec["root"]]):
                 p.rot(i, rig.fwd, act["waddle"] * math.sin(TAU * t))
+        if "tail_sway" in act:  # a trotting tail swings side to side, once per stride
+            for j, i in enumerate(rig.spec.get("tail", [])):
+                p.rot(i, rig.up, act["tail_sway"] * math.sin(TAU * t - 0.6 * j) / (1 + j))
         if "head_bob" in act:
             head_bob(rig, p, f, n / 2, act["head_bob"])
         tail_flick(rig, p, f, n, at=0.5, deg=4)
@@ -208,7 +212,9 @@ def walk(rig, act):
     bpy.ops.object.mode_set(mode="OBJECT")
     for e, _ in targets.values():
         bpy.data.objects.remove(e)
-    return stride / (n / FPS)
+    # A planted foot slides back one stride while it is down (duty of the cycle): that is the
+    # ground speed the body must travel at for the feet not to skate.
+    return stride / (duty * n / FPS)
 
 
 # ---------------------------------------------------------------- actions
@@ -219,7 +225,7 @@ def build(rig, name, act):
     rig.arm.animation_data_create()
     rig.arm.animation_data.action = action
     speed = 0.0
-    if name == "walk":
+    if name in ("walk", "trot"):
         speed = walk(rig, act)
     else:
         for f in range(n + 1):
