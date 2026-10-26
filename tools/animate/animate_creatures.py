@@ -4,8 +4,8 @@
 
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
-and writes out/assets/genprop.<id>.anim.glb: the textured, skinned prop with one glTF
-animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land"). Walk and trot cycles plant the feet with IK
+and writes out/assets/genprop.<id>.anim.glb (and .anim.lod1/.anim.lod2 from the static LODs):
+the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -411,15 +411,59 @@ def export(rig, actions):
     rig.arm["actions"] = json.dumps({name: {"loop": True, **a} for name, a in actions.items()}, sort_keys=True)
     rig.arm["fps"] = FPS
     rig.mesh.data.name = rig.mesh.name  # a game sees mesh names: not the generator's temp file name
+    path = OUT / f"genprop.{rig.pid}.anim.glb"
+    export_skinned(rig, rig.mesh, path)
+    # Levels of detail: the static prop's LOD meshes (own UVs and textures), skinned to the same
+    # skeleton by copying weights from the full mesh, with the same actions.
+    for level in (1, 2):
+        src = OUT / f"genprop.{rig.pid}.lod{level}.glb"
+        if not src.exists():
+            continue
+        lod = skinned_lod(rig, src, level)
+        export_skinned(rig, lod, OUT / f"genprop.{rig.pid}.anim.lod{level}.glb")
+        bpy.data.objects.remove(lod)
+    return path
+
+
+def skinned_lod(rig, src, level):
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(src))
+    new = [o for o in bpy.data.objects if o not in before]
+    lod = next(o for o in new if o.type == "MESH")
+    mw = lod.matrix_world.copy()
+    lod.parent = None
+    lod.matrix_world = mw
+    for o in new:
+        if o is not lod:
+            bpy.data.objects.remove(o)
+    lod.name = lod.data.name = f"genprop.{rig.pid}.lod{level}"
+    for vg in rig.mesh.vertex_groups:
+        lod.vertex_groups.new(name=vg.name)
+    dt = lod.modifiers.new("weights", "DATA_TRANSFER")
+    dt.object = rig.mesh
+    dt.use_vert_data = True
+    dt.data_types_verts = {"VGROUP_WEIGHTS"}
+    dt.vert_mapping = "POLYINTERP_NEAREST"
+    dt.layers_vgroup_select_src = "ALL"
+    dt.layers_vgroup_select_dst = "NAME"
+    rig.arm.data.pose_position = "REST"  # copy weights between the two rest shapes
+    with bpy.context.temp_override(object=lod, active_object=lod):
+        bpy.ops.object.modifier_apply(modifier=dt.name)
+    rig.arm.data.pose_position = "POSE"
+    lod.modifiers.new("Armature", "ARMATURE").object = rig.arm
+    lod.parent = rig.arm
+    lod.matrix_parent_inverse = rig.arm.matrix_world.inverted()
+    return lod
+
+
+def export_skinned(rig, mesh, path):
     bpy.ops.object.select_all(action="DESELECT")
     rig.arm.select_set(True)
-    rig.mesh.select_set(True)
+    mesh.select_set(True)
     bpy.context.view_layer.objects.active = rig.arm
-    path = OUT / f"genprop.{rig.pid}.anim.glb"
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True, export_yup=True,
                               export_animations=True, export_animation_mode="NLA_TRACKS",
                               export_force_sampling=True, export_extras=True, export_skins=True)
-    return path
 
 
 def main():
