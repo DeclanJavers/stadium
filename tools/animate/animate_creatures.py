@@ -214,7 +214,8 @@ def startle(rig, p, f, n, act):
     feathers settle with a shake."""
     u = f / n
     snap = smooth(u / 0.08) * (1 - smooth((u - 0.45) / 0.35))
-    neck_pitch(rig, p, -22 * snap, head_deg=-10 * snap)
+    up = act.get("snap", 22)  # a head-down bird needs a bigger lift to look up
+    neck_pitch(rig, p, -up * snap, head_deg=-0.45 * up * snap)
     crouch = math.exp(-((u - 0.14) * 22) ** 2)
     hop = math.sin(math.pi * min(1.0, max(0.0, (u - 0.18) / 0.22)))  # airborne 18%..40%
     p.root = rig.up * (act["hop"] * hop - 0.03 * rig.size * crouch)

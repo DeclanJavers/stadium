@@ -106,17 +106,17 @@
    }
   },
   "pigeon_pecking": {
-   "forward": [-1, 0, 0],
+   "forward": [1, 0, 0],
    "root": 0,
-   "neck": [1, 2, 3],
-   "head": [4, 5],
-   "tail": [14, 15, 16],
+   "neck": [14, 15],
+   "head": [16, 17],
+   "tail": [1, 2, 3],
    "legs": {
     "l": {
-     "chain": [10, 11, 12, 13]
+     "chain": [6, 7, 8, 9]
     },
     "r": {
-     "chain": [6, 7, 8, 9]
+     "chain": [10, 11, 12, 13]
     }
    },
    "actions": {
@@ -144,38 +144,45 @@
      "steps": 3,
      "swing": 0.18,
      "one_shot": true
+    },
+    "startle": {
+     "frames": 36,
+     "hop": 0.04,
+     "one_shot": true,
+     "root_motion": false,
+     "snap": 60
     }
    },
    "unimate": {
     "labels": {
      "0": "Hips",
-     "1": "Neck",
-     "2": "Neck",
-     "3": "Neck",
-     "4": "Head",
-     "5": "Head End",
-     "6": "Right Thigh",
-     "7": "Right Shin",
-     "8": "Right Foot",
-     "9": "Right Toe",
-     "10": "Left Thigh",
-     "11": "Left Shin",
-     "12": "Left Foot",
-     "13": "Left Toe",
-     "14": "Tail",
-     "15": "Tail",
-     "16": "Tail",
-     "17": "Tail",
-     "18": "Tail",
-     "19": "Right Wing",
-     "20": "Right Wing",
-     "21": "Right Wing",
-     "22": "Left Wing",
-     "23": "Left Wing",
-     "24": "Left Wing",
-     "25": "Tail"
+     "1": "Tail",
+     "2": "Tail",
+     "3": "Tail",
+     "4": "Tail",
+     "5": "Tail",
+     "6": "Left Thigh",
+     "7": "Left Shin",
+     "8": "Left Foot",
+     "9": "Left Toe",
+     "10": "Right Thigh",
+     "11": "Right Shin",
+     "12": "Right Foot",
+     "13": "Right Toe",
+     "14": "Neck",
+     "15": "Neck",
+     "16": "Head",
+     "17": "Head End",
+     "18": "Head End",
+     "19": "Left Wing",
+     "20": "Left Wing",
+     "21": "Left Wing",
+     "22": "Right Wing",
+     "23": "Right Wing",
+     "24": "Right Wing",
+     "25": "Jaw"
     },
-    "face": [7, 11]
+    "face": [11, 7]
    },
    "variants": {
     "blue_bar": null,
