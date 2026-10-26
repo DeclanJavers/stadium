@@ -585,7 +585,9 @@ def export_skinned(rig, mesh, path):
     bpy.context.view_layer.objects.active = rig.arm
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True, export_yup=True,
                               export_animations=True, export_animation_mode="NLA_TRACKS",
-                              export_force_sampling=True, export_extras=True, export_skins=True)
+                              export_force_sampling=True, export_extras=True, export_skins=True,
+                              # JPEG at q90: about a fifth of PNG, no visible loss on these maps
+                              export_image_format="JPEG", export_image_quality=90, export_jpeg_quality=90)
 
 
 def main():
