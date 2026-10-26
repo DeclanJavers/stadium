@@ -353,7 +353,12 @@ def long_call(rig, p, f, n):
     breathe(rig, p, f, n, deg=1.0)
 
 
-def export(rig):
+def export(rig, actions):
+    """The prop, its skin and one glTF animation per action. glTF has no place for per-animation
+    properties, so the action table (frames, seconds, looping, root_speed: how fast the game moves
+    the prop while a cycle plays) goes on the armature node's extras as "actions"."""
+    rig.arm["actions"] = json.dumps({name: dict(a, loop=True) for name, a in actions.items()}, sort_keys=True)
+    rig.arm["fps"] = FPS
     bpy.ops.object.select_all(action="DESELECT")
     rig.arm.select_set(True)
     rig.mesh.select_set(True)
@@ -374,7 +379,7 @@ def main():
         rig = Rig(pid, spec)
         report[pid] = {name: build(rig, name, act) for name, act in spec["actions"].items()}
         bpy.ops.wm.save_as_mainfile(filepath=str(RIGS / f"{pid}.anim.blend"))
-        report[pid]["glb"] = str(export(rig).relative_to(ROOT))
+        report[pid]["glb"] = str(export(rig, dict(report[pid])).relative_to(ROOT))
         print("ANIMATED", pid, json.dumps(report[pid]), flush=True)
     path = ROOT / "out" / "animate" / "anim_report.json"
     old = json.loads(path.read_text()) if path.exists() else {}
