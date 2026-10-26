@@ -82,6 +82,12 @@
    "actions": {
     "peck": {
      "frames": 48
+    },
+    "walk": {
+     "frames": 16,
+     "stride": 0.045,
+     "lift": 0.014,
+     "head_bob": 10
     }
    },
    "unimate": {
