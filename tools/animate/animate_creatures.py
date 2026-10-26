@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb: the textured, skinned prop with one glTF
-animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call"). Walk and trot cycles plant the feet with IK
+animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -163,6 +163,26 @@ def wings_flap(rig, p, t, n, amp):
     p.root = rig.up * (0.012 * rig.size * math.sin(TAU * (t / n) - 0.6))
 
 
+def takeoff(rig, p, f, n, act):
+    """One shot, with root motion: a crouch with the wings cocked, then flaps that start hard and
+    fast and settle as the bird climbs away forward; the legs tuck back once it is airborne."""
+    u = f / n
+    lift_at = 0.18
+    crouch = smooth(u / lift_at) * (1 - smooth((u - lift_at) / 0.06))
+    air = max(0.0, (u - lift_at) / (1 - lift_at))
+    beat = act.get("beat", 9)  # frames per wingbeat
+    wings_flap(rig, p, f, beat, act["amplitude"] * (1.15 - 0.25 * air))
+    p.root = (rig.up * (act["height"] * air ** 1.6 - 0.05 * rig.size * crouch)
+              + rig.fwd * (act["distance"] * air ** 2))
+    # The prop stands upright; in the air the body tips forward towards level flight.
+    root = rig.spec["root"]
+    p.rot(root, rig.left, act.get("pitch", 55) * smooth((air - 0.1) / 0.6) * rig.sign(root, rig.left, rig.fwd, tip=nose(rig)))
+    tuck = smooth((air - 0.15) / 0.3)
+    for leg in rig.spec.get("legs", {}).values():
+        hip = leg["chain"][0]
+        p.rot(hip, rig.left, 70 * tuck * rig.sign(hip, rig.left, -rig.fwd))
+
+
 # ---------------------------------------------------------------- IK walk
 
 def plant_feet(rig):
@@ -277,6 +297,8 @@ def build(rig, name, act):
                 sniff(rig, p, f, n)
             elif name == "call":
                 long_call(rig, p, f, n)
+            elif name == "takeoff":
+                takeoff(rig, p, f, n, act)
             p.apply(f)
         if planted:
             bake(rig, n, helpers)
@@ -289,7 +311,10 @@ def build(rig, name, act):
     track.name = name
     track.strips.new(name, 0, action)
     rig.arm.animation_data.action = None
-    return {"frames": n, "seconds": round(n / FPS, 2), "root_speed": round(speed, 3)}
+    meta = {"frames": n, "seconds": round(n / FPS, 2), "root_speed": round(speed, 3)}
+    if act.get("one_shot"):
+        meta.update(loop=False, root_motion=True)  # plays once and carries its own movement
+    return meta
 
 
 def peck(rig, p, f, n):
@@ -357,7 +382,7 @@ def export(rig, actions):
     """The prop, its skin and one glTF animation per action. glTF has no place for per-animation
     properties, so the action table (frames, seconds, looping, root_speed: how fast the game moves
     the prop while a cycle plays) goes on the armature node's extras as "actions"."""
-    rig.arm["actions"] = json.dumps({name: dict(a, loop=True) for name, a in actions.items()}, sort_keys=True)
+    rig.arm["actions"] = json.dumps({name: {"loop": True, **a} for name, a in actions.items()}, sort_keys=True)
     rig.arm["fps"] = FPS
     rig.mesh.data.name = rig.mesh.name  # a game sees mesh names: not the generator's temp file name
     bpy.ops.object.select_all(action="DESELECT")
