@@ -37,6 +37,22 @@
      "hop": 0.05,
      "one_shot": true,
      "root_motion": false
+    },
+    "turn_left": {
+     "frames": 24,
+     "degrees": 90,
+     "lift": 0.02,
+     "steps": 3,
+     "swing": 0.18,
+     "one_shot": true
+    },
+    "turn_right": {
+     "frames": 24,
+     "degrees": -90,
+     "lift": 0.02,
+     "steps": 3,
+     "swing": 0.18,
+     "one_shot": true
     }
    },
    "unimate": {
@@ -194,6 +210,22 @@
      "hop": 0.07,
      "one_shot": true,
      "root_motion": false
+    },
+    "turn_left": {
+     "frames": 30,
+     "degrees": 90,
+     "lift": 0.03,
+     "steps": 3,
+     "swing": 0.18,
+     "one_shot": true
+    },
+    "turn_right": {
+     "frames": 30,
+     "degrees": -90,
+     "lift": 0.03,
+     "steps": 3,
+     "swing": 0.18,
+     "one_shot": true
     }
    },
    "unimate": {
