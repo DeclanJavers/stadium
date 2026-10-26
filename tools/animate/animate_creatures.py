@@ -5,7 +5,7 @@
 Reads out/animate/rigs/<id>.rig.blend (rig_inspect.py) and catalog/creature_anims.json, builds
 each action from periodic functions of the loop phase (so the last frame meets the first),
 and writes out/assets/genprop.<id>.anim.glb (and .anim.lod1/.anim.lod2 from the static LODs):
-the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land"). Walk and trot cycles plant the feet with IK
+the textured, skinned prop with one glTF animation per action ("idle", "walk", "trot", "peck", "flap", "sniff", "call", "takeoff", "land", "startle"). Walk and trot cycles plant the feet with IK
 targets on a stance/swing path, then bake to plain bone keys; they play in place, and the
 action's root_speed (m/s) is how fast to move the prop while it plays.
 
@@ -207,6 +207,25 @@ def land(rig, p, f, n, act):
         p.rot(hip, rig.left, 70 * tuck * rig.sign(hip, rig.left, -rig.fwd))
 
 
+def startle(rig, p, f, n, act):
+    """One shot, in place: the head snaps up and back, the body crouches and springs into a short
+    hop (legs tucked in the air), lands on the spot, then the head eases back down and the
+    feathers settle with a shake."""
+    u = f / n
+    snap = smooth(u / 0.08) * (1 - smooth((u - 0.45) / 0.35))
+    neck_pitch(rig, p, -22 * snap, head_deg=-10 * snap)
+    crouch = math.exp(-((u - 0.14) * 22) ** 2)
+    hop = math.sin(math.pi * min(1.0, max(0.0, (u - 0.18) / 0.22)))  # airborne 18%..40%
+    p.root = rig.up * (act["hop"] * hop - 0.03 * rig.size * crouch)
+    for leg in rig.spec.get("legs", {}).values():
+        hip = leg["chain"][0]
+        p.rot(hip, rig.left, 35 * hop * rig.sign(hip, rig.left, -rig.fwd))
+    shake = math.sin(TAU * u * 11) * math.exp(-((u - 0.72) * 9) ** 2)
+    for i in rig.spec.get("spine", [rig.spec["root"]]):
+        p.rot(i, rig.fwd, 6 * shake)
+    tail_flick(rig, p, f, n, at=0.2, deg=14)
+
+
 # ---------------------------------------------------------------- IK walk
 
 def plant_feet(rig):
@@ -325,6 +344,8 @@ def build(rig, name, act):
                 takeoff(rig, p, f, n, act)
             elif name == "land":
                 land(rig, p, f, n, act)
+            elif name == "startle":
+                startle(rig, p, f, n, act)
             p.apply(f)
         if planted:
             bake(rig, n, helpers)
@@ -338,8 +359,8 @@ def build(rig, name, act):
     track.strips.new(name, 0, action)
     rig.arm.animation_data.action = None
     meta = {"frames": n, "seconds": round(n / FPS, 2), "root_speed": round(speed, 3)}
-    if act.get("one_shot"):
-        meta.update(loop=False, root_motion=True)  # plays once and carries its own movement
+    if act.get("one_shot"):  # plays once; root_motion: it carries its own movement (else it ends in place)
+        meta.update(loop=False, root_motion=act.get("root_motion", True))
     return meta
 
 

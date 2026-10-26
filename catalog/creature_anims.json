@@ -1,5 +1,5 @@
 {
- "_doc": "Looping cycles for rigged generated props (tools/animate/animate_creatures.py). Bones are indices into out/animate/rigs/<id>.bones.json (UniRig skeletons have no names). forward: the way the creature faces, in kit space (Z up). legs: [hip, knee, ankle, toes]; copy: duplicate bones UniRig put over a leg, driven like it; ik: the bone whose tail the foot target pulls (default the third); lock: the foot/toe bone held at its rest orientation (default the fourth). head_forward/head_turn: a head the generated prop has turned to the camera, and the degrees to turn it back to face forward in every action. one_shot: plays once with root motion (loop false in the exported table); takeoff height/distance in metres. plant: keep the feet on the ground with IK while the body moves. walk/trot: cycle frames at 24 fps, stride and lift in metres, duty the share of the cycle a foot is down, and each leg's phase (default: two legs alternate; a trot pairs diagonals); the loop plays in place and root_speed (m/s) is how fast the game should move it. unimate: reviewed joint labels (UniMate's vocabulary) and the facing pair [right, left] for the UniMate comparison.",
+ "_doc": "Looping cycles for rigged generated props (tools/animate/animate_creatures.py). Bones are indices into out/animate/rigs/<id>.bones.json (UniRig skeletons have no names). forward: the way the creature faces, in kit space (Z up). legs: [hip, knee, ankle, toes]; copy: duplicate bones UniRig put over a leg, driven like it; ik: the bone whose tail the foot target pulls (default the third); lock: the foot/toe bone held at its rest orientation (default the fourth). head_forward/head_turn: a head the generated prop has turned to the camera, and the degrees to turn it back to face forward in every action. one_shot: plays once (loop false in the exported table), with root motion unless root_motion is false (then it ends where it began); takeoff height/distance in metres. plant: keep the feet on the ground with IK while the body moves. walk/trot: cycle frames at 24 fps, stride and lift in metres, duty the share of the cycle a foot is down, and each leg's phase (default: two legs alternate; a trot pairs diagonals); the loop plays in place and root_speed (m/s) is how fast the game should move it. unimate: reviewed joint labels (UniMate's vocabulary) and the facing pair [right, left] for the UniMate comparison.",
  "fps": 24,
  "creatures": {
   "pigeon_standing": {
@@ -31,6 +31,12 @@
      "stride": 0.06,
      "lift": 0.022,
      "head_bob": 16
+    },
+    "startle": {
+     "frames": 36,
+     "hop": 0.05,
+     "one_shot": true,
+     "root_motion": false
     }
    },
    "unimate": {
@@ -142,6 +148,12 @@
     "call": {
      "frames": 60,
      "plant": true
+    },
+    "startle": {
+     "frames": 40,
+     "hop": 0.07,
+     "one_shot": true,
+     "root_motion": false
     }
    },
    "unimate": {
