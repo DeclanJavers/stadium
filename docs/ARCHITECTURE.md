@@ -223,8 +223,34 @@ The living props generated from prompts (`genprop.*`: pigeons, gulls, the urban 
 | `colab_setup_anim.sh`, `run_unirig.sh` | Colab L4 | UniRig (MIT) predicts a skeleton and skin weights for a texture-free copy of each prop |
 | `rig_inspect.py` | local Blender | copies the weights onto the textured prop, dumps the bones (`out/animate/rigs/<id>.bones.json`) and renders them numbered, for labelling |
 | `catalog/creature_anims.json` | data | per creature: which bones are root, spine, neck, head, tail, legs and wings; facing; the actions and their timing |
-| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks and trots plant the feet with IK targets on a stance/swing path (per-leg phase, so a trot moves diagonal pairs together) and bake to bone keys, in place, with `root_speed` (m/s, stride over stance time) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action) |
+| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks and trots plant the feet with IK targets on a stance/swing path (per-leg phase, so a trot moves diagonal pairs together) and bake to bone keys, in place, with `root_speed` (m/s, stride over stance time) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action; glTF has no per-animation properties, so the armature node's extras carry `actions`: frames, seconds, loop and `root_speed` per action, plus `fps`) |
 | `review_anims.py` | local Blender | film strips and looping MP4s per action in `out/review/anims/` |
+| `check_anims.py` | any Python with numpy | reads the exported GLBs: every looping action ends where it starts (0.5°, 1 mm), every action in the table is exported, and both LODs carry the same actions |
+
+What each creature can do (`catalog/creature_anims.json`):
+
+| creature | loops | one shots | plumages (`KHR_materials_variants`) |
+|---|---|---|---|
+| `urban_fox` | idle, trot (0.71 m/s), sniff | alert, turn_left, turn_right | - |
+| `pigeon_standing` | idle, walk (0.17 m/s) | startle, turn_left, turn_right | blue_bar, dark, ash_red, pale |
+| `pigeon_pecking` | peck, walk (0.11 m/s, foraging) | - | blue_bar, dark, ash_red, pale |
+| `seagull_standing` | idle, walk (0.17 m/s), call | startle, turn_left, turn_right | herring, lesser_black_backed, juvenile |
+| `seagull_wings_up` | idle, flap | takeoff, land | herring, lesser_black_backed, juvenile |
+
+Reading an animated prop in a game: the armature node's extras hold `fps` and an `actions` table,
+one entry per glTF animation, with `frames`, `seconds`, `loop`, `root_speed` and, for one shots,
+`root_motion` and (turns) `root_yaw`.
+- `loop: true`: a cycle that plays in place; move the prop at `root_speed` m/s while it plays.
+- `loop: false, root_motion: false` (startle, alert): plays once and ends where it began.
+- `loop: false, root_motion: true`: the clip carries its own movement on the root bone (take-off
+  climbs 1.4 m and travels 1.6 m; landing ends at the origin), or turns the prop by `root_yaw`
+  degrees (left positive); afterwards place the prop where the clip left it.
+- Each animated prop also ships `.anim.lod1` and `.anim.lod2` (the static LOD meshes skinned to the
+  same skeleton, same actions), so a game can switch level at any frame without a pop.
+- Plumages are glTF material variants: pick one per instance; meshes and animations are shared.
+
+Textures in all generated props (static and animated) are JPEG at quality 90, about a quarter of
+PNG with no visible loss in side-by-side renders.
 
 UniRig bones carry no names and arbitrary roll, so rotations are given about kit-space axes with
 the sign read from the rest geometry ("turn the neck so the head goes down"). UniRig sometimes
