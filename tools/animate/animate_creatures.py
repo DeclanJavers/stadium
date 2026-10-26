@@ -51,6 +51,29 @@ class Rig:
         for pb in self.arm.pose.bones:
             pb.rotation_mode = "QUATERNION"
         bpy.context.scene.render.fps = FPS
+        self.validate()
+
+    def validate(self):
+        """Catch a mislabelled spec before building: the head must lie forward of the tail (or the
+        root), and "l" legs on the creature's left. (A swapped head/tail once made a
+        pigeon peck with its tail and walk backwards.)"""
+        s = self.spec
+        r = self.head(s["root"])
+        problems = []
+        # upright birds carry the head almost over the root, so judge it against the tail
+        ref = self.tail(s["tail"][-1]) if s.get("tail") else r
+        nose_d = (self.tail(s["head"][-1]) - ref).dot(self.fwd)
+        if nose_d <= 0.02 * self.size:
+            problems.append(f"head is not forward of the {'tail' if s.get('tail') else 'root'} "
+                            f"({nose_d:.3f} m): forward or head/tail are wrong")
+        for side, leg in s.get("legs", {}).items():
+            foot = self.tail(leg["chain"][-1]) - r
+            lat = foot.dot(self.left)
+            want = 1 if side.endswith("l") else -1 if side.endswith("r") else 0
+            if want and lat * want < 0:
+                problems.append(f"leg {side} is on the {'right' if lat < 0 else 'left'} ({lat:.3f} m)")
+        if problems:
+            raise ValueError(f"{self.pid} spec does not match its skeleton: " + "; ".join(problems))
 
     def bone(self, i):
         return self.arm.data.bones[self.names[i]]
