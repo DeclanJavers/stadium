@@ -1,11 +1,11 @@
 //! Turn a generated stadium (stadium_gen::stadium::Stadium, kit coordinates) into a renderable
 //! scene (glTF coordinates: Y up, the kit's -Y is +Z) using the asset library.
 
-use crate::glb::{self, Alpha, Image, Instance, Light, Material, PitchInfo, Primitive, Scene, TexRef, TexXform};
+use crate::glb::{self, Alpha, GrassParams, Image, Instance, Light, Material, PitchInfo, Primitive, Scene, TexRef, TexXform};
 use crate::library::Library;
 use glam::{DVec3, Mat4, Vec2, Vec3, Vec4};
 use stadium_gen::mesh::to_trimesh;
-use stadium_gen::stadium::{Mat, NetSpec, Stadium, Tex};
+use stadium_gen::stadium::{Mat, NetSpec, Part, PropSet, Spot, Stadium, Tex};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -39,12 +39,23 @@ fn plain(name: &str, base: Vec3, rough: f32) -> Material {
         cutoff: 0.5,
         transmission: 0.0,
         extras: serde_json::Value::Null,
+        grass: None,
     }
+}
+
+/// What a scene is built from: a stadium or a training ground, in kit coordinates.
+pub struct World<'a> {
+    pub parts: &'a [Part],
+    pub props: &'a [PropSet],
+    pub spots: &'a [Spot],
+    pub camera: DVec3,
+    pub pitch: Option<&'a stadium_gen::pitch::Pitch>,
+    pub capacity: Option<u64>,
 }
 
 struct Builder<'a> {
     lib: &'a Library,
-    st: &'a Stadium,
+    st: World<'a>,
     scene: Scene,
     mats: HashMap<String, usize>,
     lib_images: HashMap<usize, usize>,
@@ -162,13 +173,23 @@ impl<'a> Builder<'a> {
                 }
             },
         };
+        if mat.key == "Dugout_Polycarbonate" {
+            // the library bakes it opaque; it is clear polycarbonate (transmission in Blender)
+            m.transmission = 0.75;
+        }
         if let Some(c) = mat.color {
             let c = lin(c);
             let gain = m.extras.get("tint_gain").and_then(|v| v.as_f64());
             let base = m.extras.get("base_hex").and_then(|v| v.as_str()).map(glb::srgb_hex);
             let rgb = match (gain, base) {
                 (Some(g), _) => c * g as f32,
-                (None, Some(b)) => m.base_color.truncate() * c / b.max(Vec3::splat(1e-4)),
+                // keep the bake's darkening (occlusion, grime) as one brightness ratio: per channel,
+                // a saturated base (a red door's near-zero green) turns small bake drift into a
+                // colour cast (grey doors came out mint)
+                (None, Some(b)) => {
+                    let lum = Vec3::new(0.2126, 0.7152, 0.0722);
+                    c * (m.base_color.truncate().dot(lum) / b.dot(lum).max(1e-4)).clamp(0.25, 2.0)
+                }
                 (None, None) => c,
             };
             m.base_color = rgb.min(Vec3::ONE).extend(m.base_color.w);
@@ -176,6 +197,22 @@ impl<'a> Builder<'a> {
         if let Some((c, s)) = mat.emission {
             m.emissive = lin(c);
             m.emissive_strength = s as f32;
+        }
+        if let Some(Tex::Grass(g)) = &mat.texture {
+            let info = PitchInfo {
+                pattern: g.pattern.clone(),
+                width: g.stripe_width as f32,
+                angle: g.angle_deg as f32,
+                strength: g.strength as f32,
+                natural: g.natural,
+                color: glb::srgb_hex(&g.color),
+                dry: glb::srgb_hex(&g.dry),
+                wear: g.wear as f32,
+                wetness: g.wetness as f32,
+                height_mm: g.height_mm as f32,
+                half: g.half.as_vec2(),
+            };
+            m.grass = Some(GrassParams::from_pitch(&info, g.origin.as_vec2(), g.yaw as f32, g.wear_zones));
         }
         m
     }
@@ -193,14 +230,17 @@ impl<'a> Builder<'a> {
             .iter()
             .map(|p| {
                 let lm = &self.lib.scene.materials[p.material];
-                let tint = tints.iter().find(|(n, _)| *n == lm.name).map(|t| t.1);
+                // a slot also matches its per-variant materials ("TINT_pole_a" -> "TINT_pole_a_<preset>")
+                let tint = tints.iter().find(|(n, _)| *n == lm.name || lm.name.strip_prefix(n.as_str()).is_some_and(|r| r.starts_with('_'))).map(|t| t.1);
                 let texture = match net {
-                    Some(n) if lm.name == "TINT_net_card" => Some(Tex::Net(n.clone())),
+                    Some(n) if lm.name.starts_with("TINT_net_card") => Some(Tex::Net(n.clone())),
                     _ => None,
                 };
                 let color = if texture.is_some() { None } else { tint };
-                let mi = self.material(&Mat { key: lm.name.clone(), color, emission: None, texture });
-                Primitive { positions: p.positions.clone(), normals: p.normals.clone(), uvs: p.uvs.clone(), indices: p.indices.clone(), material: mi }
+                // "EMIT:<material>" lights a library material up (floodlight lenses at night)
+                let emission = tints.iter().find(|(n, _)| n.strip_prefix("EMIT:").is_some_and(|k| lm.name.starts_with(k))).map(|t| (t.1, 30.0));
+                let mi = self.material(&Mat { key: lm.name.clone(), color, emission, texture });
+                Primitive { positions: p.positions.clone(), normals: p.normals.clone(), uvs: p.uvs.clone(), colors: p.colors.clone(), indices: p.indices.clone(), material: mi }
             })
             .collect();
         self.scene.meshes.push(prims);
@@ -213,6 +253,20 @@ impl<'a> Builder<'a> {
 
 /// Build the render scene. Returns the scene and any warnings (missing assets).
 pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
+    let w = World { parts: &st.parts, props: &st.props, spots: &st.spots, camera: st.camera.0, pitch: Some(&st.pitch), capacity: Some(st.report.capacity.total as u64) };
+    scene_of(w, lib)
+}
+
+/// The render scene of a training ground (its pitches built in place).
+pub fn site_scene(site: &stadium_gen::site::Site, cat: &stadium_gen::catalog::Catalog, lib: &Library) -> (Scene, Vec<String>) {
+    let (parts, props) = stadium_gen::site::realize(site, cat);
+    let w = World { parts: &parts, props: &props, spots: &site.spots, camera: site.camera.0, pitch: None, capacity: None };
+    scene_of(w, lib)
+}
+
+pub fn scene_of(st: World, lib: &Library) -> (Scene, Vec<String>) {
+    let capacity = st.capacity;
+    let camera = st.camera;
     let mut b = Builder {
         lib,
         st,
@@ -224,8 +278,8 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
             lights: Vec::new(),
             bounds: (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN)),
             pitch: None,
-            capacity: Some(st.report.capacity.total as u64),
-            main_camera: Some(to_gltf(st.camera.0)),
+            capacity,
+            main_camera: Some(to_gltf(camera)),
             lods: Vec::new(),
             nodes: Vec::new(),
         },
@@ -237,7 +291,7 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
     };
     let (mut lo, mut hi) = (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN));
     // generated parts: triangulate and smooth on every core
-    let parts = &b.st.parts;
+    let parts = b.st.parts;
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(parts.len().max(1));
     let mut tms: Vec<Option<stadium_gen::mesh::TriMesh>> = vec![None; parts.len()];
     std::thread::scope(|sc| {
@@ -267,7 +321,7 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
             let mi = b.material(&mat);
             // compact each group's vertices so primitives stay small
             let mut remap: HashMap<u32, u32> = HashMap::new();
-            let mut pp = Primitive { positions: Vec::new(), normals: Vec::new(), uvs: Vec::new(), indices: Vec::new(), material: mi };
+            let mut pp = Primitive { positions: Vec::new(), normals: Vec::new(), uvs: Vec::new(), colors: Vec::new(), indices: Vec::new(), material: mi };
             for &i in idx {
                 let j = *remap.entry(i).or_insert_with(|| {
                     pp.positions.push(positions[i as usize]);
@@ -287,12 +341,15 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
     // props
     let c = kit_to_gltf();
     let ci = c.inverse();
-    for ps in &b.st.props {
-        let Some(prop) = lib.props.get(&ps.key) else {
-            b.warnings.push(format!("prop {} is not in the library", ps.key));
+    for ps in b.st.props {
+        // (a generated prop not finished yet draws its fallback, or nothing: it is optional)
+        let Some((key, prop)) = lib.resolve(&ps.key).and_then(|k| Some((k, lib.props.get(k)?))) else {
+            if !ps.key.starts_with("genprop.") {
+                b.warnings.push(format!("prop {} is not in the library", ps.key));
+            }
             continue;
         };
-        let lod = lib.props.get(&format!("{}.lod2", ps.key));
+        let lod = lib.props.get(&format!("{key}.lod2"));
         for (k, (mesh, local)) in prop.parts.iter().enumerate() {
             let mi = b.lib_mesh(*mesh, &ps.tints, ps.net.as_ref());
             if !b.scene.nodes.iter().any(|n| n.2 == mi) {
@@ -319,7 +376,7 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
         }
     }
     // lights
-    for s in &b.st.spots {
+    for s in b.st.spots {
         let outer = (s.angle_deg / 2.0).to_radians();
         let ca = outer.cos();
         let inner = (ca + s.blend * (1.0 - ca)).min(1.0).acos();
@@ -332,7 +389,7 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
             outer: outer as f32,
         });
     }
-    let p = &b.st.pitch;
+    if let Some(p) = b.st.pitch {
     let g = &p.grass_spec;
     let hex = |k: &str, d: &str| glb::srgb_hex(g.get(k).and_then(|v| v.as_str()).unwrap_or(d));
     b.scene.pitch = Some(PitchInfo {
@@ -347,8 +404,8 @@ pub fn scene(st: &Stadium, lib: &Library) -> (Scene, Vec<String>) {
         wetness: p.wetness as f32,
         height_mm: p.height_mm as f32,
         half: Vec2::new(p.length as f32 / 2.0, p.width as f32 / 2.0),
-        procedural: true,
     });
+    }
     b.scene.bounds = (lo, hi);
     let w = std::mem::take(&mut b.warnings);
     (b.scene, w)

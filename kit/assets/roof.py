@@ -50,6 +50,23 @@ def deck_material(color, membrane=False):
     return m
 
 
+def underside_material(color="#d8d8d4"):
+    """The soffit of a sheeted roof: the same trapezoidal profile as the deck seen from below (ribs
+    every 250 mm), the troughs a shade darker, faint condensation streaks."""
+    name = "Roof_Underside"
+    if bpy.data.materials.get(name):
+        return bpy.data.materials[name]
+    m, nb = material(name)
+    pos = nb.geometry()["Position"]
+    x = nb.sep(pos)[0]
+    rib = nb.smooth(0.22, 0.42, nb.math("PINGPONG", nb.div(x, 0.25), 0.5))
+    streak = nb.smooth(0.55, 0.85, nb.noise(nb.vmath("MULTIPLY", pos, (0.3, 1.0, 1.0)), 0.8, detail=3))
+    col = nb.mix(nb.mul(nb.sub(1.0, rib), 0.12), srgb(color), srgb("#6f7276"))
+    col = nb.mix(nb.mul(streak, 0.18), col, srgb("#8a8c86"))
+    nb.output(nb.principled(Base_Color=col, Roughness=0.62, Normal=nb.bump(rib, 0.8, 0.035)))
+    return m
+
+
 def translucent_material():
     name = "Roof_Polycarbonate"
     if bpy.data.materials.get(name):
@@ -75,16 +92,17 @@ def build(run, tiers, bay_list, spec, d_focal, far_width, col, parent, include_e
         spec = dict(spec, type="cantilever")
         roof = RF.solve(tiers, spec, d_focal, far_width)
     out = RF.build(run, roof, bay_list, include_ends)
+    steel = MAT.painted_metal("Roof_Steel", spec.get("steel_color", "#eceeee"), rough=0.4, dirt=0.0, scuffs=0.1)
     mats = [deck_material(spec.get("color", "#e3e4e2"), spec.get("deck") == "membrane"),
             translucent_material(),
             painted("TINT_roof_fascia", spec.get("fascia_color", "#1b1d20"), 0.45),
-            painted("Roof_Underside", spec.get("underside_color", "#d8d8d4"), 0.65)]
+            underside_material(spec.get("underside_color", "#d8d8d4")),
+            steel]
     V, F, tags, UV = out["mesh"]
     if len(F):
         o = mesh_object(f"Roof_{run.name}", V, F, col, parent, materials=mats, mat_index=tags, uvs=UV)
         _recalc(o)
         smooth_by_angle(o)
-    steel = MAT.painted_metal("Roof_Steel", spec.get("steel_color", "#eceeee"), rough=0.4, dirt=0.0, scuffs=0.1)
     _tubes_mesh(f"RoofSteel_{run.name}", out["tubes"], col, parent, steel, sides=8)
     import math
     for kind, ident, loc, n, props in out["sockets"]:

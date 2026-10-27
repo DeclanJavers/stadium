@@ -27,6 +27,16 @@ from .stand import _tubes_mesh, concrete, painted
 FRONT_FROM_TOUCHLINE = 4.3
 
 
+def _segments(digit, x0, x1, z0, z1, t):
+    """The lit segments of a seven-segment digit in the box x0..x1, z0..z1 (segment thickness t)."""
+    zm = 0.5 * (z0 + z1)
+    seg = {"a": (x0 + t, x1 - t, z1 - t, z1), "b": (x1 - t, x1, zm + t / 2, z1 - t), "c": (x1 - t, x1, z0 + t, zm - t / 2),
+           "d": (x0 + t, x1 - t, z0, z0 + t), "e": (x0, x0 + t, z0 + t, zm - t / 2), "f": (x0, x0 + t, zm + t / 2, z1 - t),
+           "g": (x0 + t, x1 - t, zm - t / 2, zm + t / 2)}
+    lit = ["abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc", "abcdefg", "abcdfg"][digit % 10]
+    return [seg[ch] for ch in lit]
+
+
 def front_from_touchline(pitch, stands=None):
     """Dugout fronts sit 4.3 m behind the touchline, closer (not under 1.5 m) when the main stand's
     front is near, so the dugout and its roof never run into the stand."""
@@ -101,30 +111,64 @@ def _model(p, col, name):
             # never put floats in object names: Blender parses a trailing ".digits" as a counter
             parts.append(mesh_object(f"end_{k}", Ve, [tuple(range(len(Ve)))], col, materials=[shell]))
         ribs = [(np.array([[x, y, z] for y, z in prof]), 0.03) for x in np.linspace(-Lx / 2, Lx / 2, 5)]
+        # base and lip rails along the shell, a club-colour back panel and a kick plate
+        for y, z in (prof[0], prof[-1]):
+            ribs.append((np.array([[-Lx / 2, y, z], [Lx / 2, y, z]]), 0.04))
         parts.append(_tubes_mesh("ribs", ribs, col, None, frame, sides=8))
+        club = painted("TINT_dugout", p["color"], 0.45)
+        for V, F in (_box(-Lx / 2 + 0.05, Lx / 2 - 0.05, -DEPTH + 0.14, -DEPTH + 0.2, 0.42, 1.55),
+                     _box(-Lx / 2, Lx / 2, -0.08, 0.0, 0.12, 0.32)):
+            parts.append(mesh_object("panel", V, F, col, materials=[club]))
     elif style == "box":
+        # a brick base (back wall and low side walls) under clear polycarbonate sides and a sloping
+        # polycarbonate roof on a steel frame, with a club-colour fascia
         wall = brick("Dugout_Brick", "#7a3426")
-        for V, F in (_box(-Lx / 2, Lx / 2, -DEPTH - 0.25, -DEPTH, 0.0, 2.2),
-                     _box(-Lx / 2 - 0.25, -Lx / 2, -DEPTH - 0.25, 0.0, 0.0, 2.2),
-                     _box(Lx / 2, Lx / 2 + 0.25, -DEPTH - 0.25, 0.0, 0.0, 2.2)):
+        for V, F in (_box(-Lx / 2 - 0.25, Lx / 2 + 0.25, -DEPTH - 0.25, -DEPTH, 0.0, 1.1),
+                     _box(-Lx / 2 - 0.25, -Lx / 2, -DEPTH - 0.25, 0.0, 0.0, 1.0),
+                     _box(Lx / 2, Lx / 2 + 0.25, -DEPTH - 0.25, 0.0, 0.0, 1.0)):
             parts.append(mesh_object("wall", V, F, col, materials=[wall]))
-        V, F = _box(-Lx / 2 - 0.3, Lx / 2 + 0.3, -DEPTH - 0.3, 0.35, 2.2, 2.38)
-        parts.append(mesh_object("roof", V, F, col, materials=[painted("TINT_dugout", p["color"], 0.45)]))
+        V, F = _box(-Lx / 2 - 0.3, Lx / 2 + 0.3, -DEPTH - 0.3, -DEPTH + 0.05, 1.1, 1.18)
+        parts.append(mesh_object("coping", V, F, col, materials=[slab]))
+        parts += _canopy(p, Lx, 1.1, True, col, polycarbonate("#3d4954"), frame)
     else:  # shelter
-        clear = polycarbonate("#dfe8ea")
-        posts = []
-        for x in (-Lx / 2, Lx / 2):
-            for y in (-DEPTH + 0.05, -0.05):
-                posts.append((np.array([[x, y, 0.12], [x, y, 2.15]]), 0.04))
-        parts.append(_tubes_mesh("posts", posts, col, None, frame, sides=8))
-        for V, F in (_box(-Lx / 2, Lx / 2, -DEPTH + 0.02, -DEPTH + 0.04, 0.3, 2.1),
-                     _box(-Lx / 2 - 0.01, -Lx / 2 + 0.01, -DEPTH, -0.1, 0.3, 2.1),
-                     _box(Lx / 2 - 0.01, Lx / 2 + 0.01, -DEPTH, -0.1, 0.3, 2.1)):
-            parts.append(mesh_object("pane", V, F, col, materials=[clear]))
-        V, F = _box(-Lx / 2 - 0.15, Lx / 2 + 0.15, -DEPTH - 0.15, 0.25, 2.15, 2.22)
-        parts.append(mesh_object("roof", V, F, col, materials=[painted("TINT_dugout", p["color"], 0.45)]))
+        parts += _canopy(p, Lx, 0.3, False, col, polycarbonate("#dfe8ea"), frame)
     obj = join([o for o in parts if o is not None], name)
     return obj
+
+
+def _canopy(p, Lx, z_base, walled, col, clear, frame):
+    """Clear polycarbonate panels (back above z_base, sides from z_base) under a roof sloping from
+    2.35 m at the back to 2.15 m over the front, on a steel frame of posts, rails and rafters, with a
+    club-colour fascia along the front edge. walled: brick walls carry the back below z_base."""
+    yb, yf, zb, zf = -DEPTH - 0.05, 0.3, 2.35, 2.15
+
+    def zr(y):
+        return zb + (zf - zb) * (y - yb) / (yf - yb)
+    x0, x1 = -Lx / 2, Lx / 2
+    quads = [[(x0, yb, zb), (x1, yb, zb), (x1, yf, zf), (x0, yf, zf)],
+             [(x0, -DEPTH + 0.02, z_base), (x1, -DEPTH + 0.02, z_base), (x1, -DEPTH + 0.02, zr(-DEPTH)),
+              (x0, -DEPTH + 0.02, zr(-DEPTH))]]
+    quads += [[(x, -DEPTH, z_base), (x, 0.0, z_base), (x, 0.0, zr(0.0)), (x, -DEPTH, zr(-DEPTH))] for x in (x0, x1)]
+    out = [mesh_object(f"pane_{k}", q, [(0, 1, 2, 3)], col, materials=[clear]) for k, q in enumerate(quads)]
+    V, F = _box(x0 - 0.05, x1 + 0.05, yf - 0.06, yf + 0.02, zf - 0.18, zf + 0.04)
+    out.append(mesh_object("fascia", V, F, col, materials=[painted("TINT_dugout", p["color"], 0.45)]))
+    r = 0.03
+    z_post = 1.0 if walled else 0.12
+    lines = []
+    for x in (x0, x1):
+        lines += [(np.array([[x, -DEPTH, z_post], [x, -DEPTH, zr(-DEPTH)]]), r),
+                  (np.array([[x, 0.0, z_post], [x, 0.0, zr(0.0)]]), r),
+                  (np.array([[x, -DEPTH, z_base], [x, 0.0, z_base]]), r)]
+    lines += [(np.array([[x0, yb, zb], [x1, yb, zb]]), r), (np.array([[x0, 0.0, zr(0.0)], [x1, 0.0, zr(0.0)]]), r),
+              (np.array([[x0, -DEPTH + 0.02, z_base], [x1, -DEPTH + 0.02, z_base]]), r)]
+    n = max(2, int(round(Lx / 1.2)))
+    for k in range(n + 1):
+        x = x0 + Lx * k / n
+        lines.append((np.array([[x, yb, zb], [x, yf, zf]]), 0.022))
+        if 0 < k < n:
+            lines.append((np.array([[x, -DEPTH + 0.02, z_base], [x, -DEPTH + 0.02, zr(-DEPTH)]]), 0.02))
+    out.append(_tubes_mesh("canopy_frame", lines, col, None, frame, sides=8))
+    return out
 
 
 def _box(x0, x1, y0, y1, z0, z1):
@@ -205,5 +249,38 @@ def build(cfg, pitch, night=False, col=None, stands=None):
         o.matrix_world = origin
         _seats(p, col, root, origin, False)
         socket("dugout", side, (x, y, 0.0), 0.0, parent=root, col=col, seats=p["seats"], length=round(Lx, 2))
+    # the fourth official's desk beside the tunnel exit, between the dugouts
+    dark = MAT.painted_metal("Dugout_Frame", "#2b2d30", rough=0.35, dirt=0.2)
+    dx, dy = GAP / 2 - 0.6, y + 0.9
+    boxes = [(_box(dx - 0.7, dx + 0.7, dy - 0.3, dy + 0.3, 0.72, 0.76), dark),
+             (_box(dx - 0.7, dx + 0.7, dy + 0.26, dy + 0.3, 0.05, 0.72), painted("TINT_dugout", p["color"], 0.45))]
+    boxes += [(_box(dx + sx * 0.66 - 0.03, dx + sx * 0.66 + 0.03, dy - 0.3, dy + 0.3, 0.0, 0.72), dark) for sx in (-1, 1)]
+    # the electronic substitution board in its holder at one end: a slim housing with a carry
+    # handle, and on both faces the two-digit number cells, red (off) over green (on)
+    from .tunnel import _emissive
+    red = _emissive("SubsBoard_Red", "#ff1508", 2.5, base="#101112")
+    green = _emissive("SubsBoard_Green", "#1aff44", 2.5, base="#101112")
+    bx0, by = dx - 0.62, dy - 0.05
+    boxes.append((_box(bx0, bx0 + 0.62, by - 0.035, by + 0.035, 0.76, 1.24), dark))
+    boxes += [(_box(hx - 0.015, hx + 0.015, by - 0.012, by + 0.012, 1.24, 1.33), dark) for hx in (bx0 + 0.1, bx0 + 0.52)]
+    boxes.append((_box(bx0 + 0.085, bx0 + 0.535, by - 0.015, by + 0.015, 1.3, 1.34), dark))
+    for sy in (-1.0, 1.0):
+        ya, yb = (by - 0.039, by - 0.035) if sy < 0 else (by + 0.035, by + 0.039)
+        for z0, mm, digits in ((1.02, red, (1, 4)), (0.8, green, (2, 3))):
+            for c, dg in zip((bx0 + 0.07, bx0 + 0.33), digits):
+                # read the right way round from the side it faces
+                x0 = c if sy < 0 else 2 * bx0 + 0.62 - c - 0.22
+                for sx0, sx1, sz0, sz1 in _segments(dg, x0 + 0.03, x0 + 0.19, z0 + 0.01, z0 + 0.17, 0.024):
+                    if sy > 0:      # (the glyph itself mirrored too on the face read from +y)
+                        sx0, sx1 = 2 * x0 + 0.22 - sx1, 2 * x0 + 0.22 - sx0
+                    boxes.append((_box(sx0, sx1, ya, yb, sz0, sz1), mm))
+    # water bottles at the other end
+    bottle = MAT.plastic("FourthOfficial_Bottle", "#6fa6d6", 0.2)
+    for k, bxx in enumerate((dx + 0.25, dx + 0.36, dx + 0.47)):
+        byy = dy - 0.1 + 0.06 * k
+        boxes.append((_box(bxx - 0.035, bxx + 0.035, byy - 0.035, byy + 0.035, 0.76, 0.98), bottle))
+        boxes.append((_box(bxx - 0.015, bxx + 0.015, byy - 0.015, byy + 0.015, 0.98, 1.02), dark))
+    for k, ((V, F), m) in enumerate(boxes):
+        mesh_object(f"FourthOfficial_{k}", V, F, col, root, materials=[m])
     technical_areas(pitch, xs, Lx, col, root, front)
     return {"root": root, "length": Lx, "xs": xs}

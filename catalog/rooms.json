@@ -1,0 +1,550 @@
+{
+  "_doc": "Rooms for buildings with interiors (kit/site/medical.py). Sizes in metres: min_w along the band (the corridor), min_d into it; max_d: in a deeper band a cross wall closes the room at that depth, with mechanical plant behind it. floor: vinyl | rubber | tile | carpet | timber (timber_from: the quality tier it becomes timber at); walls: paint | tile | accent (the club colour). glazing on the outside wall: window (sill 0.9, head 2.3) | full (0.1 to 2.6) | high (1.6 to 2.3) | none. door: leaf width (0 = an opening), door_kind: leaf | lead (X-ray: a lead-lined leaf and a warning light) | metal (a lift) | opening. fixtures: props laid out in the room's frame (u along the door wall, v into the room away from it): at back | left | right | door (a wall, off = distance from its face) or centre (fu, fv: fractions of the room); along: fraction along the wall, or repeat (spacing, with max and span [from, to] in fractions); rot: degrees added to the wall's facing (a prop's +y faces into the room); tints: slot -> colour (club = the club's primary); min_w / min_d / min_tier gate a fixture; cut: false hides a fixture in the cutaway view (wall-hung or overhead kit that would float above the cut walls).",
+  "entrance": {
+    "label": "Entrance and reception", "min_w": 6.0, "min_d": 3.6, "floor": "vinyl", "timber_from": 3, "walls": "accent",
+    "glazing": "entrance", "door": 2.4, "door_kind": "opening",
+    "fixtures": [
+      {"key": "prop.reception_desk", "at": "right", "along": 0.55, "off": 0.45, "min_d": 4.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.waiting_seats", "at": "left", "along": 0.55, "off": 0.32, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.08, "fv": 0.9},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.92, "fv": 0.9, "min_tier": 3},
+      {"key": "prop.med_tv", "cut": false, "at": "door", "along": 0.8, "off": 0.0, "min_tier": 3}
+    ]
+  },
+  "first_aid": {
+    "label": "First-aid room", "min_w": 4.8, "min_d": 3.6, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.med_couch_folding", "at": "back", "along": 0.38, "off": 0.42},
+      {"key": "prop.med_cabinet", "at": "left", "along": 0.62, "off": 0.25},
+      {"key": "prop.med_sink", "cut": false, "at": "right", "along": 0.55, "off": 0.0},
+      {"key": "prop.ice_machine", "at": "door", "along": 0.75, "off": 0.32},
+      {"key": "prop.med_chair", "at": "back", "along": 0.85, "off": 0.35, "rot": 20, "min_w": 4.4},
+      {"key": "prop.med_trolley", "at": "centre", "fu": 0.65, "fv": 0.45}
+    ]
+  },
+  "treatment_basic": {
+    "label": "Treatment room", "min_w": 4.2, "min_d": 3.4, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.med_couch_folding", "at": "back", "repeat": 2.2, "max": 3, "span": [0.0, 0.85], "off": 0.42},
+      {"key": "prop.med_sink", "cut": false, "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.med_chair", "at": "door", "along": 0.75, "off": 0.32}
+    ]
+  },
+  "treatment": {
+    "label": "Physio treatment room", "min_w": 5.4, "min_d": 4.2, "max_d": 7.0, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.med_curtain", "cut": false, "at": "back", "repeat": 2.6, "max": 4, "off": 0.85},
+      {"key": "prop.med_couch", "at": "back", "repeat": 2.6, "max": 4, "off": 0.85, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.med_sink", "cut": false, "at": "door", "along": 0.82, "off": 0.0},
+      {"key": "prop.med_wall_station", "cut": false, "at": "left", "along": 0.35, "off": 0.0, "min_d": 4.6},
+      {"key": "prop.ice_machine", "at": "right", "along": 0.25, "off": 0.32},
+      {"key": "prop.med_trolley", "at": "centre", "fu": 0.5, "fv": 0.3},
+      {"key": "prop.med_cabinet", "at": "right", "along": 0.7, "off": 0.25, "min_d": 5.0}
+    ]
+  },
+  "consult": {
+    "label": "Doctor's consulting room", "min_w": 4.2, "min_d": 4.2, "max_d": 6.0, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.med_desk", "at": "back", "along": 0.55, "off": 1.35},
+      {"key": "prop.med_chair_office", "at": "back", "along": 0.55, "off": 0.6},
+      {"key": "prop.med_chair", "at": "back", "along": 0.42, "off": 2.3, "rot": 180},
+      {"key": "prop.med_chair", "at": "back", "along": 0.68, "off": 2.3, "rot": 180, "min_w": 4.6},
+      {"key": "prop.med_exam_couch", "at": "left", "along": 0.62, "off": 0.36, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.med_sink", "cut": false, "at": "right", "along": 0.3, "off": 0.0}
+    ]
+  },
+  "store": {
+    "label": "Store", "min_w": 2.4, "min_d": 2.0, "max_d": 4.0, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 0.9,
+    "fixtures": [{"key": "prop.med_cabinet", "at": "back", "repeat": 1.05, "max": 4, "off": 0.25}]
+  },
+  "office": {
+    "label": "Office", "min_w": 3.6, "min_d": 3.0, "max_d": 6.0, "floor": "carpet", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.med_desk", "at": "back", "repeat": 1.8, "max": 3, "off": 1.35},
+      {"key": "prop.med_chair_office", "at": "back", "repeat": 1.8, "max": 3, "off": 0.6},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.1, "fv": 0.15}
+    ]
+  },
+  "meeting": {
+    "label": "Meeting room", "min_w": 4.8, "min_d": 4.0, "max_d": 7.0, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.meeting_table", "at": "centre", "fu": 0.5, "fv": 0.5},
+      {"key": "prop.wall_tv", "cut": false, "at": "left", "along": 0.5, "off": 0.0},
+      {"key": "prop.whiteboard", "cut": false, "at": "right", "along": 0.5, "off": 0.0, "min_d": 4.8},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.92, "fv": 0.9}
+    ]
+  },
+  "staff": {
+    "label": "Staff room", "min_w": 4.8, "min_d": 3.6, "max_d": 7.0, "floor": "carpet", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.waiting_seats", "at": "left", "along": 0.5, "off": 0.32, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.waiting_seats", "at": "back", "along": 0.5, "off": 0.32, "min_w": 5.2},
+      {"key": "prop.med_tv", "cut": false, "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.9, "fv": 0.9}
+    ]
+  },
+  "rehab_gym": {
+    "label": "Rehab gym", "min_w": 9.0, "min_d": 6.0, "floor": "rubber", "walls": "accent", "glazing": "full", "door": 1.8,
+    "fixtures": [
+      {"key": "prop.treadmill", "at": "back", "repeat": 1.3, "max": 3, "span": [0.0, 0.42], "off": 1.15, "rot": 180},
+      {"key": "prop.wattbike", "at": "back", "repeat": 1.1, "max": 4, "span": [0.45, 0.95], "off": 0.8, "rot": 180},
+      {"key": "prop.squat_rack", "at": "left", "along": 0.45, "off": 1.0, "min_d": 6.5},
+      {"key": "prop.dumbbell_rack", "at": "right", "along": 0.5, "off": 0.3},
+      {"key": "prop.isokinetic", "at": "centre", "fu": 0.62, "fv": 0.38, "rot": 180, "min_tier": 3},
+      {"key": "prop.alter_g", "at": "door", "along": 0.72, "off": 1.15, "rot": 90, "min_tier": 4},
+      {"key": "prop.med_tv", "cut": false, "at": "door", "along": 0.42, "off": 0.0, "min_tier": 3},
+      {"key": "genprop.plyo_boxes", "at": "centre", "fu": 0.3, "fv": 0.25, "rot": 15},
+      {"key": "genprop.swiss_ball", "at": "centre", "fu": 0.45, "fv": 0.62},
+      {"key": "genprop.kettlebells", "at": "right", "along": 0.25, "off": 0.4},
+      {"key": "genprop.medicine_balls", "at": "right", "along": 0.75, "off": 0.4, "min_d": 6.5},
+      {"key": "genprop.resistance_bands", "at": "right", "along": 0.1, "off": 0.3},
+      {"key": "genprop.foam_rollers", "at": "door", "along": 0.9, "off": 0.35, "min_tier": 2}
+    ]
+  },
+  "lab": {
+    "label": "Sports science lab", "min_w": 5.4, "min_d": 4.8, "floor": "rubber", "walls": "paint", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.treadmill", "at": "back", "along": 0.3, "off": 1.15, "rot": 180},
+      {"key": "prop.vo2_cart", "at": "back", "along": 0.55, "off": 0.6, "rot": 160},
+      {"key": "prop.wattbike", "at": "back", "along": 0.78, "off": 0.8, "rot": 180},
+      {"key": "prop.med_desk", "at": "door", "along": 0.7, "off": 0.45, "rot": 180},
+      {"key": "prop.med_chair_office", "at": "door", "along": 0.7, "off": 1.15}
+    ]
+  },
+  "imaging": {
+    "label": "Ultrasound room", "min_w": 3.6, "min_d": 3.6, "floor": "vinyl", "walls": "paint", "glazing": "high", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.med_exam_couch", "at": "back", "along": 0.45, "off": 0.4, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.ultrasound", "at": "back", "along": 0.88, "off": 0.6, "rot": 180},
+      {"key": "prop.med_sink", "cut": false, "at": "right", "along": 0.3, "off": 0.0}
+    ]
+  },
+  "xray": {
+    "label": "X-ray room", "min_w": 5.4, "min_d": 4.4, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 1.2, "door_kind": "lead",
+    "fixtures": [{"key": "prop.xray_unit", "at": "centre", "fu": 0.44, "fv": 0.55}]
+  },
+  "dexa": {
+    "label": "DEXA suite", "min_w": 4.8, "min_d": 3.6, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 1.2, "door_kind": "lead",
+    "fixtures": [
+      {"key": "prop.dexa", "at": "back", "along": 0.42, "off": 0.6, "rot": 180},
+      {"key": "prop.med_chair_office", "at": "door", "along": 0.85, "off": 0.6}
+    ]
+  },
+  "recovery": {
+    "label": "Recovery suite", "min_w": 6.0, "min_d": 4.8, "floor": "tile", "walls": "tile", "glazing": "high", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.ice_bath", "at": "back", "repeat": 2.7, "max": 2, "span": [0.0, 0.62], "off": 0.5},
+      {"key": "prop.sauna", "at": "right", "along": 0.68, "off": 1.05},
+      {"key": "prop.med_wall_station", "cut": false, "at": "door", "along": 0.7, "off": 0.0}
+    ]
+  },
+  "cryo": {
+    "label": "Cryotherapy", "min_w": 4.2, "min_d": 4.4, "max_d": 6.0, "floor": "tile", "walls": "paint", "glazing": "none", "door": 1.2,
+    "fixtures": [{"key": "prop.cryo_chamber", "at": "back", "along": 0.5, "off": 1.25}]
+  },
+  "hydro": {
+    "label": "Hydrotherapy pool", "min_w": 9.0, "min_d": 6.0, "floor": "tile", "walls": "tile", "glazing": "high", "door": 1.2, "pool": true,
+    "fixtures": [{"key": "prop.med_wall_station", "cut": false, "at": "door", "along": 0.75, "off": 0.0}]
+  },
+  "sleep": {
+    "label": "Sleep and recovery pods", "min_w": 4.8, "min_d": 3.6, "max_d": 7.0, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [{"key": "prop.sleep_pod", "at": "back", "repeat": 1.6, "max": 4, "off": 1.08, "rot": 90}]
+  },
+  "wc": {
+    "label": "Accessible WC", "min_w": 2.4, "min_d": 2.2, "max_d": 2.6, "floor": "vinyl", "walls": "tile", "glazing": "high", "door": 1.0,
+    "fixtures": [{"key": "prop.wc_accessible", "at": "back", "along": 0.55, "off": 0.0}]
+  },
+  "changing": {
+    "label": "Changing room", "min_w": 4.2, "min_d": 3.0, "max_d": 7.2, "floor": "tile", "walls": "tile", "glazing": "high", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.lockers", "at": "back", "repeat": 1.3, "max": 4, "off": 0.22, "tints": {"TINT_locker": "club"}},
+      {"key": "prop.lockers", "at": "left", "along": 0.6, "off": 0.22, "min_d": 4.2, "tints": {"TINT_locker": "club"}},
+      {"key": "prop.showers", "at": "right", "along": 0.4, "off": 0.0, "min_d": 5.2},
+      {"key": "genprop.kit_hamper", "at": "centre", "fu": 0.55, "fv": 0.3, "rot": 10},
+      {"key": "genprop.boots_muddy", "at": "back", "along": 0.3, "off": 1.25, "rot": 160},
+      {"key": "genprop.kit_bag", "at": "back", "along": 0.72, "off": 1.4, "rot": 200}
+    ]
+  },
+  "lobby": {
+    "label": "Reception", "min_w": 6.0, "min_d": 3.6, "floor": "carpet", "timber_from": 3, "walls": "accent", "glazing": "entrance", "door": 2.4, "door_kind": "opening",
+    "fixtures": [
+      {"key": "prop.reception_desk", "at": "right", "along": 0.55, "off": 0.45, "min_d": 4.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.sofa", "at": "left", "along": 0.5, "off": 0.45, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.coffee_table", "at": "left", "along": 0.5, "off": 1.45},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.08, "fv": 0.9},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.92, "fv": 0.9, "min_tier": 3},
+      {"key": "prop.framed_shirt", "cut": false, "at": "door", "along": 0.82, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.framed_shirt", "cut": false, "at": "door", "along": 0.18, "off": 0.0, "min_tier": 3, "tints": {"TINT_club": "club"}}
+    ]
+  },
+  "scout_room": {
+    "label": "Scouts' office", "min_w": 4.8, "min_d": 3.4, "max_d": 6.0, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.desk_basic", "at": "back", "repeat": 1.7, "max": 2, "off": 0.4},
+      {"key": "prop.filing_cabinet", "at": "left", "along": 0.3, "off": 0.33},
+      {"key": "prop.archive_shelving", "at": "left", "along": 0.65, "off": 0.22, "min_d": 4.0},
+      {"key": "prop.whiteboard", "cut": false, "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.tv_cabinet", "at": "door", "along": 0.72, "off": 0.25, "min_w": 5.2}
+    ]
+  },
+  "scout_office": {
+    "label": "Scouts' office", "min_w": 3.6, "min_d": 3.4, "max_d": 6.0, "floor": "carpet", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.desk_dual", "at": "back", "repeat": 1.9, "max": 3, "off": 0.42},
+      {"key": "prop.filing_cabinet", "at": "left", "along": 0.35, "off": 0.33},
+      {"key": "prop.whiteboard", "cut": false, "at": "right", "along": 0.45, "off": 0.0},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.1, "fv": 0.12}
+    ]
+  },
+  "open_office": {
+    "label": "Open-plan scouting office", "min_w": 6.0, "min_d": 4.8, "max_d": 7.2, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.bench_desk", "at": "back", "repeat": 3.2, "max": 4, "off": 1.55, "rot": 90},
+      {"key": "prop.whiteboard", "cut": false, "at": "left", "along": 0.55, "off": 0.0},
+      {"key": "prop.filing_cabinet", "at": "door", "along": 0.9, "off": 0.33},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.06, "fv": 0.1}
+    ]
+  },
+  "head_office": {
+    "label": "Head of recruitment", "min_w": 4.2, "min_d": 4.2, "max_d": 6.0, "floor": "carpet", "timber_from": 4, "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.desk_dual", "at": "back", "along": 0.55, "off": 1.1, "rot": 180},
+      {"key": "prop.med_chair", "at": "back", "along": 0.42, "off": 2.15, "rot": 180},
+      {"key": "prop.med_chair", "at": "back", "along": 0.68, "off": 2.15, "rot": 180, "min_w": 4.6},
+      {"key": "prop.sofa", "at": "left", "along": 0.3, "off": 0.45, "min_w": 4.8, "min_d": 5.0},
+      {"key": "prop.filing_cabinet", "at": "right", "along": 0.18, "off": 0.33},
+      {"key": "prop.framed_shirt", "cut": false, "at": "right", "along": 0.55, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.9, "fv": 0.93}
+    ]
+  },
+  "video_room": {
+    "label": "Video room", "min_w": 4.2, "min_d": 3.6, "max_d": 6.6, "floor": "carpet", "walls": "accent", "glazing": "none", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.tv_cabinet", "at": "back", "along": 0.5, "off": 0.25, "max_tier": 2},
+      {"key": "prop.video_wall", "cut": false, "at": "back", "along": 0.5, "off": 0.0, "min_tier": 3},
+      {"key": "prop.sofa", "at": "centre", "fu": 0.5, "fv": 0.32, "rot": 180},
+      {"key": "prop.coffee_table", "at": "centre", "fu": 0.5, "fv": 0.56}
+    ]
+  },
+  "analysis_suite": {
+    "label": "Video analysis suite", "min_w": 5.4, "min_d": 4.2, "max_d": 6.6, "floor": "carpet", "walls": "accent", "glazing": "high", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.desk_triple", "at": "back", "repeat": 2.0, "max": 3, "off": 0.42},
+      {"key": "prop.desk_triple", "at": "left", "along": 0.35, "off": 0.42, "min_d": 5.0},
+      {"key": "prop.whiteboard", "cut": false, "at": "right", "along": 0.45, "off": 0.0}
+    ]
+  },
+  "war_room": {
+    "label": "Recruitment room", "min_w": 6.0, "min_d": 4.8, "max_d": 7.2, "floor": "carpet", "timber_from": 4, "walls": "accent", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.meeting_table", "at": "centre", "fu": 0.5, "fv": 0.48, "max_tier": 3},
+      {"key": "prop.boardroom_table", "at": "centre", "fu": 0.5, "fv": 0.48, "min_tier": 4},
+      {"key": "prop.wall_tv", "cut": false, "at": "left", "along": 0.5, "off": 0.0, "max_tier": 3},
+      {"key": "prop.video_wall", "cut": false, "at": "left", "along": 0.5, "off": 0.0, "min_tier": 4},
+      {"key": "prop.squad_board", "cut": false, "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.whiteboard", "cut": false, "at": "door", "along": 0.72, "off": 0.0, "min_w": 6.0}
+    ]
+  },
+  "match_centre": {
+    "label": "Match centre", "min_w": 7.2, "min_d": 6.0, "max_d": 9.6, "floor": "carpet", "walls": "accent", "glazing": "none", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.video_wall", "cut": false, "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.desk_triple", "at": "back", "repeat": 2.0, "max": 4, "off": 2.6},
+      {"key": "prop.desk_triple", "at": "back", "repeat": 2.0, "max": 4, "off": 4.4, "min_d": 6.4},
+      {"key": "prop.wall_tv", "cut": false, "at": "left", "along": 0.6, "off": 0.0},
+      {"key": "prop.wall_tv", "cut": false, "at": "right", "along": 0.6, "off": 0.0}
+    ]
+  },
+  "data_lab": {
+    "label": "Data science lab", "min_w": 6.0, "min_d": 4.8, "max_d": 7.2, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.bench_desk", "at": "back", "repeat": 3.2, "max": 3, "off": 1.55, "rot": 90},
+      {"key": "prop.whiteboard", "cut": false, "at": "left", "along": 0.55, "off": 0.0},
+      {"key": "prop.wall_tv", "cut": false, "at": "right", "along": 0.55, "off": 0.0},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.94, "fv": 0.1}
+    ]
+  },
+  "agent_room": {
+    "label": "Agents' lounge", "min_w": 4.8, "min_d": 4.2, "max_d": 6.0, "floor": "carpet", "timber_from": 4, "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.sofa", "at": "back", "along": 0.5, "off": 0.5},
+      {"key": "prop.coffee_table", "at": "centre", "fu": 0.5, "fv": 0.6},
+      {"key": "prop.sofa", "at": "centre", "fu": 0.5, "fv": 0.32, "rot": 180, "min_d": 4.8},
+      {"key": "prop.framed_shirt", "cut": false, "at": "left", "along": 0.6, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.wall_tv", "cut": false, "at": "right", "along": 0.55, "off": 0.0, "min_tier": 4},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.92, "fv": 0.9}
+    ]
+  },
+  "kitchen": {
+    "label": "Kitchen and breakout", "min_w": 3.6, "min_d": 2.4, "max_d": 6.0, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.kitchenette", "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.kitchen_wall_units", "cut": false, "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.meeting_table", "at": "centre", "fu": 0.5, "fv": 0.38, "min_d": 4.4, "tints": {"TINT_upholstery": "club"}}
+    ]
+  },
+  "server": {
+    "label": "Server room", "min_w": 2.4, "min_d": 2.4, "max_d": 4.0, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 0.9, "door_kind": "metal",
+    "fixtures": [{"key": "prop.server_rack", "at": "back", "repeat": 0.7, "max": 4, "off": 0.55}]
+  },
+  "archive": {
+    "label": "Archive", "min_w": 2.4, "min_d": 2.0, "max_d": 4.0, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.archive_shelving", "at": "back", "repeat": 1.05, "max": 5, "off": 0.22},
+      {"key": "prop.archive_shelving", "at": "right", "along": 0.4, "off": 0.22, "min_d": 3.2}
+    ]
+  },
+  "pods": {
+    "label": "Quiet booths", "min_w": 3.6, "min_d": 2.4, "max_d": 4.0, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [{"key": "prop.phone_booth", "at": "back", "repeat": 1.2, "max": 4, "off": 0.55, "tints": {"TINT_upholstery": "club"}}]
+  },
+  "shop": {
+    "label": "Club store", "min_w": 7.2, "min_d": 3.6, "floor": "tile", "timber_from": 4, "walls": "accent", "glazing": "entrance", "door": 2.4, "door_kind": "opening",
+    "fixtures": [
+      {"key": "prop.merch_wall", "at": "left", "along": 0.62, "off": 0.0},
+      {"key": "prop.print_station", "at": "left", "along": 0.2, "off": 0.0, "min_tier": 4, "min_d": 5.0},
+      {"key": "prop.shop_counter", "at": "right", "along": 0.35, "off": 1.15, "tints": {"TINT_club": "club"}},
+      {"key": "prop.merch_wall", "at": "right", "along": 0.8, "off": 0.0, "min_d": 7.0},
+      {"key": "prop.shirt_rail", "at": "centre", "fu": 0.38, "fv": 0.42, "tints": {"TINT_club": "club"}},
+      {"key": "prop.shirt_rail", "at": "centre", "fu": 0.62, "fv": 0.42, "min_tier": 2, "tints": {"TINT_club": "club"}},
+      {"key": "prop.gondola", "at": "centre", "fu": 0.5, "fv": 0.7, "min_d": 5.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.shop_mannequin", "at": "back", "along": 0.12, "off": 0.45, "tints": {"TINT_club": "club"}},
+      {"key": "prop.shop_mannequin", "at": "back", "along": 0.88, "off": 0.45, "min_tier": 2, "tints": {"TINT_club": "club"}}
+    ]
+  },
+  "ticket_office": {
+    "label": "Ticket office", "min_w": 4.2, "min_d": 3.0, "max_d": 5.0, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.ticket_desk", "at": "back", "along": 0.5, "off": 0.45, "rot": 180, "tints": {"TINT_club": "club"}},
+      {"key": "prop.filing_cabinet", "at": "left", "along": 0.3, "off": 0.33}
+    ]
+  },
+  "cafe": {
+    "label": "Café", "min_w": 6.0, "min_d": 3.6, "max_d": 8.4, "floor": "vinyl", "timber_from": 3, "walls": "accent", "glazing": "full", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.cafe_backbar", "at": "right", "along": 0.45, "off": 0.0},
+      {"key": "prop.menu_board", "cut": false, "at": "right", "along": 0.45, "off": 0.0},
+      {"key": "prop.cafe_counter", "at": "right", "along": 0.45, "off": 1.35},
+      {"key": "prop.cafe_table4", "at": "centre", "fu": 0.22, "fv": 0.32},
+      {"key": "prop.cafe_table4", "at": "centre", "fu": 0.22, "fv": 0.72, "min_d": 4.8},
+      {"key": "prop.cafe_table", "at": "centre", "fu": 0.47, "fv": 0.28, "min_w": 7.0},
+      {"key": "prop.cafe_table", "at": "centre", "fu": 0.47, "fv": 0.7, "min_w": 7.0, "min_d": 4.8},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.06, "fv": 0.92}
+    ]
+  },
+  "bar": {
+    "label": "Sports bar", "min_w": 7.2, "min_d": 6.0, "max_d": 9.6, "floor": "timber", "walls": "accent", "glazing": "window", "door": 1.5,
+    "fixtures": [
+      {"key": "prop.bar_back", "at": "left", "along": 0.55, "off": 0.0},
+      {"key": "prop.bar_counter", "at": "left", "along": 0.55, "off": 1.55},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "door", "along": 0.75, "off": 0.0},
+      {"key": "prop.cafe_table4", "at": "centre", "fu": 0.62, "fv": 0.3},
+      {"key": "prop.cafe_table4", "at": "centre", "fu": 0.62, "fv": 0.72},
+      {"key": "prop.cafe_table", "at": "centre", "fu": 0.86, "fv": 0.72, "min_w": 8.0},
+      {"key": "prop.cafe_table", "at": "centre", "fu": 0.86, "fv": 0.3, "min_w": 8.0}
+    ]
+  },
+  "restaurant": {
+    "label": "Restaurant", "min_w": 7.2, "min_d": 5.4, "max_d": 9.6, "floor": "carpet", "timber_from": 3, "walls": "accent", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.2, "fv": 0.32},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.5, "fv": 0.32},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.8, "fv": 0.32},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.2, "fv": 0.72},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.5, "fv": 0.72},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.8, "fv": 0.72},
+      {"key": "prop.framed_shirt", "cut": false, "at": "right", "along": 0.5, "off": 0.0, "tints": {"TINT_club": "club"}}
+    ]
+  },
+  "lounge": {
+    "label": "Hospitality lounge", "min_w": 7.2, "min_d": 5.4, "max_d": 9.6, "floor": "carpet", "timber_from": 4, "walls": "accent", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.bar_back", "at": "right", "along": 0.5, "off": 0.0},
+      {"key": "prop.bar_counter", "at": "right", "along": 0.5, "off": 1.55},
+      {"key": "prop.sofa", "at": "centre", "fu": 0.24, "fv": 0.22, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.coffee_table", "at": "centre", "fu": 0.24, "fv": 0.42},
+      {"key": "prop.armchair", "at": "centre", "fu": 0.09, "fv": 0.48, "rot": -90},
+      {"key": "prop.armchair", "at": "centre", "fu": 0.39, "fv": 0.48, "rot": 90},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.2, "fv": 0.8, "min_d": 6.4},
+      {"key": "prop.dining_table", "at": "centre", "fu": 0.45, "fv": 0.8, "min_d": 6.4},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "left", "along": 0.6, "off": 0.0},
+      {"key": "prop.framed_shirt", "cut": false, "at": "door", "along": 0.8, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.06, "fv": 0.92}
+    ]
+  },
+  "function_room": {
+    "label": "Function suite", "min_w": 9.6, "min_d": 6.0, "max_d": 12.0, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 1.8,
+    "fixtures": [
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.2, "fv": 0.28, "min_w": 10.5, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.5, "fv": 0.28, "min_w": 10.5, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.8, "fv": 0.28, "min_w": 10.5, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.2, "fv": 0.68, "min_w": 10.5, "min_d": 7.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.5, "fv": 0.68, "min_w": 10.5, "min_d": 7.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.27, "fv": 0.3, "max_w": 10.5, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.67, "fv": 0.3, "max_w": 10.5, "tints": {"TINT_club": "club"}},
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.27, "fv": 0.72, "max_w": 10.5, "min_d": 7.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.lectern", "at": "back", "along": 0.88, "off": 0.6, "tints": {"TINT_club": "club"}},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "back", "along": 0.5, "off": 0.0}
+    ]
+  },
+  "private_dining": {
+    "label": "Private dining room", "min_w": 4.8, "min_d": 4.2, "max_d": 6.6, "floor": "carpet", "timber_from": 4, "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.banquet_table", "at": "centre", "fu": 0.5, "fv": 0.52, "tints": {"TINT_club": "club"}},
+      {"key": "prop.framed_shirt", "cut": false, "at": "right", "along": 0.5, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.08, "fv": 0.92}
+    ]
+  },
+  "museum": {
+    "label": "Trophy room", "min_w": 6.0, "min_d": 4.8, "max_d": 7.2, "floor": "timber", "walls": "accent", "glazing": "none", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.trophy_cabinet", "at": "back", "repeat": 1.5, "max": 4, "off": 0.25},
+      {"key": "prop.trophy_cabinet", "at": "left", "along": 0.35, "off": 0.25},
+      {"key": "prop.trophy_plinth", "at": "centre", "fu": 0.5, "fv": 0.45},
+      {"key": "prop.display_plinth", "at": "centre", "fu": 0.27, "fv": 0.62, "min_w": 6.5},
+      {"key": "genprop.trophy_league", "at": "centre", "fu": 0.27, "fv": 0.62, "z": 1.01, "min_w": 6.5},
+      {"key": "prop.display_plinth", "at": "centre", "fu": 0.73, "fv": 0.62, "min_w": 6.5},
+      {"key": "genprop.trophy_cup", "at": "centre", "fu": 0.73, "fv": 0.62, "z": 1.01, "min_w": 6.5},
+      {"key": "prop.display_plinth", "at": "centre", "fu": 0.5, "fv": 0.79, "min_d": 5.6},
+      {"key": "genprop.trophy_shield", "at": "centre", "fu": 0.5, "fv": 0.79, "z": 1.01, "min_d": 5.6},
+      {"key": "genprop.bust_pedestal", "at": "left", "along": 0.82, "off": 0.55},
+      {"key": "genprop.match_ball_plinth", "at": "centre", "fu": 0.5, "fv": 0.2},
+      {"key": "prop.framed_shirt", "cut": false, "at": "right", "along": 0.3, "off": 0.0, "tints": {"TINT_club": "club"}},
+      {"key": "prop.framed_shirt", "cut": false, "at": "right", "along": 0.62, "off": 0.0, "tints": {"TINT_club": "club"}}
+    ]
+  },
+  "pro_kitchen": {
+    "label": "Kitchen", "min_w": 4.8, "min_d": 3.6, "max_d": 6.0, "floor": "tile", "walls": "tile", "glazing": "high", "door": 1.0,
+    "fixtures": [
+      {"key": "prop.kitchen_line", "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.extraction_hood", "cut": false, "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.prep_table", "at": "centre", "fu": 0.55, "fv": 0.35}
+    ]
+  },
+  "stock_room": {
+    "label": "Stock room", "min_w": 3.0, "min_d": 2.4, "max_d": 5.0, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 1.0,
+    "fixtures": [
+      {"key": "prop.stock_racking", "at": "back", "repeat": 1.9, "max": 3, "off": 0.32},
+      {"key": "prop.stock_racking", "at": "right", "along": 0.4, "off": 0.32, "min_d": 3.8}
+    ]
+  },
+  "toilets": {
+    "label": "Toilets", "min_w": 4.2, "min_d": 3.6, "max_d": 5.4, "floor": "tile", "walls": "tile", "glazing": "high", "door": 1.0,
+    "fixtures": [
+      {"key": "prop.wc_cubicles", "at": "back", "along": 0.55, "off": 0.0},
+      {"key": "prop.vanity_basins", "at": "right", "along": 0.28, "off": 0.0},
+      {"key": "prop.washroom_mirror", "cut": false, "at": "right", "along": 0.28, "off": 0.0}
+    ]
+  },
+  "sales_office": {
+    "label": "Commercial office", "min_w": 3.6, "min_d": 3.4, "max_d": 6.0, "floor": "carpet", "walls": "paint", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.desk_sales", "at": "back", "repeat": 1.9, "max": 3, "off": 0.42},
+      {"key": "prop.filing_cabinet", "at": "left", "along": 0.35, "off": 0.33},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.9, "fv": 0.12}
+    ]
+  },
+  "press_room": {
+    "label": "Press conference room", "min_w": 6.0, "min_d": 3.6, "max_d": 9.6, "floor": "carpet", "walls": "accent", "glazing": "none", "door": 1.5,
+    "fixtures": [
+      {"key": "prop.roller_banner", "at": "back", "along": 0.3, "off": 0.25, "max_tier": 1},
+      {"key": "prop.roller_banner", "at": "back", "along": 0.7, "off": 0.25, "max_tier": 1},
+      {"key": "prop.press_backdrop", "at": "back", "along": 0.5, "off": 0.4, "min_tier": 2},
+      {"key": "prop.press_table", "at": "back", "along": 0.5, "off": 1.45, "tints": {"TINT_club": "club"}},
+      {"key": "prop.press_seating", "at": "back", "along": 0.5, "off": 3.1, "rot": 180},
+      {"key": "prop.press_seating", "at": "back", "along": 0.5, "off": 4.0, "rot": 180, "min_d": 4.7},
+      {"key": "prop.press_seating", "at": "back", "along": 0.5, "off": 4.9, "rot": 180, "min_d": 5.6},
+      {"key": "prop.press_seating", "at": "back", "along": 0.5, "off": 5.8, "rot": 180, "min_d": 7.0},
+      {"key": "prop.tv_camera", "at": "centre", "fu": 0.1, "fv": 0.3},
+      {"key": "prop.tv_camera", "at": "centre", "fu": 0.9, "fv": 0.3, "min_tier": 2}
+    ]
+  },
+  "interview_room": {
+    "label": "Flash interview room", "min_w": 4.2, "min_d": 4.2, "max_d": 6.6, "floor": "carpet", "walls": "paint", "glazing": "none", "door": 0.9,
+    "fixtures": [{"key": "prop.flash_interview", "at": "back", "along": 0.5, "off": 0.4}]
+  },
+  "edit_suite": {
+    "label": "Edit suite", "min_w": 3.6, "min_d": 3.4, "max_d": 6.0, "floor": "carpet", "walls": "accent", "glazing": "high", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.edit_desk", "at": "back", "repeat": 2.0, "max": 3, "off": 0.42},
+      {"key": "prop.acoustic_panels", "cut": false, "at": "left", "along": 0.5, "off": 0.0, "min_d": 3.8},
+      {"key": "prop.sofa", "at": "door", "along": 0.62, "off": 0.5, "min_d": 4.8, "min_w": 4.4}
+    ]
+  },
+  "podcast": {
+    "label": "Podcast studio", "min_w": 4.2, "min_d": 3.6, "max_d": 6.0, "floor": "carpet", "walls": "accent", "glazing": "none", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.podcast_table", "at": "centre", "fu": 0.5, "fv": 0.55},
+      {"key": "prop.acoustic_panels", "cut": false, "at": "back", "along": 0.5, "off": 0.0, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.acoustic_panels", "cut": false, "at": "left", "along": 0.5, "off": 0.0, "min_d": 3.8},
+      {"key": "prop.acoustic_panels", "cut": false, "at": "right", "along": 0.5, "off": 0.0, "min_d": 3.8, "tints": {"TINT_upholstery": "club"}},
+      {"key": "prop.tv_camera", "at": "centre", "fu": 0.85, "fv": 0.15, "min_tier": 3, "rot": -20}
+    ]
+  },
+  "studio": {
+    "label": "TV studio", "min_w": 7.2, "min_d": 6.0, "max_d": 9.6, "floor": "rubber", "walls": "accent", "glazing": "none", "door": 1.8,
+    "fixtures": [
+      {"key": "prop.studio_backdrop", "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.studio_desk", "at": "back", "along": 0.5, "off": 1.9, "tints": {"TINT_club": "club"}},
+      {"key": "prop.lighting_grid", "cut": false, "at": "centre", "fu": 0.5, "fv": 0.55},
+      {"key": "prop.softbox_light", "at": "centre", "fu": 0.12, "fv": 0.45, "rot": -25},
+      {"key": "prop.softbox_light", "at": "centre", "fu": 0.88, "fv": 0.45, "rot": 25},
+      {"key": "prop.studio_camera", "at": "door", "along": 0.5, "off": 1.2},
+      {"key": "prop.studio_camera", "at": "door", "along": 0.24, "off": 1.4, "rot": -18},
+      {"key": "prop.studio_camera", "at": "door", "along": 0.76, "off": 1.4, "rot": 18, "min_tier": 4},
+      {"key": "prop.armchair", "at": "left", "along": 0.75, "off": 0.6, "min_d": 7.5},
+      {"key": "prop.armchair", "at": "left", "along": 0.6, "off": 0.6, "min_d": 7.5}
+    ]
+  },
+  "gallery": {
+    "label": "Gallery", "min_w": 4.8, "min_d": 3.6, "max_d": 6.0, "floor": "carpet", "walls": "paint", "glazing": "none", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.multiview_wall", "cut": false, "at": "back", "along": 0.5, "off": 0.0},
+      {"key": "prop.gallery_desk", "at": "back", "along": 0.5, "off": 1.25}
+    ]
+  },
+  "content_studio": {
+    "label": "Content studio", "min_w": 4.8, "min_d": 4.2, "max_d": 7.2, "floor": "vinyl", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.green_screen", "at": "left", "along": 0.5, "off": 0.4},
+      {"key": "prop.ring_light", "at": "centre", "fu": 0.55, "fv": 0.35, "rot": -90},
+      {"key": "prop.tv_camera", "at": "centre", "fu": 0.75, "fv": 0.55, "rot": -90},
+      {"key": "prop.softbox_light", "at": "centre", "fu": 0.6, "fv": 0.8, "rot": -120},
+      {"key": "prop.equipment_racking", "at": "right", "along": 0.2, "off": 0.32, "min_w": 5.4}
+    ]
+  },
+  "kit_room": {
+    "label": "Kit room", "min_w": 3.0, "min_d": 2.4, "max_d": 5.0, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 1.0,
+    "fixtures": [
+      {"key": "prop.equipment_racking", "at": "back", "repeat": 1.6, "max": 3, "off": 0.32},
+      {"key": "prop.equipment_racking", "at": "right", "along": 0.4, "off": 0.32, "min_d": 3.6}
+    ]
+  },
+  "makeup": {
+    "label": "Make-up and green room", "min_w": 4.2, "min_d": 3.6, "max_d": 6.0, "floor": "carpet", "walls": "accent", "glazing": "window", "door": 0.9,
+    "fixtures": [
+      {"key": "prop.makeup_station", "at": "left", "along": 0.4, "off": 0.0},
+      {"key": "prop.makeup_mirror", "cut": false, "at": "left", "along": 0.4, "off": 0.0},
+      {"key": "prop.sofa", "at": "right", "along": 0.55, "off": 0.45, "min_d": 4.0},
+      {"key": "prop.coffee_table", "at": "right", "along": 0.55, "off": 1.4, "min_d": 4.0, "min_w": 4.8},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "back", "along": 0.6, "off": 0.0},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.9, "fv": 0.1}
+    ]
+  },
+  "press_work": {
+    "label": "Journalists' workroom", "min_w": 6.0, "min_d": 4.8, "max_d": 7.2, "floor": "carpet", "walls": "paint", "glazing": "window", "door": 1.2,
+    "fixtures": [
+      {"key": "prop.bench_desk", "at": "back", "repeat": 3.2, "max": 3, "off": 1.55, "rot": 90},
+      {"key": "prop.wall_tv_match", "cut": false, "at": "left", "along": 0.5, "off": 0.0},
+      {"key": "prop.kitchenette", "at": "door", "along": 0.75, "off": 0.0, "min_w": 7.2},
+      {"key": "prop.indoor_plant", "at": "centre", "fu": 0.06, "fv": 0.1}
+    ]
+  },
+  "stairs": {
+    "label": "Stairs", "min_w": 3.6, "min_d": 5.6, "floor": "vinyl", "walls": "paint", "glazing": "window", "door": 1.2, "door_kind": "opening", "fixtures": []
+  },
+  "lift": {
+    "label": "Lift", "min_w": 2.4, "min_d": 2.4, "floor": "vinyl", "walls": "paint", "glazing": "none", "door": 1.0, "door_kind": "metal", "fixtures": []
+  }
+}

@@ -1,0 +1,211 @@
+[
+  {
+    "asset": "ball",
+    "score": 40,
+    "pass": false,
+    "summary": "Classic 32-panel black/white ball reads instantly but is a low-poly lumpy sphere with flat matte panels, no seams and odd shading near the rim.",
+    "critique": "Silhouette is visibly faceted and lumpy (view 1 outline has flat spans and dents; the near-pentagon at lower right bulges), so it reads as a deformed low-res sphere rather than a pressurised ball. The panel layout is the right truncated-icosahedron pattern, but the black pentagons vary in size and their edges wobble, and there are no seams, grooves or stitching between panels. A real ball, hand-stitched or thermally bonded, always shows a recessed seam line catching shadow; that is the main detail that reads as 'football' up close. The white is flat and uniform with no subtle sheen, no printed branding, logo, panel numbers or scuffs. In the top-down close-up the outer band of the ball looks greyish and semi-transparent, with a ghosted inner circle. This looks like a second shell, inverted normals or a bad fresnel term on the outer rim, and it is the most obviously broken thing in the sheet. Scale looks plausible against the grass (Ø ~220 mm). The black panels are pure black (albedo too low) and read as holes in the close-up.",
+    "suggestions": [
+      "Fix the rim artefact first: make sure there is a single closed shell with outward normals and no duplicate or offset sphere, and check alpha/blend mode is opaque (the top view shows a translucent outer band).",
+      "Rebuild as a subdivided icosphere (level 4-5, ~5-10k tris, or ~2.5k tris plus a normal map) projected to a true sphere, then inflate panel centres by ~1-1.5 mm so each panel is slightly pillowed. That gives the characteristic lumpy-but-round highlight instead of random dents.",
+      "Add seams: a 1.5-2 mm wide, ~1 mm deep groove along every panel edge, in geometry or in a 512-1024 px normal/AO map baked from the truncated icosahedron edges. Darken the seam albedo to ~0.25.",
+      "Regularise the panels: pentagons should all be identical and edges straight on the sphere (great-circle arcs). Compute them from the truncated icosahedron, not hand-placed decals.",
+      "Materials: white albedo ~0.80-0.85 sRGB, not pure white; black ~0.04-0.06 linear (sRGB ~40), not 0. Roughness ~0.35-0.45 with a faint clearcoat for the PU skin, plus a subtle micro-texture (pebble grain) in the normal map.",
+      "Add a printed logo or panel graphic and light grass stains/scuffs as a variant, using one 1024 px atlas shared across instances.",
+      "Check the ball sits with ~5 mm of its bottom pressed into the turf. In the side view it appears to hover, with the full lower edge visible above the shadow."
+    ],
+    "renderer_notes": "The cartoon-like grass blades make any small ball look like it is floating. Ground contact should be judged on a flat or short-cut surface. The lack of reflections makes the white panels look chalky, which is partly the renderer."
+  },
+  {
+    "asset": "car_suv",
+    "score": 33,
+    "pass": false,
+    "summary": "Recognisable estate/SUV silhouette with plates and mirrors, but proportions are off (long rear overhang, low SUV ride height, stubby bonnet) and the front, glass and lights are flat decal-level detail.",
+    "critique": "Proportions: the side view reads as a long 2000s estate or minivan, not a modern UK crossover SUV like the Qashqai (L ~4425, H ~1620, WB ~2646) or Evoque. The rear overhang behind the rear wheel is roughly 1.2 m, much longer than the ~0.9-1.0 m on a real crossover. The front wheel sits close to the nose, but the wheelbase looks short for the body length. Ride height and ground clearance read as a hatchback (~130 mm) rather than an SUV (~180-200 mm). The roofline is flat right to the tail and the rear end is a vertical box. Glass: windows are flat dark panels set flush with the body, with no depth, no black pillar trim, no window rubbers and no frit band. The windscreen is one flat quad with no rake curvature. Front: the grille is a flat grey rectangle, the headlights are small decals with an orange blob, and the bumper has no lower intake, no fog lights and no number-plate recess. Body: door shut lines are barely visible, door handles are tiny, the wheel arches have no plastic cladding (typical of SUVs) and the sills are plain. Mirrors are blocks on stalks. Tail lights are small dark-red patches. The wheels are the best part (multi-spoke rim, tyre sidewall), but the tyres look thin and the rims sit too far inboard. The paint is a single flat glossy blue with no flake, clearcoat or dirt.",
+    "suggestions": [
+      "Re-proportion to a verified crossover: L 4425, W 1835, H 1620, WB 2646. Front overhang ~900, rear ~880, ground clearance ~185, wheel diameter ~690 mm (e.g. 215/60 R17 or 235/55 R18), wheel arches ~30 mm above the tyre. Rake the windscreen ~60 deg from vertical and add a slight roof drop and a tapered glasshouse (tumblehome ~8-10 deg) so the cabin is narrower than the shoulders.",
+      "Inset all glass 15-25 mm behind the body surface, with a 20-30 mm black rubber/trim border and black-painted B/C pillars. Add a dotted frit gradient on the screen edges using a shared 256 px decal. This is the single biggest realism gain for little cost (~200 tris).",
+      "Model the front properly: a recessed grille with a mesh or slat normal map, headlight units as modelled lenses (clear cover over chrome reflector, with a DRL strip), a lower bumper intake, fog-light pockets and a skid-plate insert. Use the same approach for the rear: wraparound tail lamps split across the tailgate, a reflector strip, and an exhaust or diffuser.",
+      "Add black unpainted plastic cladding on wheel arches and sills (roughness ~0.7, albedo ~0.05), the usual crossover cue.",
+      "Cut real panel gaps (3-4 mm dark grooves, normal map or geometry) for doors, bonnet, tailgate and fuel flap. Make the door handles modelled pulls.",
+      "Paint: metallic clearcoat (base roughness ~0.35, clearcoat roughness ~0.05), plus a dirt/road-grime gradient on the lower 300 mm and the rear tailgate. Budget ~8-15k tris for LOD0 with a 2k atlas.",
+      "Push the wheels outboard so the tyre sidewall is flush with the arch lip. Give the tyres more sidewall and a tread pattern in the normal map."
+    ],
+    "renderer_notes": "There are no screen-space reflections, so the glossy paint and glass can't show reflections and look plasticky. That isn't the model's fault, but inset glass and trim would still read without reflections."
+  },
+  {
+    "asset": "flagpole",
+    "score": 28,
+    "pass": false,
+    "summary": "A plain white rod with a blank white rectangle at the top: correct idea, but almost no construction detail and no flag design.",
+    "critique": "The pole is a uniform thin cylinder with no taper, no base and no visible ground fixing (it just enters the grass). The top has a small ball finial, but there is no truck/pulley, no halyard rope running down the pole, no cleat at hand height and no ground sleeve or hinged base plate (UK stadium and club flagpoles are usually tapered GRP or aluminium, 6-8 m, on a hinged root). The flag is a blank white sheet, a gently curved plane that reads as paper or sheet metal. Real flags show deep, irregular wave folds, a hemmed edge, a toggle/clip attachment to the halyard, and a printed design (club crest, Union flag or sponsor). In the side view the flag is a stiff vertical slab beside the pole. Material is flat white with no sheen or weathering. Pole diameter looks too thin for its height: a 6 m pole should be ~100 mm at the base, tapering to ~60 mm.",
+    "suggestions": [
+      "Add a taper (Ø ~100 mm at the root to ~60 mm at the top for a 6 m pole) and a hinged base: a 300x300x12 mm plate with 4 bolts, or a round ground sleeve collar ~150 mm Ø x 100 mm. About 100 extra tris.",
+      "Add a top truck (Ø ~120 mm disc/drum with a pulley slot) under a gilded or white ball finial ~100 mm Ø.",
+      "Add a halyard: two thin cords (Ø 6 mm, 3-4 sided strips or alpha-tested cards) running from the truck down to a cleat at ~1.2 m, with a few wraps around the cleat. Add a small shadow-casting cleat plate.",
+      "Rebuild the flag as a 12x8 grid plane (~200 tris) with a proper wave: a travelling sine wave whose amplitude grows from the hoist edge to the fly end (0 at hoist, ~150 mm at fly), plus a second, smaller harmonic. Optionally animate it in the vertex shader.",
+      "Give the flag a texture (club crest, Union flag, or one of a few team flags from an atlas), a 20 mm darker hem at the fly end and a reinforced hoist sleeve. Use cloth roughness ~0.8 with a subtle weave normal map, and render it two-sided.",
+      "Add mild weathering to the pole (slight grime at the base, faint vertical streaks)."
+    ],
+    "renderer_notes": "Flat flag shading is partly due to no subsurface or translucency. A thin flag in sun usually glows with transmitted light, so a cheap backlit-translucency term in the shader would help."
+  },
+  {
+    "asset": "lamp_post",
+    "score": 42,
+    "pass": false,
+    "summary": "Correct modern UK LED column silhouette (straight shaft, curved bracket, flat lantern), but low on detail at every point you get close to.",
+    "critique": "Overall form is right: an ~8 m column with a swept outreach bracket and a flat LED lantern, plus a slightly wider root section with a small door at the base (view 2). However: the shaft looks parallel rather than tapered or stepped (UK columns are usually stepped or tapered from Ø ~140-170 at the base to Ø ~76 at the spigot). The bracket bend is a simple single arc with no spigot joint. The lantern is a thin flat box with no visible optic panel, heat-sink fins, cable gland or tilt joint. The base has no root collar, no ground plate and no concrete or tarmac surround. The door is a dark rectangle with no hinge or lock detail. The material is one flat grey with no galvanised spangle, painted band, number plate, sticker or dirt. The close-up view only shows a featureless cylinder, which says how little there is to look at near the eye. The lantern underside should show a bright LED array or prismatic lens; here it is a light flat plane.",
+    "suggestions": [
+      "Make the column stepped: base section Ø 168 mm to ~2.5 m, then Ø 140, then Ø 114, then Ø 76 spigot, with small chamfered swage rings at each step (each ~32 segments). Alternatively, use a continuous taper. This adds negligible tris.",
+      "Add a root collar or flange (Ø ~250 mm x 150 mm) and a small concrete plinth or tarmac patch disc. Add a door ~400x100 mm at ~600 mm height, slightly recessed, with a triangular-key lock and hinge bumps.",
+      "Detail the lantern (~0.7 m long): a sloped die-cast top with 6-10 heat-sink fins, a separate underside lens panel with an emissive LED dot grid (texture), a rounded nose, and a side-entry spigot clamp with a tilt-angle knuckle. About 400-800 tris.",
+      "Add a column ID plate (white with black council number, ~100x60 mm decal at ~2.5 m) and optional bands/stickers (yellow hazard tape, small 'NO FLY POSTING').",
+      "Material: galvanised zinc albedo ~0.55, roughness ~0.5, metallic 1, with a mottled spangle texture, or painted dark grey/black with roughness ~0.45. Add grime ramping up the lowest 400 mm and slight rust streaks below the door and bracket joint.",
+      "Use a separate emissive material on the lantern underside so night scenes can light it."
+    ],
+    "renderer_notes": "There is no GI and the shading is flat on a thin cylinder, so the shaft reads as unlit grey. A normal-mapped spangle texture would still help in this renderer."
+  },
+  {
+    "asset": "rebounder",
+    "score": 50,
+    "pass": false,
+    "summary": "Believable football rebounder (rounded square tube frame, cord mesh with bungee ties, A-frame legs), but the mesh is a rigid perfect grid and the frame hardware is missing.",
+    "critique": "This is one of the better props: proportions (~1.3-1.4 m square frame, ~30-35 mm tube), rounded corners and the tilted A-frame stance are right. The small bungee ties from mesh to frame are a good touch. What makes it look CG: the mesh is a perfectly flat, regular white grid of uniform flat strips. A real rebounder net is elastic shock-cord mesh with slight sag and pillowing, knotted junctions, and cords that read as round, with shading and specular, rather than flat white bands. The tie-offs are straight short lines, whereas real ones are bungee loops wrapping the tube. The legs are plain straight rods that end in the grass with no rubber feet, ground pegs or end caps. Where the legs meet the frame there is no hinge bracket, adjustment pin, or angle-locking plate (most rebounders have a ratchet or pin-hole bracket). There is no cross-brace between the legs. The frame tube has no weld seams, end caps or powder-coat texture and is uniform matte black-grey. In the side view the legs seem to start from the frame top, but the rear leg geometry crosses the net in front, which is fine. There's no wear at all (scuffed coating at ball-impact height, grass stains on the feet).",
+    "suggestions": [
+      "Give the net cords round cross-sections (3-sided or 4-sided tubes, or alpha-tested cards with a cylinder normal map), cord Ø ~5 mm, with a slight sag (5-15 mm bulge to the centre) and small bead/knot bumps at the junctions. Cord albedo ~0.75 white with roughness ~0.6. Alternatively use dark green or black netting, which is common on rebounders.",
+      "Replace the straight tie lines with bungee loops: each a small torus or two-segment curve wrapping the tube (~8-12 segments each). That is about 40 loops x ~40 tris.",
+      "Add angle-adjustment hinge brackets where the legs meet the frame (plate ~80x40x4 mm with 3-5 pin holes and a spring pin), plus rubber end caps on the leg ends and optional ground pegs/U-stakes.",
+      "Add a lower cross-tube between the two rear legs, or a ground bar, if matching a typical pro rebounder (e.g. Kwikgoal/Precision style).",
+      "Frame material: powder-coat black albedo ~0.04, roughness ~0.55, with chipped edges showing galvanised silver at the corners and impact zone. Add mud/grass staining on the lowest 100 mm of the legs and frame.",
+      "Optional: a sponsor or brand sticker on the frame tube. Keep the total under ~5k tris with cord cards."
+    ],
+    "renderer_notes": "The flat white mesh partly comes from the lack of AO and GI. Thin geometry gets no self-shadowing, so baked AO or cylinder normals on the cords would hide this."
+  },
+  {
+    "asset": "seat.tipup_classic.std",
+    "score": 25,
+    "pass": false,
+    "summary": "Two flat glossy pink plates on a single bent flat bar: does not read as a stadium tip-up seat, and the parts look disconnected.",
+    "critique": "A classic tip-up stadium seat is a moulded polypropylene shell (backrest with lumbar curve and a sculpted seat pan) mounted on a cast/steel pedestal or riser bracket, with a pivot axle and a gravity-return seat. Here the back and the folded seat are thin, almost flat rounded-rectangle plates with no shell depth, no rolled edges, no ribbing underneath and no drain holes. In the side view (bottom-left) the backrest leans back and the seat pan leans forward in a wide V. The pan is not folded up against the back as a tip-up seat would be when closed, and the back seems to float rather than bolt to the support. The support is a single thin flat strip with a kink and a T foot. Real seats use either a pair of floor brackets/pedestal legs or a riser-mounted beam bracket with a visible pivot hub, so this reads as a sign post. There is no hinge, no axle, no bracket cover and no fixing bolts. The plastic colour is a too-saturated pink-red with very high gloss on the front and a much darker red on the back, which reads as two different materials. Scale cannot be checked against the stated ~450-500 mm width and ~850-900 mm back height, but the back looks ~550 mm tall above a ~900 mm post, so the seat sits too high (seat height should be ~450 mm).",
+    "suggestions": [
+      "Model the shell properly: backrest ~460 W x 400 H mm, 4-5 mm wall with a 20-30 mm rolled rim, curved in plan (radius ~600 mm) and with a lumbar bulge. Seat pan ~450 x 400 mm with a dished top, a front waterfall edge and stiffening ribs plus drain holes underneath. About 600-1200 tris per seat, or less with normal maps. These will be instanced by the tens of thousands, so also make a 100-200 tri LOD1 and a card/imposter LOD2.",
+      "Fix the mechanism: a pivot axle at seat height (~450 mm) between two side brackets. The seat pan in its closed state should fold up vertically, flush against the front of the backrest (gap ~30 mm), not splay in a V. Provide an 'open' variant at ~5-10 deg back from horizontal.",
+      "Replace the post with a real mount: either a riser-front bracket (cast aluminium plate ~120x200 mm bolted to the step riser with 2 visible bolts), or a floor pedestal (two tubular legs or a central cast leg ~60x40 mm section, with a 150x150 mm base plate and 4 anchor bolts). The back must visibly bolt to the bracket.",
+      "Colour and materials: polypropylene albedo in a club colour at moderate saturation (e.g. red sRGB ~(170,25,30)), roughness ~0.45-0.55 rather than mirror gloss, and the same material on both faces. Add UV fading on the top edges, scuffs on the seat front, and an optional row/seat number plaque (~40x25 mm decal) on the backrest top.",
+      "Check seat height ~450 mm and back top ~850-900 mm above the floor."
+    ],
+    "renderer_notes": "The strong pink highlight on the front faces may partly be a sky-specular issue on a flat surface. On a curved shell this would read as a normal plastic highlight."
+  },
+  {
+    "asset": "stadium_mega:seating_and_stands",
+    "score": 55,
+    "pass": false,
+    "summary": "Best part of the sheet: a convincing three-tier bowl with mosaic seat colours, aisles and vomitories, which reads well from mid-distance but breaks up close.",
+    "critique": "From the pitch the bowl reads as a real large stadium: three tiers with fascias, radial stairs, a believable rake, and a green/white/yellow randomised seat mosaic (like the Alvalade). The 'OASIS' lettering picked out in seats in the aerial view is a great touch. Weaknesses: the seats are tiny uniform blocks at regular spacing, so close up (bottom-left) they read as confetti with no back/pan form or shadow between rows. The vomitories in the lower tier are plain dark rectangles punched into the seating, with no side walls, handrails, steel balustrade or step-down, so they read as missing tiles rather than tunnel openings. Aisle steps are faint, with no yellow nosing strips. There are no handrails at the front of tiers, no crush barriers, no wheelchair platforms and no row-end signage. The tier fronts (fascias) are flat with LED ribbon boards but no glass balustrade or capping. The lower-tier front wall is a uniform dark green with no texture.",
+    "suggestions": [
+      "Use the improved tip-up seat (see seat asset) at LOD1 (~100-200 tris) for the nearest rows, with an imposter/card LOD for far rows. Bake per-row AO so each row has a dark gap below the next riser.",
+      "Build vomitories as real openings: side walls ~2.2 m high stepped with the rake, galvanised handrails around the opening (Ø 48 mm), and a dark interior tunnel with a lit far end.",
+      "Add yellow step-nosing strips (50 mm) on every aisle step, central aisle handrails, and steel crush barriers every ~5 rows in standing sections.",
+      "Tier fronts: add a glass or steel balustrade (~1.1 m) with a capping rail above the fascia LED board.",
+      "Concrete materials: give risers and stairs a precast concrete texture with staining and water streaks (albedo ~0.45, roughness ~0.85), and give the pitch-front wall a texture and padding/branding rather than flat green."
+    ],
+    "renderer_notes": "Without GI the bowl interior under the roof is lit only by ambient light, which flattens depth between tiers. Some of the busy confetti look comes from aliasing on the tiny seat blocks at distance. Mip-biased seat textures or a seat imposter would help."
+  },
+  {
+    "asset": "stadium_mega:roof",
+    "score": 48,
+    "pass": false,
+    "summary": "Continuous cantilever roof ring with a lit leading edge and a gridded soffit: right concept, but it reads as a flat grey surface with drawn lines rather than a structure.",
+    "critique": "The roof wraps the bowl continuously with a bright leading-edge strip and a gridded underside, which is a good large-stadium read. However, the soffit is a flat, uniformly shaded grey plane with thin line work, with no depth to the rafters or trusses. Real cantilever roofs show deep primary trusses or ribs (1-3 m deep) radiating out, purlins, catwalks, PA speaker clusters, and lighting gantries along the leading edge. The leading-edge strip is a plain white band. No translucent polycarbonate panels let light through near the edge. The short struts or hangers visible at the fascia are evenly spaced but thin and plain.",
+    "suggestions": [
+      "Model radial primary ribs as real geometry: box or truss girders ~1.5 m deep at ~10-15 m spacing, tapering to the leading edge. Add 2-3 longitudinal purlins and a catwalk along the leading edge. Instance one rib (~500 tris) around the ring.",
+      "Hang floodlight and PA gantries from the leading edge (see floodlights): rows of rectangular luminaires every ~4-6 m, with speaker clusters at intervals.",
+      "Use translucent polycarbonate panels for the outer 5-8 m of the roof, so sunlight shows through and shadow patterns on the stands vary.",
+      "Give the soffit a ribbed or trapezoidal sheet texture (normal map), with albedo ~0.6, slight grime near the drainage points, and darker paint on the steel members."
+    ],
+    "renderer_notes": "No GI or bounce light under the roof makes the soffit uniformly grey. Real roofs pick up green and bright bounce from the pitch, so a fake upward ambient term from the pitch colour would add a lot."
+  },
+  {
+    "asset": "stadium_mega:exterior_facade",
+    "score": 22,
+    "pass": false,
+    "summary": "The only exterior view is an almost fully black night aerial: the facade shows as an unlit silhouette with no visible design.",
+    "critique": "In the aerial (bottom-right) the outside of the stadium is near-black and unlit. You can make out a stepped mass but no cladding, glazing, stair cores, entrances, signage or facade lighting. At night a stadium of this size would have a lit facade (LED fins, a backlit membrane or a perforated metal skin), lit concourse glazing and floodlit entrances. As shown, the exterior cannot be judged above greybox level. If it is detailed, the render hides it; if it isn't, it needs building.",
+    "suggestions": [
+      "Add exterior lighting as part of the asset: emissive LED strips or a backlit facade skin, lit concourse glazing bands (emissive windows), and uplighters at entrances, so the night view reads.",
+      "Give the facade a clear architectural treatment: a perforated metal or ETFE skin wrapping the bowl, expressed stair and ramp cores, turnstile blocks with club signage, and a ground-level plinth. Use tiling textures (2k) on large shells to keep the cost low.",
+      "Add external stair cores and ramps (Wembley/Emirates-style spiral ramps or straight flights) and a podium with bollards.",
+      "Provide a daytime exterior view in the review set so the facade can be judged properly."
+    ],
+    "renderer_notes": "Most of this is a lighting and render-setup problem: the night aerial has no facade lighting and no moonlight or ambient, so everything outside the bowl goes black. The score may be unfair to the geometry, but nothing on the exterior is visible."
+  },
+  {
+    "asset": "stadium_mega:floodlights",
+    "score": 35,
+    "pass": false,
+    "summary": "No visible floodlight units: only a thin bright strip along the roof leading edge, which doesn't read as stadium lighting.",
+    "critique": "Modern bowl stadiums mount floodlights in a continuous ring along the roof leading edge as rows of discrete rectangular LED or HID luminaires on a gantry/catwalk, each aimed at the pitch. Here there is only a bright continuous white band and some short struts, with no individual luminaires, no gantry, no cabling and no aiming. At night (aerial) the bowl is lit, but no light sources are visible on the roof. Mid-distance views show nothing that a player would recognise as floodlights.",
+    "suggestions": [
+      "Add a leading-edge lighting gantry: a steel catwalk (~1 m wide with handrails) running the full ring, carrying luminaires every ~1.5-2 m. Each luminaire is a ~600x500x150 mm box with a dark glass face and a yoke bracket, angled ~20-30 deg down toward the pitch. Instance one luminaire (~150 tris) a few hundred times.",
+      "Give the luminaire faces an emissive material keyed to time of day, plus a cheap sprite glare/bloom per light at night.",
+      "Run cable trays and junction boxes along the gantry for close-up credibility."
+    ],
+    "renderer_notes": "Without a bloom pass, emissive faces will read flat. A small sprite glare on each light at night would sell it."
+  },
+  {
+    "asset": "stadium_mega:pitch_goals_nets",
+    "score": 45,
+    "pass": false,
+    "summary": "Pitch surface and markings are clean and correct-looking; goals and nets are not visible in this detail sheet. The turf is too flat and uniform for a top-flight surface.",
+    "critique": "The halfway line, touchlines, technical-area dashes and corner arc with flag are present and crisp. The turf is a smooth green with only very faint mowing variation. Top-flight pitches show strong alternating mown stripes (light/dark bands ~5-6 m wide), sometimes with a checkerboard pattern. The corner flag is tiny and appears correct. Line widths look right (~120 mm). No goals or nets are visible in these four views, so they cannot be judged here (see the overall sheet). Near the camera the turf has no grain or blade detail. The runoff strip between touchline and boards is the same grass, which is correct for natural turf.",
+    "suggestions": [
+      "Add strong mowing stripes: alternating bands with ~8-12% brightness difference, driven by view angle (anisotropic: bright when the camera looks along the mow direction, dark against it). This is a cheap shader effect.",
+      "Add a turf detail normal map and a micro-variation albedo, plus wear patches in the goalmouths and along the technical area.",
+      "Paint the lines with slight bleed and a slightly lower brightness (albedo ~0.75), not pure white, and add a faint white overspray halo.",
+      "Include goals and nets in the detail views so they can be reviewed."
+    ],
+    "renderer_notes": "Lack of anisotropic or view-dependent shading on the turf is a renderer limitation that hides mowing stripes. Adding it to the grass shader would help every pitch."
+  },
+  {
+    "asset": "stadium_mega:dugouts_tunnel",
+    "score": 50,
+    "pass": false,
+    "summary": "Extendable green tunnel with ribs and rows of padded dugout seats read well, but both are simplified, with a black void tunnel mouth and minimal canopy detail.",
+    "critique": "The telescopic players' tunnel (green fabric over hoop ribs) and the dugouts with rows of grey bucket seats are recognisable and well placed either side of the halfway line. Issues: in the straight-on view the tunnel mouth is a pure black void inside a dark frame, with no visible interior, floor or lighting, so it reads as a hole. The fabric is uniformly smooth with no sag between hoops, no club branding, no zipper seams and no ground rails or wheels. The dugout canopies are barely visible: there is no clear polycarbonate shell with edge frame, no back panel branding and no technical-area boards. The seats are simple grey shells with no padded headrests (premium dugouts use padded bucket seats with headrests and club logos). The ground under the dugouts is plain.",
+    "suggestions": [
+      "Tunnel: sag the fabric between hoops (~30-50 mm) with a normal map, add a club crest or sponsor print on the sides, rubber skirts at the base and visible wheels/rails. Give the interior a floor and lit walls so the mouth isn't pure black.",
+      "Dugouts: model a curved clear polycarbonate canopy (transparent with frame edge, ~2.2 m high), a branded back panel, padded bucket seats with headrests (~300 tris each, instanced), and a fourth-official / technical area box.",
+      "Add the technical-area marking around the dugouts and a small electronic substitution board prop."
+    ],
+    "renderer_notes": "Without GI, the tunnel interior goes pure black. A low emissive value inside, or an interior light, would fix the read."
+  },
+  {
+    "asset": "stadium_mega:advertising_boards_screens",
+    "score": 42,
+    "pass": false,
+    "summary": "Tier-fascia LED ribbon boards with readable fictional brands look good; the pitchside perimeter boards are flat grey slabs with mostly blank content.",
+    "critique": "The ribbon boards on the tier fascias are the strongest part: varied colours, legible fictional brands (Meridian Tyres, Summit Cola, Volta, Northwind) and a good sense of scale. The pitchside LED perimeter boards, which a game camera will see most, are weak. In the straight view the left board is mostly black with a short white/green bar, and the right board is grey/white with a small blue block, as if the content is unfinished or misaligned. In the bottom-left view the board is a plain grey slab with a white top strip and no visible LED face, frame, support legs or padding. Real perimeter boards are ~0.9-1 m high, angled ~10 deg back, with a black frame, a bright emissive face showing full-width ads, and legs or A-frames behind. No big video screens are visible in these views.",
+    "suggestions": [
+      "Perimeter LED boards: a 900 mm high face tilted ~10-15 deg back with a black aluminium frame (~40 mm bezel), modules separated by thin seams every ~1 m, rear A-frame supports and a padded top. Fill the face with brand content (reuse the ribbon atlas) and an emissive strength high enough to read in daylight.",
+      "Add a subtle LED pixel-grid normal or texture on all LED faces so close-ups show diodes rather than flat print.",
+      "Fix the board content mapping so no board shows mostly black or blank (check UVs and ad scroll offset).",
+      "Add the main video screens (e.g. two corner screens ~20x10 m with frames and support structure) if the mega layout specifies them, and show them in the detail views."
+    ],
+    "renderer_notes": "Emissive boards without bloom look like printed panels. That is mostly renderer, but board geometry and content still need work."
+  },
+  {
+    "asset": "traffic_cone",
+    "score": 55,
+    "pass": false,
+    "summary": "Correct UK road cone (tall orange cone, two reflective bands, square black base), but clean and plasticky with a faceted body and flat, unreflective bands.",
+    "critique": "Shape, proportions (~750 mm with a ~380 mm square base), the hollow top and the two-band layout are all right, and the base corner radius is good. Remaining issues: the cone body shows visible facets in the 3/4 views (too few radial segments for a close-up hero prop). The reflective bands are flat light grey with no retroreflective microprism pattern and no edge seam where the sleeve overlaps. Real Chapter 8 cones use a retroreflective sleeve with a visible join and slightly raised edges. The base is two stacked flat slabs. Real cone bases are a single recycled-rubber/PVC moulding with a raised rim, a recessed centre, moulded lettering and a lip where the cone sits. There is no moulding seam, embossed manufacturer text or wear. Real cones are almost always scuffed, sun-faded and dirty, especially at the base and band edges. The orange looks right but shades a bit too smoothly, like painted plastic rather than PVC.",
+    "suggestions": [
+      "Increase radial segments to ~32 on the body (still <600 tris) or use smooth normals with a normal map, and add a small rolled lip at the top hole and at the base collar where the cone meets the base.",
+      "Rebuild the base as one moulding: 380x380 mm, ~40 mm thick with a 10 mm raised outer rim, chamfered corners, a recessed inner area and a raised collar ~20 mm around the cone foot. Add embossed text (manufacturer, 'BS EN 13422') in the normal map.",
+      "Reflective bands: white/silver albedo ~0.85, with a microprism hex or diamond pattern in the normal map and a slightly lower roughness (~0.3). Add a vertical sleeve-overlap seam and slightly raised band edges (1 mm).",
+      "Wear pass: grime and tar ramp on the lowest 150 mm, scuffs and abrasion on the band edges, sun-fade (desaturate the top), and a few tyre-mark streaks. Use 2-3 texture variants from one 1024 atlas so instanced cones don't repeat.",
+      "PVC material: roughness ~0.5, a slight subsurface/translucency tint if the shader supports it, and orange albedo around sRGB (230,90,30)."
+    ],
+    "renderer_notes": "Retroreflective bands can't glow toward the camera without a view-dependent term. A cheap 'retro' boost when the light and view directions align would sell them at night."
+  }
+]

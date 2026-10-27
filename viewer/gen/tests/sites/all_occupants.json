@@ -1,0 +1,17 @@
+{"schema": "site-layout/1", "name": "Inherited", "template": "edge_of_town", "style": "industrial", "seed": 3,
+ "club": {"name": "OLD TOWN", "primary": "#2a7a3a", "secondary": "notacolour"},
+ "boundary": {"type": "brick_wall", "screening": "none"}, "gate": {"tier": 1}, "landscape": {"trees": 1.0},
+ "plots": {
+  "P1": {"state": "occupied", "occupant": "old_car_park"}, "P2": {"state": "demolition", "occupant": "old_car_park"},
+  "P3": {"state": "occupied", "occupant": "old_warehouse"}, "P4": {"state": "occupied", "occupant": "container_yard"},
+  "P5": {"state": "demolition", "occupant": "container_yard"}, "P6": {"state": "occupied", "occupant": "disused_courts"},
+  "P7": {"state": "demolition", "occupant": "disused_courts"}, "P8": {"state": "occupied", "occupant": "scrubland"},
+  "P9": {"state": "demolition", "occupant": "rubble_lot"},
+  "B1": {"state": "occupied", "occupant": "abandoned_offices"}, "B2": {"state": "demolition", "occupant": "derelict_mill"},
+  "B3": {"state": "demolition", "occupant": "farm_barns"},
+  "M1": {"state": "occupied", "occupant": "bowling_green"}, "M2": {"state": "demolition", "occupant": "bowling_green"},
+  "M3": {"state": "demolition", "occupant": "abandoned_offices"},
+  "S1": {"state": "occupied", "occupant": "rubble_lot"}, "S2": {"state": "demolition", "occupant": "scrubland"},
+  "C3": {"state": "occupied", "occupant": "container_yard"}, "S3": {"state": "cleared"},
+  "X9": {"state": "built"}
+ }}

@@ -1,0 +1,13 @@
+{
+  "_doc": "What stands on a plot the club owns but hasn't developed yet (kit/site/occupants.py). The player knocks it down (state 'demolition', then 'cleared') to build. fits: plot kinds it can stand on. Generators scale to the plot; seed varies the details.",
+  "old_car_park": {"label": "Old car park", "fits": ["strip", "large", "medium", "small", "xlarge", "pitch"], "cars": 0.12},
+  "old_warehouse": {"label": "Old warehouse", "fits": ["large", "medium", "xlarge", "pitch"], "height": 9.0, "roof": "barrel"},
+  "derelict_mill": {"label": "Derelict mill", "fits": ["large", "xlarge", "pitch"], "storeys": 4, "chimney": true},
+  "abandoned_offices": {"label": "Abandoned offices", "fits": ["medium", "large", "xlarge"], "storeys": 3},
+  "container_yard": {"label": "Container and scrap yard", "fits": ["strip", "medium", "large", "small", "xlarge", "pitch"]},
+  "farm_barns": {"label": "Old farm barns", "fits": ["medium", "large", "xlarge", "pitch"]},
+  "scrubland": {"label": "Overgrown scrubland", "fits": ["strip", "large", "medium", "small", "xlarge", "pitch"]},
+  "disused_courts": {"label": "Disused tennis courts", "fits": ["large", "medium", "xlarge", "pitch"]},
+  "bowling_green": {"label": "Old bowling green", "fits": ["medium", "large"]},
+  "rubble_lot": {"label": "Rubble lot", "fits": ["strip", "large", "medium", "small", "xlarge", "pitch"]}
+}

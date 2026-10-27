@@ -1,0 +1,16 @@
+{"schema": "site-layout/1", "name": "Premier League training centre", "template": "riverside", "style": "nordic", "seed": 41,
+ "club": {"name": "UNITED", "primary": "#1d4f91", "secondary": "#ffffff"},
+ "boundary": {"type": "hedge", "screening": "berm"}, "gate": {"tier": 3},
+ "plots": {
+  "P1": {"state": "built", "facility": "pitch", "tier": 4, "options": {"floodlights": true, "filming_tower": true, "viewing_deck": true, "equipment": true, "shelters": true, "ball_stop": true}},
+  "P2": {"state": "built", "facility": "pitch", "tier": 3, "options": {"equipment": true, "shelters": true}},
+  "P3": {"state": "built", "facility": "pitch", "tier": 3},
+  "P4": {"state": "built", "facility": "artificial_pitch", "tier": 2, "options": {"floodlights": true, "equipment": true}},
+  "P5": {"state": "built", "facility": "indoor_hall", "tier": 2},
+  "P6": {"state": "occupied", "occupant": "farm_barns"},
+  "B1+B2": {"state": "built", "facility": "training_building", "tier": 4, "options": {"modules": ["gym", "rehab", "canteen", "media"]}},
+  "C1": {"state": "built", "facility": "car_park", "tier": 4, "options": {"fill": 0.8}},
+  "M1": {"state": "built", "facility": "recovery", "tier": 3},
+  "M2": {"state": "built", "facility": "goalkeeper_area", "tier": 2},
+  "M3": {"state": "built", "facility": "maintenance", "tier": 3}
+ }}

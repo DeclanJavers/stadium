@@ -1,0 +1,114 @@
+[
+  {
+    "asset": "pipe_stack",
+    "score": 58,
+    "pass": false,
+    "summary": "Convincing UK-orange drainage pipe pack in a timber cradle with socket ends and strapping, but too clean, too uniform and with a toy-like solid end cap.",
+    "critique": "Right idea and broadly right construction: about 13 orange (terracotta RAL 8023 style) underground drainage pipes, thin walls, visible socket bulges at one end, held in two timber frames (bottom bearer, two posts, top bolted cross-beam, threaded tie rods) with white band straps. The open ends read well from the three-quarter view with dark interiors and a visible inner lip. What keeps it at 'clearly CG': (1) every pipe is an identical, perfectly straight cylinder of identical length with the same flat satin orange, so the pack reads as a single extruded object; real packs show slight length stagger (20-80 mm), slight sag between bearers and a mix of socket-left/socket-right ends. (2) Pipe albedo is too saturated and too uniform; real PVC-U drainage pipe is a duller brick orange (~sRGB 185,85,40) with dusty, scuffed lower faces and UV fade on the top layer. The grey 'grime' patches present are blotchy and read as camo rather than dust/mud. (3) The red end cap is a solid flat disc sitting proud of the bore, it looks like a plug of plasticine; real caps are thin push-on caps with a lip and a moulded centre, or a cardboard/plastic disc tucked inside. (4) The timber frames are pale, clean and unweathered, with uniform beige, no end-grain, no stencilled supplier mark, no splits. Frames sit pipes slightly above ground but the bottom bearer is barely visible and there is no ground contact detail. (5) Straps are bright white lines, too thin and too clean, and they cross over the top only rather than wrapping the pack. (6) Printed pipe markings (dotted dark line along each pipe) read as a dashed line rather than a text stripe.",
+    "suggestions": [
+      "Vary each pipe per instance via vertex offset or per-pipe params: length +/-50 mm, socket end alternating, 5-15 mm mid-span sag; zero extra triangles if done in the generator.",
+      "Retune PVC material: albedo ~ (0.48, 0.20, 0.08) linear, roughness 0.55-0.65 on top and 0.75 on lower faces, add a dust/mud gradient on the bottom 30% of each pipe and on the lowest row, plus faint UV bleaching on the top row (single 512 shared grime mask, triplanar or UV'd along length).",
+      "Replace the solid red disc with a thin push-fit cap: short cylinder 15 mm deep with a 5 mm rim lip and a slightly domed face, ~60 tris; use 2-3 caps on random ends and leave the rest open.",
+      "Weather the timber: darker, greyer albedo (~sRGB 140,120,95), visible end-grain decal on cut ends, a stencilled supplier mark on the top beam, rounded 3 mm edge bevels; add a second bottom bearer visible under the pack.",
+      "Make straps proper polyester/steel bands that wrap the full bundle cross-section (a 20 mm x 1 mm ribbon following the pack hull), slightly off-white with a buckle/seal block; 2 per frame bay.",
+      "Replace the dashed line with a repeating text-stripe decal (manufacturer, 'BS EN 1401', diameter) in black every ~1 m; one small atlas strip shared by all pipes."
+    ],
+    "renderer_notes": "The pipe interiors go almost black with no bounce light; that is mostly the lack of GI, not the asset."
+  },
+  {
+    "asset": "corner_flag.striped",
+    "score": 57,
+    "pass": false,
+    "summary": "Correct proportions and a nice spring base and banded pole, but the flag cloth reads as glossy plastic sheet and the design/attachment is simplistic.",
+    "critique": "Pole height (~1.5 m) and flag size (~0.5 m square) are in line with the Laws of the Game. The red/white banded pole, white top cap, exposed spring and ground socket disc are good recognisable details. The cloth has a believable wind ripple in the three-quarter views. Problems: (1) The flag material is far too shiny and too smooth; the satin highlights make it look like vinyl or painted plastic rather than polyester/nylon fabric, which has a low, broad sheen and visible weave at close range. The red is a hot pinkish red with very bright speculars. (2) The cloth has no hem, no stitched edge, no fraying and no thickness; at the close-up it reads as a single-sided sheet with an infinitely thin edge. (3) The attachment is just a red sleeve band; real corner flags use a sewn sleeve over the pole top or two ties/clips, and the sleeve should show fabric creasing where it grips the pole. (4) In the side view the flag folds into a tall, narrow flat sheet with an implausibly crisp curl, which looks like a bent card. (5) The pole is perfectly clean and the bands are very saturated; real poles show grass stains, scuffs at boot height and a dirty bottom 100 mm. (6) The ground socket disc reads as a brown puck sitting on the grass rather than set flush into turf.",
+    "suggestions": [
+      "Flag material: roughness 0.7-0.8, specular reduced (sheen-style), albedo red ~sRGB 200,25,35 and white ~sRGB 225,225,220; add a tiling fabric weave normal map (256 px, shared) so close-ups break the highlight.",
+      "Add a 15 mm double-stitched hem: offset strip of quads along the three free edges with a slightly darker stitch line in the albedo; ~40 extra tris.",
+      "Model the sleeve as a fabric tube 150-200 mm long with 3-4 compression creases, or two small ties at top and mid sleeve; keep it in the flag mesh so it animates together.",
+      "Constrain the cloth shape so the side view never collapses into a flat curl: limit fold amplitude near the free edge and add secondary ripples; or ship 3-4 baked wind poses as vertex-animated frames.",
+      "Add pole wear: grass/mud smudge on the bottom 100-150 mm, a few scuffs at 300-600 mm, slightly desaturated band colours (shared 128x512 strip texture).",
+      "Sink the socket so its top is flush with ground level and give it a slightly worn turf ring (decal) instead of a raised brown disc."
+    ],
+    "renderer_notes": "Cloth specular may be exaggerated by the forward PBR without a sheen lobe; even so, roughness should be raised."
+  },
+  {
+    "asset": "team_shelter",
+    "score": 62,
+    "pass": false,
+    "summary": "A recognisable, well-proportioned curved polycarbonate team shelter with tip-up seats and HOME TEAM signage, let down by spotless uniform materials and simplified glazing/frame details.",
+    "critique": "Proportions are right for a ~6 m training-ground/stadium team shelter: curved roof, white tubular arch frame on a red-panelled lower kick board, a row of tip-up shell seats on a steel beam, a green turf mat floor, and feet on base plates. The roof arches spaced at each bay, the side return panels and lettering all read correctly. What reads as CG: (1) every surface is perfectly clean; the red panels are flat uniform colour with no texture, no panel fixings, no scuffs from boots, no dirt splash at the base. Real ones have rivets/bolts along panel seams, scuffed bottoms and grass staining. (2) The polycarbonate is clean, perfectly flat-tinted and has no edge trims, no glazing bars/gasket strips, no dust, no water streaks, and no visible sheet thickness at edges. (3) Frame tube is plain white with no joint plates, welds or bolted brackets where arches meet the front beam and base. (4) The seats are bright pinkish red, too saturated and identical; no seat numbers or hinge brackets read. (5) The HOME TEAM lettering is a flat light-grey font sitting directly on the panel; vinyl lettering would have slight sheen and crisper white. (6) The base reads as a dark plinth line; there is no visible concrete pad or ground fixing detail.",
+    "suggestions": [
+      "Add a shared 512 px panel detail texture: rows of rivet/bolt heads at 300 mm centres along panel edges, a scuff/dirt gradient on the lower 200 mm, faint grass splash; normal map for rivets. Near-zero triangle cost.",
+      "Glazing: add 20-25 mm aluminium edge trims and glazing bars along each sheet seam (thin boxes, ~12 tris each), give the polycarbonate a subtle dust/streak roughness mask and a little more reflectance at grazing angles, and visible 4-6 mm edge thickness.",
+      "Add joint detail at the arch-to-beam and post-to-base junctions: small square plates with 4 bolt heads (~40 tris each), and base plates with 4 anchor bolts sitting on a thin concrete pad or kerb.",
+      "Desaturate and darken the seat red slightly (~sRGB 175,30,35) with roughness 0.45, add hinge brackets under each seat and small white seat numbers on the backs.",
+      "Make the lettering crisp vinyl white with slight sheen and add a small club crest/sponsor panel on the back return, so the asset is less generic.",
+      "Add rain-drip streaks and leaf litter mask where the roof meets the back panel; optional water bottle crate / kit bag props as separate instanced items."
+    ],
+    "renderer_notes": "Transparency sorting looks clean. Without screen-space reflections the polycarbonate loses its key reflective cue; consider a cheap fresnel-weighted sky reflection in the shader."
+  },
+  {
+    "asset": "hoarding_panel",
+    "score": 60,
+    "pass": false,
+    "summary": "Well-observed construction-site hoarding (printed facing, ply back with WBP stamps, studs and rails, raking prop to an interlocking concrete block), but flat print, single prop and missing fixings keep it game-y.",
+    "critique": "Strong reference work: printed graphic face with a developer name, phone number, warning sign and mud splash at the base; the back shows plywood sheets with EN 636 stamps and sheet numbers, vertical studs, horizontal rails, a red top capping, and a timber raking prop bolted to a Legato-style concrete block with a steel shoe. Problems: (1) The printed artwork is a flat, cartoon-like illustration with uniform saturation and no wrinkles, seam overlaps or edge wrap; the vertical sheet joint shows as a thin hairline through the print rather than a real butt joint with slight misalignment. (2) The face is perfectly flat and pristine apart from the mud splash; real hoardings have weathering, fading, staples or screw heads along the studs, and posters peeling at edges. (3) Only one prop for a ~2.4 m wide panel; real freestanding hoarding has a prop at every post (every ~1.2-2.4 m) or posts sunk in the ground. The panel visibly relies on a single brace, which reads as structurally implausible. (4) Posts stop at grass level with no foot, ground contact or kicker board. (5) The timber is uniform clean beige, no knots, end-grain or weathering; the brace and studs share the same tone as the ply. (6) The red capping is a plain box.",
+    "suggestions": [
+      "Add a second raking prop and kentledge block (instanced, ~200 tris each) so there is one per main post; or sink posts 600 mm and add a bottom kicker board.",
+      "Give the print a believable printed-vinyl/dibond look: slight desaturation, roughness ~0.5, faint UV fade toward the top, and replace the hairline seam with a real 2-3 mm joint with a small step and visible screw heads every 300 mm along stud lines (normal/albedo decal).",
+      "Use a more photographic CGI render or photo for the artwork instead of the flat vector illustration; developer hoardings usually carry glossy architectural renders.",
+      "Weather the timber: per-piece tone variation, knots, end-grain decals on cut ends, darker green/grey bottom 150 mm from ground damp; brace a slightly different timber tone.",
+      "Add contact detail at the base: a gap and scattered mud/gravel decal along the bottom, small grass tufts poking up, and a shallow chamfered profile on the capping.",
+      "Optional cheap realism: a few cable ties or a small laminated A4 notice on the back, staple marks and a torn corner on the print."
+    ],
+    "renderer_notes": "Shadow and lighting are fine; the grass is the renderer's ground, not part of the asset."
+  },
+  {
+    "asset": "cctv_pole",
+    "score": 60,
+    "pass": false,
+    "summary": "Credible 6 m CCTV column with PTZ dome, bullet camera, junction box, cable runs and signage, but the column and base are plain clean grey with simplified root/base details.",
+    "critique": "Good component set and placement: a slim column with a swan-neck PTZ dome on top, a bullet camera on a wall-arm bracket, a grey junction box on standoff brackets, conduit/cable runs, a yellow 'CCTV' warning sign, and a mid-height door/joint. Proportions are plausible for a 6 m column. Issues: (1) The column is a uniform smooth grey with no galvanised spangle, no paint, no weathering, no rust staining under fixings and no door panel detail; the access door reads only as a pale rectangle. (2) The base is a square concrete plinth with a pyramid-shaped flange; real CCTV columns are either planted (rooted, ground sleeve with a concrete collar) or flange-mounted with 4 visible anchor bolts and nuts and a base shroud. The base looks like a lamp-post toy stand. (3) The taper/joint at mid-height looks like a sudden change rather than a swaged step or continuous taper. (4) Cameras are bright clean white with no sunshield overhang, lens glass or IR LEDs reading at distance; the bullet camera is fine up close but slightly oversized. (5) Cable from box to cameras is a rigid thin line; real cables sag slightly and are tied with cable ties. (6) The sign reads well from the front but the back is a blank grey plate with no band clips.",
+    "suggestions": [
+      "Material: galvanised steel albedo ~sRGB 150,155,155, metallic 1, roughness 0.45 with a tiling spangle/mottle mask (shared 256 px) and darker run-off streaks under the junction box and brackets.",
+      "Rework the base: either a flange plate 300x300x20 mm with 4 M24 anchor bolts and nuts (simple hex prisms, ~150 tris) on a 600x600 concrete pad, or a planted root with a 50 mm concrete collar ring. Drop the pyramid.",
+      "Model the access door as a recessed 400x100 mm panel with a lock dot at ~600 mm height, and make the mid-height joint a swaged step with a 20 mm transition.",
+      "Cameras: add a sunshield overhang on the bullet, dark lens glass with a faint IR ring, slight off-white tone and dirt on top surfaces.",
+      "Make cables slight catenaries with 2-3 cable-tie bands; add banding-strap clips (stainless band) around the pole for the sign and box brackets.",
+      "Add a small stencilled asset number and a faded maintenance sticker near the door; one shared decal atlas."
+    ],
+    "renderer_notes": "No issues attributable to the renderer."
+  },
+  {
+    "asset": "tree_conifer",
+    "score": 50,
+    "pass": false,
+    "summary": "Recognisable spruce silhouette in mid views, but a spindly bare leader, flat branch cards, pale untextured trunk and a garden-mulch ring make it read as a stylised game tree.",
+    "critique": "From the side view the narrow conical silhouette is the strongest aspect and reads as a spruce. Weaknesses: (1) The top 10-15% is a bare stick with a few sparse tufts; a Norway spruce leader is short (a single year's growth, ~0.3-0.6 m) above a dense whorl, not a long spindly stalk. This is the most obvious error from the three-quarter views. (2) Crown width is too narrow for an open-grown Norway spruce of this height; the reference gives 5-7 m spread on 25-35 m, and lower branches of open-grown trees sweep outward and down to near the ground with the classic drooping 'curtain' secondary branchlets. Here the lower branches are short and the cone is pencil-like. (3) Close-up: branch geometry (pale pinkish-grey limbs) lies on top of the foliage cards and is clearly visible, foliage cards are flat, individually distinct, uniformly mid-green with hard alpha edges; there is no depth, no inner dark crown, no dead inner twigs. (4) The trunk is a smooth beige-grey cylinder with no bark texture, no root flare, and the wrong colour (spruce bark is reddish-brown to grey-brown, scaly). (5) The tree sits on a circular brown mulch bed, which reads as a newly planted ornamental, odd for a mature tree in open ground; there is no needle litter. (6) Foliage colour is one green; real spruce is darker blue-green inside, slightly lighter tips.",
+    "suggestions": [
+      "Fix the leader: cap the trunk with a dense terminal whorl and a single 0.3-0.5 m leader with a tuft; taper whorl spacing to 0.3-0.5 m near the top so foliage is dense to the tip.",
+      "Widen the crown: crown radius at base ~0.2-0.25 x height for an open-grown spruce, lower branches angled slightly downward then turning up at tips, with hanging secondary 'curtain' cards on the lower two-thirds.",
+      "Push branch limbs inside the foliage: shorten visible limb geometry or darken/thin it so it never shows on the card surfaces; add a darker inner crown shell (a few large, dark, low-alpha cards or a cone mesh with dark albedo) to give depth.",
+      "Foliage cards: use a 1024 atlas with 4-6 variants, tip-lighter gradient, slight hue variation per card, alpha-to-coverage, and bend each card along its length (3 segments) to avoid flat paddles; keep LOD0 under ~8-12k tris.",
+      "Trunk: scaly reddish-brown bark texture (shared 512 tiling + normal), root flare of 4-6 buttress bulges at the base, bark darker near ground.",
+      "Replace the mulch disc with a needle-litter decal (brown-orange needles, sparse, irregular edge, fading into grass) or drop it entirely; add a few fallen cones."
+    ],
+    "renderer_notes": "No translucency/subsurface on foliage and no GI make the crown look flatter and darker inside; still, the issues above are asset issues."
+  },
+  {
+    "asset": "satellite_dish",
+    "score": 62,
+    "pass": false,
+    "summary": "Well-researched non-penetrating ballast-frame satellite dish (approx. 1.2 m offset dish, mast, struts, LNB arm, stacked paving slabs) that is believable but clean and simplified at close range.",
+    "critique": "Good construction: an offset-fed elliptical dish with rolled rim, rear stiffening ribs and mount bracket, a central mast with two diagonal struts, an LNB feed arm with feedhorn/LNB and cable, a galvanised slotted-channel ballast frame with rubber pads at the corners and stacked concrete slabs (3 per bay) with moss/green staining. Shortcomings: (1) The dish face is a perfectly smooth, uniform off-white with a soft gradient and a faint smudge; real dishes have a pressed-steel or SMC surface with a slight texture, dirt runs from the bottom rim, and bird droppings; the SKYLINK logo is small and very faint. (2) The dish rim is a bright white tube-like lip that is too thick and too clean, making it look like a plastic toy rim. (3) The feed arm is a thin square tube with an LNB that reads at distance, but there is no feed-arm support strut and no coax drip loop down the mast. (4) The mast, struts and frame are uniform mid-grey; no galvanised spangle, no rust at bolt holes, no bolts at strut ends. (5) The slabs are uniform, identically sized and perfectly aligned; real ballast slabs are 600x600x50 with chipped corners and offset stacking. (6) One long strut runs from the dish across the frame to a slab, which looks odd and unanchored.",
+    "suggestions": [
+      "Dish material: albedo ~sRGB 215,215,210 roughness 0.6 with a 512 dirt mask (rain streaks from the lower rim, dust concentrated at the bottom of the bowl, 2-3 bird-dropping splats); make the logo a crisper decal.",
+      "Thin the rim lip to ~10-15 mm and match it to the dish colour; add a small bolt ring where the bowl meets the rear bracket.",
+      "Add a feed-arm support brace (thin rod from arm mid-point to dish lower rim) and run the coax as a drooping catenary down the mast with a drip loop and 2-3 cable ties.",
+      "Galvanised steel material for mast/frame with spangle mask; add hex bolt heads at every strut end and channel joint (~20 tris each), rust bloom at a few slot holes.",
+      "Randomise slabs: per-slab offset 5-20 mm and rotation 1-3 degrees, chipped corner variants, varied moss amount; keep as instanced 600x600x50 boxes with a shared texture.",
+      "Re-anchor or remove the long diagonal rod so every strut terminates on the frame with a visible bracket."
+    ],
+    "renderer_notes": "No reflections on the bowl is a renderer limitation; it is otherwise fine."
+  }
+]

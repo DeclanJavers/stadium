@@ -1,0 +1,166 @@
+[
+  {
+    "asset": "parasol",
+    "score": 57,
+    "pass": false,
+    "summary": "Believable cantilever-free centre-pole cafe parasol with vented crown, crank, drop valance and slab base, but the canopy reads as a rigid faceted shell with no fabric behaviour.",
+    "critique": "Silhouette and parts list are right: 8-rib canopy, raised wind vent, finial, telescopic pole with collar and crank box, cross/slab base. What keeps it CG: (1) the canopy is eight perfectly flat triangular facets; real fabric sags 30-60 mm between ribs and pulls taut over each rib, so each panel should be slightly concave with a visible rib ridge. (2) The hem between rib tips is a straight chord; on a real parasol the fabric scallops upward between tips, and the valance follows that curve. (3) The scalloped valance is too deep (it reads roughly 250-300 mm; typical is 120-180 mm) and its lower edge is jagged and stair-stepped in the side view rather than clean arcs. (4) Underside: only a few struts near the hub are visible; the ribs, runner and stretchers are barely readable, so from below or the side it looks like a solid shell. (5) Fabric material is a single flat red with uniform roughness, no seams, no weave, no sun fade on the top surfaces versus the shaded valance, no dirt at rib tips. (6) Crest decals are soft/blurry at close range and the 'ATHLETIC' text is partly cut off by the vent in one view. (7) Base slab is clean, sharp-edged and untextured: no chamfer, no aggregate, no water staining.",
+    "suggestions": [
+      "Make each canopy panel concave: subdivide each triangle 4x along the radius and 3x across, push interior vertices down by sag = 0.04 m * sin(pi*u) * sin(pi*v_norm), keep rib edges straight. Adds about 200 tris total.",
+      "Curve the hem: between rib tips lift the edge by 40-60 mm at mid-span (parabolic), and have the valance follow that edge. Reduce valance depth to about 150 mm and draw the scallops as true semicircle arcs (8-12 segments each) or as an alpha mask on a quad strip so the edge is smooth.",
+      "Model the 8 ribs and 8 stretchers on the underside as thin rectangular aluminium sections (20x10 mm ribs, 15x8 mm stretchers) plus a runner collar; about 300 tris, essential for low and side views.",
+      "Fabric material: albedo about sRGB (175,40,40) on top with a 5-10% lighter, desaturated sun-fade gradient toward the crown, roughness 0.8, a tiling woven-acrylic normal (256 px), stitched seam lines along each rib as a thin darker line in the texture, and faint grime at rib tips.",
+      "Sharpen crest/text decals: render them at at least 512 px per panel and keep text clear of the vent; place the crest in the middle third of the panel.",
+      "Base: 10 mm chamfer on the slab edges, a concrete albedo with aggregate speckle and a darker damp band at the bottom 20 mm."
+    ],
+    "renderer_notes": "Shadow is crisp and correct; the lack of underside bounce light makes the canopy interior read very dark red, which is a renderer limitation, not the asset."
+  },
+  {
+    "asset": "water_fountain",
+    "score": 56,
+    "pass": false,
+    "summary": "Recognisable pedestal drinking fountain with bottle-refill niche, push button, signage and bolted base plate, but the bowl is a crude drum and the column is a plain painted box.",
+    "critique": "Good parts list: square steel column, round stainless bowl, front push button, 'DRINKING WATER' plate, service door, rear bottle-refill recess with sensor, base plate with bolts on a concrete pad, edge wear. Problems: (1) The bowl is a thick-walled cylinder perched on top like a hat; it has an almost vertical 60-80 mm wall, no rolled lip, no drain grate, and the bubbler is just a thin loop. Real pedestal bowls are shallow pressed stainless dishes (about 300-330 mm diameter, 70-90 mm deep) with a rolled rim, a centre strainer, and an angled mouth-guard bubbler. (2) The bowl joins the column with a plain flange; real units have a neck/transition or the column top is capped. (3) Column is a sharp box with uniform green paint; the scratches/wear are only on the edges and read as thin white lines rather than chipped paint showing grey primer or steel. (4) Push button is an oversized dome placed high on the side; real push buttons are 30-40 mm, chrome, set in a stainless escutcheon on the front just below the bowl. (5) Bottle refill niche is shallow and its stainless back plate is flat grey; no spout visible, no drip tray grille detail beyond a printed strip. (6) Sign plate is clean and bright white with no screws or ageing. (7) Overall height looks about right (bowl rim roughly 0.95-1.0 m) but the column reads slightly too wide (about 230-250 mm) for the bowl.",
+    "suggestions": [
+      "Rebuild the bowl as a lathe profile (24 segments): rolled rim radius 8 mm, wall sloping inward at 35-45 degrees to a dished bottom, 320 mm diameter, 80 mm deep, with a 40 mm centre strainer disc and a short angled bubbler head with mouth guard. About 400 tris. Stainless material: metallic 1, roughness 0.3 with brushed anisotropic-looking streak texture and water-spot staining in the bottom.",
+      "Add a short tapered neck or square cap plate between column top and bowl underside so the bowl does not look balanced on the box.",
+      "Move the push button to the front face below the bowl, 35 mm diameter chrome button in a 70 mm square stainless escutcheon with 4 screw heads.",
+      "Column: 6-10 mm bevel on the vertical edges; replace edge-line scratches with irregular paint chips (masked by edge-curvature + noise) revealing dark grey primer, plus a darker grime/splash band in the bottom 150 mm and a water-stain run below the bowl.",
+      "Bottle refill: inset the niche 80-100 mm, add a small spout nozzle at the top and a perforated stainless drip grille (alpha or normal map) at the bottom.",
+      "Sign: add 4 screw heads, slightly off-white (sRGB 235,235,228) with a faint grime gradient."
+    ],
+    "renderer_notes": "Stainless bowl looks flat grey because there are no reflections (no SSR or local probes); a simple sky-colour environment cube would help all metal props."
+  },
+  {
+    "asset": "planter",
+    "score": 54,
+    "pass": false,
+    "summary": "The precast concrete trough is good (tie holes, rain streaks, plinth recess), but the planting is two perfect spheres with leaf-printed textures, which reads as fake topiary.",
+    "critique": "Container: right proportions for a precast street planter (about 1.6 x 0.8 x 0.6 m), recessed plinth, rain-streak staining, form-tie holes, rounded arrises. It is the strongest part. Planting is the weak point: (1) the two box-ball topiaries are mathematically perfect spheres with a leaf-pattern albedo; the silhouette has no leaf breakup at all, so they read as plastic balls or painted stones, especially in the close view. Real clipped box balls are slightly flattened, lumpy, have a fuzzy silhouette of protruding shoots, and sit on a visible short stem/trunk with soil at the base. (2) The big ball overhangs the planter rim and nearly intersects the wall; at least from above it looks like it is resting on the lip. (3) A few dark stray specks/fragments sit on the ball silhouettes (stray geometry or alpha artefacts). (4) The ornamental grass tuft is a sparse fan of flat blades that reads OK at distance but is too thin and too pale/straw for a living plant; it looks dead. (5) Mulch is a flat plane with printed chips that sits right at the rim level; real soil sits 50-80 mm below the rim. (6) Concrete is slightly too white and uniform on the top face; tops collect dirt and moss.",
+    "suggestions": [
+      "Replace the sphere topiaries with a lumpy shell (icosphere subdivision 3, vertices displaced by 3D noise +/- 6%, squashed to 0.85 height) plus 150-300 small alpha leaf cards (or a fin shell of 2-3 offset layers with alpha-tested leaf texture) around the surface for a fuzzy silhouette. About 1.5-2k tris per ball; instance the ball.",
+      "Keep the balls inside the rim: max ball radius = (inner width / 2) - 30 mm; and add a short visible stem plus a small soil mound.",
+      "Remove the stray dark fragments on the ball silhouettes (check for leftover leaf quads or degenerate tris).",
+      "Grass: 40-60 blades instead of about 15, arched with 3-4 segments each, green-to-straw gradient along the blade (base sRGB 70,100,45, tips 180,170,110), with a few seed heads.",
+      "Drop the soil/mulch surface 60 mm below the rim and give it a slight dome and a darker damp edge where it meets the wall.",
+      "Concrete top: darker grime and a little green algae on the top face and drip lines under the lip; overall albedo about sRGB 170-180 grey rather than near-white."
+    ]
+  },
+  {
+    "asset": "flagpole",
+    "score": 53,
+    "pass": false,
+    "summary": "Correct parts (pole, finial, halyards, base sleeve, club flag) but the pole is an untapered white tube on a tiny pad and the flag hangs out stiff like a board.",
+    "critique": "(1) The pole is a constant-diameter tube; commercial GRP or aluminium ground-mounted flagpoles taper (about 100-120 mm at the base to 50-60 mm at the top on a 6 m pole). (2) The concrete pad is a small flat square that looks like a sign base; real poles go into a buried root sleeve with a hinged base plate or a simple flush collar, and the visible part is a cast base collar 200-250 mm tall. (3) No cleat on the pole for the halyard, and the halyard lines do not visibly come down to anything. (4) The flag is a near-rigid horizontal rectangle with a single shallow ripple; at that extension there would be strong wind, so the flag should show multiple travelling waves and a drooping fly end; with less wind it should hang. In the 'side' view it reads as a stiff board. (5) Flag graphics: the crest and chevron artwork are OK but the 'ATHLETIC' text is overlapped by the stripe, and the fabric has no weave, hem stitching, or edge fraying; the hoist side has no visible toggles/clips on the halyard. (6) Finial is a plain gold sphere with no truck/pulley housing beneath it.",
+    "suggestions": [
+      "Taper the pole: base radius 55 mm to top radius 30 mm over 6 m, 12 sides is enough with smooth normals. Add a truck (revolving cap with pulley) 80 mm tall under a 75 mm gilt ball finial.",
+      "Replace the square pad with a 220 mm cast aluminium base collar (lathe, 16 sides) sitting flush on a small round concrete surround or directly in paving; add a halyard cleat 1.2 m up the pole and route the two halyard lines to it.",
+      "Flag: subdivide 12 x 8 and drive a vertex wave with 2-3 travelling waves along the fly (amplitude rising from 0 at the hoist to about 8% of flag length at the fly) plus a slight droop; if static, bake 2-3 wave variants and pick per instance. About 200 tris.",
+      "Add hoist detail: a white hoist tape strip along the pole edge with two snap clips on the halyard, and a double-stitched hem line in the texture on the fly edge.",
+      "Fix the artwork so the wordmark is not overlapped by the stripe; add a fabric weave normal and slight translucency darkening at folds (albedo modulation by wave normal)."
+    ]
+  },
+  {
+    "asset": "bench",
+    "score": 62,
+    "pass": false,
+    "summary": "Convincing UK park bench with three cast-iron standards, hardwood slats, coach bolts and a memorial plaque; held back by flat slat geometry, blotchy paint wear and boxy castings.",
+    "critique": "Strongest of this batch. Dimensions look right (about 1.8 m, seat about 450 mm, back top about 850 mm), three standards with scrolled arm tops and feet, separate back posts, bolts on every slat, brass memorial plaque with legible text, weathered timber with grain and cracks. Remaining issues: (1) Cast standards have a near-square constant cross-section; real castings have a T or I section with a raised outer bead/rib, filleted junctions and swelling at the feet, which makes them read as cast rather than cut from plate. (2) Paint wear on the castings is a camouflage-like pattern of large dark blotches (very visible in the side view) rather than chips concentrated on the arms, feet and edges with rust showing through; the feet are uniformly rust-brown blocks. (3) Slats are sharp rectangular boxes with no edge chamfer/round-over, all identical length and colour; real hardwood slats have 3-5 mm round-overs, slight colour variation between slats, and silvered grey tops where UV-weathered. In one view the seat slats read warm orange and in another grey-beige, which suggests a lighting-dependent albedo that is too saturated. (4) Seat is flat; most benches of this style have a slight waterfall front slat or a curved seat profile following the standards. (5) Back slats sit on straight posts with no curve. (6) Plaque is bright yellow, not tarnished brass.",
+    "suggestions": [
+      "Give the standards a beaded section: extrude a 6-point profile (main web 25 mm, outer bead 8 mm raised) along the casting path instead of a square, and fillet the arm-to-leg and leg-to-stretcher joints with 2-3 extra segments. Adds about 600 tris per standard, shared by instancing.",
+      "Paint wear: drive chips from edge curvature (or a baked AO/edge mask) times a high-frequency noise, so wear sits on arm tops, scroll ends and feet; underneath show dark primer and orange-brown rust (sRGB 110,60,35), roughness 0.85 in rust, 0.45 on intact paint.",
+      "Slats: 4 mm chamfer on the two top long edges (8 extra tris per slat), +/-8% per-slat albedo variation, and a grey UV-silvering mask on the seat tops and back slat top edges; desaturate the base timber albedo to about sRGB 150,120,90.",
+      "Shape the seat: follow the standard's seat line with a slight 3-5 degree back tilt and lower the front slat 15 mm (waterfall); curve the back slats into a gentle 2-3 degree recline that matches the back posts.",
+      "Plaque: tarnished brass (sRGB 170,140,70, metallic 1, roughness 0.45) with darker edges and two screw heads."
+    ]
+  },
+  {
+    "asset": "shrub",
+    "score": 50,
+    "pass": false,
+    "summary": "Leaf-card shrub with a plausible rounded mass and visible stems, but the cards show edge-on streaks, washed-out pale leaves and a hard-edged mulch decal.",
+    "critique": "(1) Many leaf cards are seen edge-on and render as long thin green streaks and slivers, especially in the top-down close view; this is the most obvious CG tell. (2) Leaf albedo varies too much in value: some leaves are almost white-green and look backlit or unlit (possibly backface normals not flipped), giving a speckled, noisy look. (3) Leaf size is large for a 1-1.2 m shrub (individual leaves read 80-120 mm, closer to laurel); fine for laurel, but the leaf shape is generic. (4) The interior is pitch black from above, with no inner leaf mass; it reads as a hollow shell of cards. (5) The mulch ring is a flat decal with a jagged, cut-out edge and chip particles scattered beyond it; it looks pasted on. (6) Silhouette is good from the side, slightly lopsided, with a little branching visible at the base, which is the right idea.",
+    "suggestions": [
+      "Orient leaf cards: limit each card's normal to within about 60 degrees of the outward radial direction (and bias up), and cull/fade cards whose plane is within 15 degrees of the view; this removes the streaks at no extra cost. Use clusters of 5-9 leaves per card (512 px atlas) rather than single leaves so the count drops and coverage rises.",
+      "Normals: set card normals to a blend of the card normal and the radial direction from the shrub centre (spherical normals) so lighting is coherent; flip normals for back faces. This fixes the pale/white leaves.",
+      "Fill the interior with a low-poly dark-green inner hull (about 200 tris) so the top view never shows a black void.",
+      "Tighten leaf albedo variation to +/-15% value and +/-5 degrees hue; add a subtle yellow-green translucency term on the sunny side if the shader supports it.",
+      "Mulch: replace the cut-out decal with a soft radial falloff (alpha or vertex-colour blend into the grass) and keep chips inside the ring; slightly mound it (20-30 mm) toward the stems.",
+      "Budget: 1.5-3k tris with a single 1k leaf atlas is reasonable for instancing by the hundred; provide a billboard/impostor LOD."
+    ]
+  },
+  {
+    "asset": "pallet_stack",
+    "score": 55,
+    "pass": false,
+    "summary": "Good builder's-merchant vignette (bulk bag of sharp sand plus strapped concrete blocks on pallets) but the bag is a smooth clean shell and the block stack is too regular and noisy-textured.",
+    "critique": "(1) The FIBC bulk bag is a smooth white rounded box: no woven polypropylene texture, no vertical seam panels, no creases/sagging at the top, no dirt; real bags are slumped, bulge outward at mid-height, sag between the lift loops and are grubby sand-coloured at the bottom. The lift loops are flat strips that stand upright rigidly; they normally flop over. The label is good (clear 'SHARP SAND' plate). (2) The sand surface is a smooth dome with no grain or lumps. (3) Concrete blocks: correct size class (440 x 215 x 100) and strapped, but every block is identical in shading, the speckle texture is high-contrast white flecks that look like noise rather than dense aggregate, and there is a blue tint along bed joints; some blocks are offset leaving an odd dark slot on top. Real packs are tightly banded with crisp, slightly varied grey blocks and shrink-wrap or plastic corner protectors under straps. (4) Straps are flat black bands with no buckle/seal and do not deform over block edges. (5) Pallets: correct 1200 x 1000 construction with blocks and nail heads, but the timber is very clean, bright pale pine with no stamps (HT/EPAL), no dirt, no damaged boards.",
+    "suggestions": [
+      "Bulk bag: start from a 0.9 m box with 6x6x6 subdivisions, push mid-height sides out 40-60 mm, sag top edges 50 mm between corners, add 2-3 crease folds near the top; apply a woven PP normal (256 px tiling), off-white albedo sRGB 220,218,210 with sand-coloured dirt rising 150 mm from the bottom. Let lift loops droop (bend 60-90 degrees). About 600 tris.",
+      "Sand top: irregular heightfield with 2-3 lumps and a grain normal; colour sRGB 200,165,110 with darker damp patches.",
+      "Blocks: replace the white-fleck texture with a fine, low-contrast aggregate (albedo 120-150 grey, specks within +/-10%); per-block value variation +/-6%; remove the blue joint tint; close the gap/slot on the top course or make it a deliberate missing block.",
+      "Straps: add a metal seal/buckle on each band and kink the strap 5 mm over block arrises; add cardboard corner protectors (four L-shaped quads) under the straps at top corners.",
+      "Pallets: greyer, weathered timber (sRGB 165,140,105) with per-board variation, a stamped HT/EPAL mark on the corner blocks, dirt on the bottom deck and one cracked/replaced board in some variants."
+    ]
+  },
+  {
+    "asset": "training_championship:buildings",
+    "score": 38,
+    "pass": false,
+    "summary": "The main building reads as a blocky Georgian-style brick box with flat material fills, pasted-on windows and an oversized blank roof; close to greybox at the hero distance.",
+    "critique": "(1) Brick walls are a flat brown fill with no visible brick coursing, mortar or variation; at the distance shown the bond pattern and colour variation should be obvious. (2) Windows are flush rectangles with black glass, beige blind panels and thin white frames; no reveals/depth, no sill projection beyond a flat strip, no reflections, no glazing bars on some. (3) A red club banner is placed directly over a first-floor window, half covering it; it reads as a placement bug. (4) The roof is a huge plain slate plane with a uniform tile texture, no ridge tiles, no chimneys, no rooflights, no gutters or downpipes, no fascia/soffit depth; the roof mass is about as tall as the walls, which is heavy for a two-storey office/training building. (5) Portico is a simple pediment on two square columns with a lettered 'CITY FC' sign; the door is a flat red rectangle; steps are a slab. (6) The pediment with a round window above the portico is good intent but too thin and flat. (7) Modern UK training grounds are usually contemporary (cladding, curtain wall, glass entrance); this traditional brick look is a valid choice but needs proper detail. (8) Forecourt paving is fine but the grey slab texture is very regular.",
+    "suggestions": [
+      "Brick: tiling 1k brick albedo/normal with Flemish or stretcher bond (brick 215 x 65 mm, 10 mm mortar), per-brick colour variation, plus a dirt gradient at the base and under sills. This one texture change will lift the whole building.",
+      "Windows: inset each window 100 mm into the wall (reveal faces), add a projecting stone sill (60 mm out, 50 mm deep) and a lintel, sash bars as geometry or alpha, glass roughness 0.05 with a simple sky reflection; vary blinds per window. About 60 tris per window, instanced.",
+      "Move the club banner to a blank pier between windows or mount it on a dedicated pole/fixing bracket; never over glazing (validate against window rectangles).",
+      "Roof: reduce pitch to 35-40 degrees, add ridge tile strip, 2 chimney stacks or a modern plant enclosure, gutters (100 mm half-round) along the eaves with 3-4 downpipes per elevation, 200 mm fascia and soffit overhang.",
+      "Portico: round or chamfered columns with base and capital, a moulded entablature, glazed double doors with a frame and push bars, 2-3 real steps with a ramp and handrail for accessibility.",
+      "Add ground-level life: a plinth course in engineering brick, air bricks, signage plaque, external lights over the entrance, cycle stands."
+    ]
+  },
+  {
+    "asset": "training_championship:car park & vehicles",
+    "score": 45,
+    "pass": false,
+    "summary": "Well-populated car park with a mix of saloons, SUVs and hatchbacks, UK plates and bay markings, but vehicles are plasticky, trees grow straight out of bays and layout details are missing.",
+    "critique": "(1) Birch trees are planted in the middle of parking rows with no tree pit, kerbed island or guard; trunks sit right against car bonnets (the white car in the foreground nearly touches a trunk). Real car-park trees are in kerbed islands at row ends or between every 4-6 bays. (2) Cars: proportions are roughly right and have wheels, lights, plates, mirrors, but body panels are smooth with uniform glossy white/grey paint, no panel gaps beyond faint lines, black opaque glass with no interior, and identical wheel designs. Several cars are too similar. (3) Some cars are not aligned to bays (slight skew/straddling), which is fine in moderation, but a few are crossing the line by most of a car width. (4) Asphalt is a flat uniform grey with no patching, oil stains, tyre wear in aisles or drainage gullies; bay lines are clean and perfectly white with no wear. (5) No kerbs/edging along the grass, no car-park signage, no pay/barrier, no disabled bays, no pedestrian route, no wheel stops; lamp columns are present. (6) Tree canopy shadows are nice and help a lot.",
+    "suggestions": [
+      "Put every car-park tree in a kerbed island (2.4 x 2.4 m or a full bay width at row ends) with a 125 mm kerb, bark/soil fill and a tree guard; never place a tree inside a bay. Reserve those positions before placing cars.",
+      "Constrain parking jitter: lateral offset <= 0.25 m and yaw <= 4 degrees; occasionally leave bays empty (20-30%).",
+      "Cars: add window tint with a faint interior silhouette (seat-back quad + steering wheel), 3-4 wheel designs, panel-gap lines in a normal/AO texture, metallic flake roughness variation (0.25-0.4), dirt on lower sills and wheel arches, and a broader paint palette weighted to UK reality (grey, black, white, blue, silver, a few red).",
+      "Asphalt: add a large-scale noise for patching, darker oil drips centred in each bay, lighter tyre-polished aisle bands, a few gully grates and slightly worn/yellowed line paint.",
+      "Add the missing car-park furniture: kerbs, 2-4 disabled bays with blue/white markings, entry signage, pedestrian crossing to the building, a barrier or pay station at the entrance."
+    ]
+  },
+  {
+    "asset": "training_championship:pitches & training kit",
+    "score": 50,
+    "pass": false,
+    "summary": "Right ingredients (striped grass, markings, goals, mannequins, poles, floodlight columns, dugout, filming gantry) but the pitches read as flat green planes and the kit is sparse and small.",
+    "critique": "(1) Grass is a flat texture with mower stripes but no wear around goalmouths and centre, no divots, no height variation at the edges; at the low camera it looks like a carpet. (2) Line markings are clean and correct, but very thin lines read uneven and aliased in the distance. (3) Training kit (mannequins, slalom poles, cones, mini goals, rebounder) is present but very small in frame and placed sparsely; a working training ground pitch usually has a cluster of kit at one end, ball bags, cones in patterns. (4) Floodlight columns are thin poles with small heads; real training-ground floodlights are 15-18 m with 2-4 lamp heads on a crossarm. (5) The red filming/coaching gantry is a strong touch but its scaffold looks like thin lines with no bracing detail. (6) Perimeter: weldmesh fencing and ball-stop netting are suggested but very faint; ball-stop nets behind goals (6-10 m high) are a defining feature of UK training grounds and are not clearly present. (7) Pitches on the aerial view include three bare brown soil rectangles with machinery, which may be intended as renovation, but three at once looks odd for a working site.",
+    "suggestions": [
+      "Grass: add a wear mask (goalmouths, centre circle, touchline corridors, and especially the coaching zones) blending to a lighter, sparse, sandy grass albedo; add a subtle macro variation noise at 5-20 m scale so stripes are not perfectly uniform.",
+      "Make lines 120 mm wide with slight brightness variation and use mipmapped/anti-aliased line rendering (or line texture with alpha) so they do not break up at grazing angles.",
+      "Add ball-stop netting behind each goal end (6 m posts every 5 m with a fine net alpha texture) and clearer 2.4-3 m weldmesh perimeter fencing.",
+      "Floodlights: 15 m columns with a crossarm and 2-4 rectangular LED heads angled down; add a small control box at the base.",
+      "Group the training kit into readable drills: a cone grid of 20-30 flat discs, 4-6 mannequins in a wall, 2 pop-up mini goals, a ball bag with 10-15 balls; keep it instanced.",
+      "At most one pitch under renovation at a time; the others should be in play or rest condition."
+    ],
+    "renderer_notes": "The haze and lack of GI make the distant pitches desaturated and flat; that is renderer-level."
+  },
+  {
+    "asset": "training_championship:landscape & site layout",
+    "score": 50,
+    "pass": false,
+    "summary": "Plausible campus plan (access road, building and car park at the front, grid of pitches behind, tree belts, surrounding farmland) but the site reads as a grid of flat rectangles with little edge treatment.",
+    "critique": "(1) Layout logic is sound: entrance road from the public road, main building and car park near the entrance, pitches arranged in a block, maintenance area, surrounding hedges and fields. (2) Everything is axis-aligned and rectangular, with crisp edges between grass types; there are no soft transitions, banks, swales, drainage ditches or mounding. Real training grounds have screening bunds and planting belts around the perimeter. (3) Trees are scattered singly and evenly rather than in natural shelter belts and copses; the tree types repeat visibly. (4) Field hedges are thin dark lines with no height; from the aerial view they look like painted lines. (5) Surrounding farmland is a flat colour patchwork; fine at distance but with sharp edges and repeating tones. (6) Internal paths between pitches and the building are thin or missing; no maintenance compound fence or machine sheds are clearly readable apart from small buildings. (7) Three brown bare pitches dominate the aerial view.",
+    "suggestions": [
+      "Add a 10-20 m perimeter planting belt (mixed native trees and understory) on at least two sides, and 1-2 m earth bunds along the public road; use cluster placement (Poisson with clumping) instead of uniform scatter.",
+      "Give hedges volume: 1.8-2.2 m tall x 1 m wide extruded strips with a hedge texture and occasional hedgerow trees; this fixes the aerial read cheaply.",
+      "Soften edges: 2-5 m blend zones between amenity grass, rough grass and pitch grass; add a few drainage ditches along field boundaries.",
+      "Add internal circulation: 2-3 m tarmac or resin paths from the building to each pitch block, a maintenance yard with fenced compound and a machinery shed near the pitches.",
+      "Vary the farmland: add per-field texture direction (crop rows), slight hue noise, and field boundary hedges with gates."
+    ],
+    "renderer_notes": "The distant fog and flat sky are renderer-level; the farmland patchwork reads acceptable at horizon distance."
+  }
+]

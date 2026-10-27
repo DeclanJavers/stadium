@@ -209,11 +209,17 @@ def apply_mosaic(colors, anchors, mosaic, run_length, tier_rows, image=None, war
     return painted
 
 
-def finish(colors, fade=0.0, variation=0.025, seed=0):
+def finish(colors, fade=0.0, variation=0.04, seed=0):
     """Per-seat manufacturing/UV-fade variation; returns linear RGBA for the renderer.
-    The variation is uniform with the given standard deviation (portable, see prng.py)."""
+    The variation is uniform with the given standard deviation (portable, see prng.py). About 2% of
+    seats are replacements: a few newer (deeper) ones and more that faded in the sun before the rest."""
     k = np.array([(uniform(seed + 1, i) - 0.5) * 2 * 1.7320508 * variation for i in range(len(colors))])
     c = colors * (1 + k[:, None])
+    r = np.array([uniform(seed + 2, i) for i in range(len(colors))])
+    newer = r < 0.007
+    faded = (r >= 0.007) & (r < 0.02)
+    c[newer] = c[newer] * 0.8
+    c[faded] = c[faded] * 0.68 + 0.2
     if fade:
         grey = c.mean(1, keepdims=True)
         c = c * (1 - 0.45 * fade) + (0.25 + 0.55 * grey) * 0.45 * fade + 0.08 * fade

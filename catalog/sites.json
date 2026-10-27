@@ -1,0 +1,150 @@
+{
+  "_doc": "Training-ground site templates (kit/site). Land the club already owns, split into plots. Metres, kit frame (x east, y north). A plot is a rectangle: centre (x, y), kind (size from plot_kinds), yaw in degrees (the plot's local x axis), front: the local side facing a road or path ('x', '-x', 'y', '-y'); a footpath stub runs from the middle of that side to the nearest road or path. roads: driveways (7 m tarmac with kerbs) from outside the gate; paths: 3 m footpaths between plots. merges: plots that can be built on as one when all are free.",
+  "plot_kinds": {
+    "pitch": {"label": "Pitch plot", "size": [128, 94]},
+    "large": {"label": "Large plot", "size": [84, 60]},
+    "medium": {"label": "Medium plot", "size": [56, 40]},
+    "small": {"label": "Small plot", "size": [30, 22]},
+    "strip": {"label": "Strip plot", "size": [100, 36]},
+    "xlarge": {"label": "Double plot", "size": [84, 136]}
+  },
+  "edge_of_town": {
+    "label": "Edge of town",
+    "boundary": [[-312, -206], [318, -206], [338, -186], [338, 196], [318, 216], [-294, 216], [-312, 198]],
+    "gate": {"x": -190, "y": -206},
+    "roads": [
+      [[-190, -330], [-190, -206], [-190, 134], [-178, 146], [312, 146]]
+    ],
+    "paths": [
+      [[-82, -200], [-82, 142.5]],
+      [[57, -200], [57, 142.5]],
+      [[195, -200], [195, 142.5]],
+      [[-82, -78], [332, -78]],
+      [[-82, 26], [332, 26]]
+    ],
+    "context": "fields",
+    "plots": [
+      {"id": "P1", "kind": "pitch", "x": -12, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "P2", "kind": "pitch", "x": 126, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "P3", "kind": "pitch", "x": 264, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "P4", "kind": "pitch", "x": -12, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "P5", "kind": "pitch", "x": 126, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "P6", "kind": "pitch", "x": 264, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "P7", "kind": "pitch", "x": -12, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "P8", "kind": "pitch", "x": 126, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "P9", "kind": "pitch", "x": 264, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "C1", "kind": "strip", "x": -250, "y": -162, "yaw": 0, "front": "x"},
+      {"id": "C2", "kind": "strip", "x": -134, "y": -151, "yaw": 90, "front": "y"},
+      {"id": "B1", "kind": "large", "x": -252, "y": -96, "yaw": 0, "front": "x"},
+      {"id": "B2", "kind": "large", "x": -252, "y": -20, "yaw": 0, "front": "x"},
+      {"id": "B3", "kind": "large", "x": -134, "y": -66, "yaw": 0, "front": "-x"},
+      {"id": "M1", "kind": "medium", "x": -266, "y": 54, "yaw": 0, "front": "x"},
+      {"id": "M2", "kind": "medium", "x": -134, "y": 8, "yaw": 0, "front": "-x"},
+      {"id": "M3", "kind": "medium", "x": -134, "y": 82, "yaw": 0, "front": "-x"},
+      {"id": "S1", "kind": "small", "x": -266, "y": 110, "yaw": 0, "front": "x"},
+      {"id": "S2", "kind": "small", "x": -234, "y": 184, "yaw": 0, "front": "-y"},
+      {"id": "C3", "kind": "strip", "x": 60, "y": 184, "yaw": 0, "front": "-y"},
+      {"id": "S3", "kind": "small", "x": 296, "y": 186, "yaw": 0, "front": "-y"}
+    ],
+    "merges": [
+      {"id": "B1+B2", "plots": ["B1", "B2"], "kind": "xlarge", "x": -252, "y": -58, "yaw": 0, "front": "x"}
+    ]
+  },
+  "academy_campus": {
+    "label": "Academy campus",
+    "boundary": [[-312, -206], [318, -206], [338, -186], [338, 196], [318, 216], [-294, 216], [-312, 198]],
+    "gate": {"x": -190, "y": -206},
+    "roads": [
+      [[-190, -330], [-190, -206], [-190, 134], [-178, 146], [312, 146]]
+    ],
+    "paths": [
+      [[-82, -200], [-82, 142.5]],
+      [[57, -200], [57, 142.5]],
+      [[195, -200], [195, 142.5]],
+      [[-82, -78], [332, -78]],
+      [[-82, 26], [332, 26]]
+    ],
+    "context": "fields",
+    "plots": [
+      {"id": "Y1", "kind": "pitch", "x": -12, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "Y2", "kind": "pitch", "x": 126, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "Y3", "kind": "pitch", "x": 264, "y": -130, "yaw": 0, "front": "-x"},
+      {"id": "Y4", "kind": "pitch", "x": -12, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "Y5", "kind": "pitch", "x": 126, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "Y6", "kind": "pitch", "x": 264, "y": -26, "yaw": 0, "front": "-x"},
+      {"id": "Y7", "kind": "pitch", "x": -12, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "Y8", "kind": "pitch", "x": 126, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "Y9", "kind": "pitch", "x": 264, "y": 78, "yaw": 0, "front": "-x"},
+      {"id": "C1", "kind": "strip", "x": -250, "y": -162, "yaw": 0, "front": "x"},
+      {"id": "C2", "kind": "strip", "x": -134, "y": -151, "yaw": 90, "front": "y"},
+      {"id": "A1", "kind": "large", "x": -252, "y": -96, "yaw": 0, "front": "x"},
+      {"id": "A2", "kind": "large", "x": -252, "y": -20, "yaw": 0, "front": "x"},
+      {"id": "A3", "kind": "large", "x": -134, "y": -66, "yaw": 0, "front": "-x"},
+      {"id": "M1", "kind": "medium", "x": -266, "y": 54, "yaw": 0, "front": "x"},
+      {"id": "M2", "kind": "medium", "x": -134, "y": 8, "yaw": 0, "front": "-x"},
+      {"id": "M3", "kind": "medium", "x": -134, "y": 82, "yaw": 0, "front": "-x"},
+      {"id": "S1", "kind": "small", "x": -266, "y": 110, "yaw": 0, "front": "x"},
+      {"id": "S2", "kind": "small", "x": -234, "y": 184, "yaw": 0, "front": "-y"},
+      {"id": "C3", "kind": "strip", "x": 60, "y": 184, "yaw": 0, "front": "-y"},
+      {"id": "S3", "kind": "small", "x": 296, "y": 186, "yaw": 0, "front": "-y"}
+    ],
+    "merges": [
+      {"id": "A1+A2", "plots": ["A1", "A2"], "kind": "xlarge", "x": -252, "y": -58, "yaw": 0, "front": "x"}
+    ]
+  },
+  "building_lot": {
+    "label": "Single building site",
+    "boundary": [[-70, -80], [74, -80], [80, -74], [80, 72], [-64, 72], [-70, 66]],
+    "gate": {"x": -55, "y": -80},
+    "roads": [
+      [[-55, -130], [-55, -80], [-55, 60]]
+    ],
+    "paths": [
+      [[-55, -27], [72, -27]]
+    ],
+    "context": "fields",
+    "plots": [
+      {"id": "B1", "kind": "large", "x": 16, "y": 12, "yaw": 0, "front": "-y"},
+      {"id": "C1", "kind": "strip", "x": 16, "y": -52, "yaw": 0, "front": "y"}
+    ],
+    "merges": []
+  },
+  "riverside": {
+    "label": "Riverside",
+    "boundary": [[-302, -194], [252, -194], [302, -154], [302, 116], [214, 166], [60, 186], [-120, 178], [-262, 152], [-302, 120]],
+    "gate": {"x": -230, "y": -194},
+    "roads": [
+      [[-230, -320], [-230, -194], [-230, 84], [-220, 94], [-40, 94]]
+    ],
+    "paths": [
+      [[-137, -188], [-137, 34]],
+      [[-1, -188], [-1, 36]],
+      [[137, -188], [137, 36]],
+      [[-137, -70], [296, -70]],
+      [[-226.5, 34], [296, 34]]
+    ],
+    "river": [[-460, 230], [-262, 196], [-120, 222], [60, 232], [214, 212], [330, 168], [470, 150]],
+    "context": "meadow",
+    "plots": [
+      {"id": "P1", "kind": "pitch", "x": -70, "y": -122, "yaw": 0, "front": "-x"},
+      {"id": "P2", "kind": "pitch", "x": 68, "y": -122, "yaw": 0, "front": "-x"},
+      {"id": "P3", "kind": "pitch", "x": 206, "y": -122, "yaw": 0, "front": "-x"},
+      {"id": "P4", "kind": "pitch", "x": -70, "y": -18, "yaw": 0, "front": "-x"},
+      {"id": "P5", "kind": "pitch", "x": 68, "y": -18, "yaw": 0, "front": "-x"},
+      {"id": "P6", "kind": "pitch", "x": 206, "y": -18, "yaw": 0, "front": "-x"},
+      {"id": "P7", "kind": "pitch", "x": 130, "y": 96, "yaw": -6, "front": "-y"},
+      {"id": "C1", "kind": "strip", "x": -278, "y": -136, "yaw": 90, "front": "-y"},
+      {"id": "B1", "kind": "large", "x": -182, "y": -126, "yaw": 0, "front": "-x"},
+      {"id": "B2", "kind": "large", "x": -182, "y": -50, "yaw": 0, "front": "-x"},
+      {"id": "M1", "kind": "medium", "x": -270, "y": -12, "yaw": 90, "front": "-y"},
+      {"id": "M2", "kind": "medium", "x": -270, "y": 60, "yaw": 90, "front": "-y"},
+      {"id": "M3", "kind": "medium", "x": -132, "y": 134, "yaw": 0, "front": "-y"},
+      {"id": "S1", "kind": "small", "x": -186, "y": 12, "yaw": 0, "front": "-x"},
+      {"id": "S2", "kind": "small", "x": -40, "y": 134, "yaw": 0, "front": "-y"},
+      {"id": "C2", "kind": "strip", "x": -134, "y": 58, "yaw": 0, "front": "y"}
+    ],
+    "merges": [
+      {"id": "B1+B2", "plots": ["B1", "B2"], "kind": "xlarge", "x": -182, "y": -88, "yaw": 0, "front": "-x"}
+    ]
+  }
+}

@@ -1,0 +1,170 @@
+[
+  {
+    "asset": "seat.padded_vip.std",
+    "score": 50,
+    "pass": false,
+    "summary": "Right type of object (padded VIP tip-up with armrests and seat numbers), but the upholstery reads as smooth grey plastic and the back is an untreated black slab.",
+    "critique": "Silhouette and parts list are right for a stadium VIP seat: twin floor-plate standards with bolts, padded tip-up pan on a pivot boss, padded back, long armrests with number plaques. Proportions are roughly right (seat about 450 mm, back top about 950 to 1000 mm). It falls down on materials and on how the parts join. (1) The upholstery has no fabric or leather response. The seat and back are one flat mid-grey with soft vertical shading streaks on the back cushion that look like normal-map or smoothing artefacts, not padding. There is no piping, seam, stitch line, quilting or panel split, so it reads as moulded plastic. (2) The rear of the back (view 2) is a featureless near-black shell with a ragged-looking top edge. Real VIP seats have a moulded or upholstered back cover, often with a seat-number or row plate and a slightly lighter, satin plastic shell. (3) In the side view the back cushion, back frame and standard read as three separate slabs with gaps between them. The back looks thin (under 60 mm) and the headrest roll at the top is a lumpy cap. (4) The seat pan's front edge curls down like a rubber lip, and the pan floats with no visible spring or hinge bracket under it. (5) The armrests are plain extruded boxes with hard edges and the same matte black as the frame. Real armrests have a soft PU top with rounded ends over a steel or aluminium arm. (6) The frame is one uniform matte black with no powder-coat sheen, edge wear or scuffing at the floor plates. The number plaques are a nice touch but are tiny and low contrast.",
+    "suggestions": [
+      "Upholstery material: give seat and back a tileable fabric or leatherette normal plus roughness map (256 px, shared by every seat), with roughness 0.55 to 0.7 for fabric or 0.4 for leatherette and albedo around sRGB 70 to 80 for charcoal. Add one horizontal seam or welt groove across the back at about two-thirds height, plus a perimeter piping bead (a 6 mm half-round, about 40 extra tris).",
+      "Rebuild the back as one closed volume: cushion about 70 to 80 mm thick, wrapped into a satin plastic back shell (albedo about sRGB 35, roughness 0.45) with a 10 mm lip around the cushion. Remove the gaps between cushion, shell and standard in the side view. Add a recessed row and seat-number plate on the shell's upper rear.",
+      "Fix the shading streaks on the back cushion by recomputing smooth normals across the cushion (weighted normals) and dropping any baked vertical banding.",
+      "Seat pan: replace the drooped front lip with a 25 to 30 mm rounded waterfall edge. Show a steel hinge bracket or spring housing under the pan connecting to the pivot boss, and a thin dark plastic underside shell.",
+      "Armrests: bevel the ends (8 to 10 mm radius) and split the top into a soft-touch PU pad (roughness 0.6, slightly lighter than the frame) sitting on a metal arm. Enlarge the number plaque to about 40 x 25 mm with higher-contrast white-on-black text.",
+      "Frame: switch to satin powder coat (roughness 0.35 to 0.45, albedo about sRGB 25) and add light edge wear and floor-plate scuffs via a vertex-colour or AO-masked wear term. The bolt heads on the floor plates are good, so keep them.",
+      "Budget: all of the above stays at about 1.5 to 2.5k tris per seat with one shared 512 px atlas, which is fine to instance by the thousand. Use a 300-tri LOD for rows beyond about 20 m."
+    ],
+    "renderer_notes": "The back reads almost pure black partly because the viewer has no GI to bounce light into the shadowed rear, so lift the shell albedo slightly rather than relying on the renderer."
+  },
+  {
+    "asset": "goal.portable",
+    "score": 54,
+    "pass": false,
+    "summary": "Convincing proportions and a good hex net, but the frame is a pristine white tube with no hardware, and the net hangs as rigid flat planes with no sag or ground drape.",
+    "critique": "The 7.32 x 2.44 m frame proportions read correctly, the angled side stays and rear top bar give a believable box-net shape, and the knotless hexagonal mesh is the best part: it is fine enough, consistent in scale and casts plausible shadows. As a PORTABLE goal it under-delivers. (1) Real portable goals carry a rear ground frame (a heavy box section or tube along the back and sides), transport wheels on the rear corners or on flip-down brackets, and steel ballast or counterweight bars. Here the wheels are tiny black discs at the front posts and the ballast is two dark teardrop blobs that look like rubber pebbles. (2) The net is perfectly taut and planar on every face. Real nets sag in a catenary between the crossbar and rear bar, bag slightly at the back and lie on the grass along the bottom by 100 to 200 mm, often held by pegs or net hooks. The net stopping exactly at a ground line is the giveaway. (3) The frame is uniform glossy white tube with no corner connectors or brackets, no net hooks or clips, no stencilled maker's mark, no grass staining at the base and no scuffs. Uprights on portable goals are usually 80 to 120 mm oval or round aluminium with a visible groove for net clips. (4) There are no welds, end caps or joints where the side stays meet the crossbar and ground frame.",
+    "suggestions": [
+      "Net drape: deform the top and back net panels with a simple sag function (about 80 to 150 mm dip mid-span, proportional to the square of the distance from the supports). Extend the bottom of the back and side panels 150 mm onto the grass as a flat folded strip. This needs no extra texture and only a few hundred tris if the mesh stays an alpha-tested card.",
+      "Make the portable hardware read: add a rear ground frame (60 x 60 mm box section along the back and both sides), two 200 mm pneumatic or solid wheels on rear-corner brackets with an axle and hub, and rectangular steel counterweight bars (about 600 x 150 x 100 mm, dark galvanised) bolted to the side ground frames in place of the teardrop blobs.",
+      "Frame detail: use oval-profile uprights (120 x 100 mm) with a 2 mm net-groove line in the normal map, cast corner connectors where crossbar meets posts, and net clips every 300 to 400 mm (an instanced 12-tri clip).",
+      "Material: drop to semi-gloss white (roughness 0.35) and add a grass-stain or dirt gradient on the bottom 150 mm of posts and ground frame, a few scuffs, and a small stencilled maker's sticker on one upright.",
+      "Budget: frame plus hardware around 3 to 5k tris, net kept as an alpha-tested mesh card. A full-size portable goal never needs more than a handful of instances, so there is headroom."
+    ],
+    "renderer_notes": "The net shadow pattern on grass is good. The grass under the goal is the renderer's lawn, so I am not judging it."
+  },
+  {
+    "asset": "weeds",
+    "score": 44,
+    "pass": false,
+    "summary": "A recognisable weed clump (dock, sorrel, plantain, dandelion) on a bare soil patch, but leaves are flat, uniform cards and the soil disc is an obvious decal.",
+    "critique": "Species choice is good and UK-plausible: a broad-leaved dock rosette with red midribs, a rust-brown dock seed spike, tall arrow-leaved sorrel stems, dandelion rosettes with a yellow head, and a white daisy-like flower. Close up it falls apart. (1) Leaves are single flat polygons with uniform opaque green, no translucency, no vein normal detail beyond the painted red midrib, no curl, crinkle or droop. Dock leaves in particular are wavy-edged and leathery, and here they look like cut paper. (2) The tall sorrel stems are thin straight wires with a few leaves bunched at the very top, which makes the clump look like a stick bouquet. Real sorrel and dock have leaves graded up the stem and a flower panicle that branches. (3) The soil patch is a near-circular brown disc with scattered twig decals and a hard edge against the lawn. Weeds in a lawn do not sit on a neat circle of bare earth. (4) The seed spike is one blob column with a few bumps, too dense and too dark. A dock panicle is several branching whorled spikes. (5) The whole clump is about 1 m tall and reads as one small group with lots of empty space, with no low-level filler (grass tufts, clover, moss) blending it into the ground.",
+    "suggestions": [
+      "Replace flat leaf quads with 4- to 8-vertex bent leaf cards: add a midrib fold (V cross-section about 10 to 15 degrees), tip droop and an edge-wave for dock (sine displacement on the outline). Use one shared 512 px leaf atlas with per-species alpha outlines, a vein normal and a backlight or translucency term.",
+      "Vary leaf colour and wear: hue jitter of plus or minus 8 percent, yellowed or brown-spotted older lower leaves (dock always has some rust spots and holes), and lighter new growth at the centre.",
+      "Sorrel and dock stems: distribute leaves along the stem with size decreasing upward, and build the dock seed head as 3 to 5 branching whorled spikes of small reddish-brown seed clusters (an instanced 6-tri seed card) instead of a single dense column.",
+      "Soil patch: break the circle into an irregular, noise-edged blend, ideally as a ground-decal splat with alpha falloff into the lawn rather than a mesh disc. Mix in some grass blades and clover through it so there is no hard ring.",
+      "Add 6 to 12 low filler cards (coarse grass tufts, clover, moss) around the base to anchor the clump. Budget: whole clump 800 to 1.5k tris on one 512 px atlas, fine for scattering by the hundred, with a 2-card impostor LOD beyond 30 m."
+    ],
+    "renderer_notes": "Without translucency or subsurface the leaves will always look matte in this viewer. A cheap wrap-lighting or backlit-leaf term in the foliage shader would help every vegetation asset."
+  },
+  {
+    "asset": "portaloo",
+    "score": 58,
+    "pass": false,
+    "summary": "A believable hire-company portable toilet with good decals and vents, held back by a too-clean single-piece shell, a door that isn't a real door, and a puzzling plate on the side.",
+    "critique": "This is the strongest asset in the batch. The proportions (about 1.1 x 1.1 x 2.3 m), ribbed blue polyethylene walls, white translucent-style roof, side vents, vent stack with cowl, dark skid base, hire-company sticker with phone number, in-use indicator and asset number 'AW 214' all read correctly. What holds it back: (1) The body is one clean tapered box with perfectly regular vertical ribs. Real units have moulded corner posts, a raised door frame, a skirt where the walls meet the base, and ribs that stop short of top and bottom. (2) The door is just a flat rectangle on the front face. There is no frame reveal, no hinge strip or piano hinge, no spring closer bar, no latch housing with a vacant/engaged window (there is a small green tab, which is good), and the handle is a thin bar. (3) The roof is a flat opaque white slab with a single bevel. Real roofs are translucent white with a domed centre and a raised rim, and the light coming through them is the signature look. (4) The dark plate on the side and back (views 1 and 3) reads as a floating shelf or panel with no obvious function. If it is the waste-tank housing, it needs to merge into the shell. (5) Materials are too clean and uniform: no scuffs, sun-fade, grime streaks from the roof or mud splashes on the bottom 300 mm, so it reads as brand new plastic.",
+    "suggestions": [
+      "Door: inset it 15 mm inside a raised frame (30 mm wide bead around three sides), add a full-height hinge strip on one side, a closer bar at the top, and a proper latch box with a red/green indicator window. About 150 extra tris.",
+      "Shell: add moulded corner posts (about 60 mm radius rounds), end the ribs 120 mm short of the top and bottom edges into a flat band, and add a 50 mm base skirt overlapping the skid. Keep the rib count but jitter the rib depth slightly.",
+      "Roof: dome the centre about 60 to 80 mm, raise the rim, and give it a light-transmitting look: a slightly emissive or backlit white (albedo about sRGB 225, roughness 0.5) with faint panel shading. Even a fake translucency term sells it.",
+      "Remove or rework the side plate. If it is meant to be the tank or a step, model it as part of the moulding (rounded, same blue plastic) rather than a separate dark panel.",
+      "Wear: add a grime gradient (darker, desaturated blue) on the bottom 300 mm, faint vertical drip streaks under the roof lip, scuffs around the handle, and slight UV fading on the sun side. A 512 px tiling grime mask driven by height is enough. Budget stays under 3k tris with one 1k atlas, fine for rows of a dozen at events."
+    ],
+    "renderer_notes": "The roof would read better with any form of translucency or subsurface in the shader, which this viewer lacks. That is not a fault of the asset."
+  },
+  {
+    "asset": "floodlight_fixture.halide",
+    "score": 52,
+    "pass": false,
+    "summary": "Good overall form (visor, yoke, aiming protractor, finned rear), but the reflector is a matte grey stepped box, so the face, which is the part everyone sees, reads as CG.",
+    "critique": "The form language is right for a classic rectangular metal-halide sports floodlight: front glass in a frame, a top visor, a U yoke with a pivot boss and a graduated aiming protractor (a lovely detail in the side view), and a finned die-cast rear housing. The weakness is the face. (1) The reflector is built as nested rectangular steps tiled in a grey checker, matte and flat-shaded, so it looks like a stepped concrete tray or a tiled bathroom. A real halide reflector is a deep, highly specular (mirror or hammered or faceted polished aluminium) asymmetric trough. You see bright distorted reflections and a lot of contrast, not grey blocks. (2) The lamp is a flat white rectangle. A double-ended halide tube is a thin quartz tube (about 20 to 25 mm diameter) with a glowing arc and two end sockets, floating in front of the reflector. (3) The front glass has only one faint glare streak. It needs a visible gasket, toughened-glass edge tint and clip fixings around the frame. (4) The visor is a plain flat sheet with no folded edges or rivets. (5) The rear fins are good but the housing is one smooth grey with no cast texture, no ballast or gear-tray box, no cable gland or conduit entry, and no data or rating label. (6) The yoke is very thin for a 30 to 40 kg luminaire.",
+    "suggestions": [
+      "Reflector: make it a mirror material (metallic 1.0, roughness 0.08 to 0.15, albedo about sRGB 220) and shape it as a smooth asymmetric trough or a coarse faceted mirror (about 6 x 4 facets, each with a slightly different normal) rather than concentric steps. If the renderer's reflections are too weak, bake a bright streaky reflection into the albedo or emissive at low strength.",
+      "Lamp: model a thin cylinder (about 24 mm diameter, about 100 to 150 mm long) with two ceramic end caps and sockets, with a bright emissive core when lit and a pale warm tint when off.",
+      "Glass and frame: add a 10 mm black rubber gasket, 6 to 8 stainless toggle clips around the frame, and a slight green edge tint on the glass. Keep the glass as a single quad with roughness about 0.05 and a subtle dirt or dust mask.",
+      "Housing: add a cast-aluminium micro-normal (shared 256 px), a cable gland on the underside, a small rating label on the rear, and fold returns plus 4 rivets on the visor. Thicken the yoke arms to about 12 to 15 mm with 40 mm width.",
+      "Budget: about 2 to 4k tris per fixture is fine since even a big stadium only has a few hundred. Make a 500-tri LOD with the reflector baked flat for pylon-head distance."
+    ],
+    "renderer_notes": "No SSR or environment reflections in the viewer mutes any reflector. Part of the fix is a reflection probe or a baked reflection in the material, so do not blame the geometry for all of it."
+  },
+  {
+    "asset": "bike_rack",
+    "score": 40,
+    "pass": false,
+    "summary": "Recognisable row of Sheffield stands, but the tube texture reads as grey camouflage or marble, and the stands look taller than wide with no fixings.",
+    "critique": "A row of five Sheffield stands is exactly the right object, and the bend radius at the top corners and the white reflective bands are good ideas. But: (1) The surface material is a mottled grey and black pattern that reads as camouflage or marbling on the close view. It does not look like black powder coat, galvanised steel or stainless. Sheffield stands are usually black polyester-powder-coated mild steel, bare galvanised (spangled light grey) or brushed stainless. (2) Proportions: the spec is about 750 W x 750 H above ground with a 48 mm tube. These read noticeably taller than wide (about 900 to 1000 H x 600 W), and the tube looks thinner than 48 mm in the wide shots. (3) The reflective bands are only on one leg near the top. Normally there are two contrasting bands per leg, or a band on both legs, at about 150 mm and 600 mm height for visibility (UK accessibility guidance). (4) The legs simply stab into the ground. Real stands are either root-fixed into a small concrete plinth or surface-mounted with 150 x 150 mm base plates and 4 bolts, and you normally see a paved or tarmac pad, not lawn. (5) No wear: no scratches through the coating at the bike-contact height (about 400 to 700 mm), no rust bloom at the feet and no tamper-proof bolts.",
+    "suggestions": [
+      "Material first: replace the mottled texture with a uniform satin powder coat (albedo about sRGB 25, roughness 0.35 to 0.45) plus a sparse scratch and chip mask concentrated at 400 to 700 mm height, showing grey primer or bright steel. Alternatively offer a galvanised variant (albedo about sRGB 150, metallic 1.0, roughness 0.45 with a spangle normal).",
+      "Fix proportions to 750 x 750 mm above ground with a 48 mm OD tube and about 200 mm centreline bend radius. Space stands at 1.0 m centres.",
+      "Add two contrasting bands per leg (white or yellow, 150 mm tall) at roughly 150 mm and 600 mm height, as UK guidance suggests, or match the authority style consistently.",
+      "Ground fixing: add surface-mount base plates (150 x 150 x 8 mm with 4 bolt heads, about 40 tris each) or a root-fix collar plus a small concrete pad decal. Ship the row with a tarmac or block-paving pad (one quad plus a 512 px texture) so it is not floating in grass.",
+      "Budget: about 300 to 500 tris per stand with 16-segment tubes and the bends; a shared 256 px material. Trivially instanceable."
+    ],
+    "renderer_notes": "The grass is the viewer's lawn; judging stand geometry and material only."
+  },
+  {
+    "asset": "sign_post",
+    "score": 55,
+    "pass": false,
+    "summary": "Clean, legible welcome sign with good graphics and a proper rear channel-and-clamp mount, but floating fixings, plain uncapped posts and no wear keep it CG.",
+    "critique": "The graphic design is strong: a believable club crest, clear typography, a direction strip with arrows, and a thin white border. The back of the panel correctly shows aluminium channel rails clamped to the posts, which is how UK signs are actually mounted. Problems: (1) There are small dots floating above the top edge of the panel in views 1 and 4. They look like fixings or rivets positioned outside the board, which is an obvious error. (2) The posts are plain black cylinders with flat tops: no post caps, no ground collar or concrete base, and they look about 60 to 76 mm diameter, which is fine, but they read as plastic. Real posts are galvanised (grey) or powder-coated, with domed or flat plastic caps. (3) The panel face is too clean and too saturated: perfect flat red, no retroreflective sheeting texture, no slight sheen, no dirt, algae or weathering at the bottom edge, and no fixing rivet heads on the face where the channels attach. (4) The panel has almost no visible thickness or edge return. UK signs use 2 to 3 mm aluminium with a folded or extruded edge, or a 'tray' sign with a 25 to 40 mm return. (5) The clamp hardware on the back is tiny and the channel rails are a bit thin.",
+    "suggestions": [
+      "Fix the floating dots: snap fixing heads onto the panel face, aligned with the rear channel rails (2 rows of 3 to 4 dome-head rivets about 10 mm diameter), or delete them.",
+      "Panel: give it a 3 mm thickness with a 25 mm tray return, or at least a bevelled aluminium edge. Apply a faint retroreflective micro-normal (prismatic dot pattern, 256 px tile), roughness about 0.35 on the face, a slight desaturation of the red (sRGB about 200, 45, 55), and a grime gradient on the bottom 15 percent.",
+      "Posts: switch to galvanised (albedo about sRGB 140, metallic 1.0, roughness 0.5) or satin black powder coat, add a 10 mm domed cap and a small concrete or grass-cut collar at the base. Optionally lean one post a degree off vertical.",
+      "Clamps: enlarge the rear clamp brackets to read at distance (about 80 mm wide bands with a bolt head) and thicken the channel rails to about 40 x 20 mm.",
+      "Budget: under 1k tris; the face decal is the only real texture (1k px), and the rest uses shared materials, so it is fine to instance with per-instance text variants."
+    ],
+    "renderer_notes": "The back panel reading grey is fine. The front red looking a little flat is partly the absence of any reflection environment."
+  },
+  {
+    "asset": "training_non_league:buildings",
+    "score": 47,
+    "pass": false,
+    "summary": "Stacked portable cabins and a brick barrel-roof hall suit a non-league site, but the cabins look freshly unboxed and the hall is a flat red box with a band of black windows.",
+    "critique": "Using double-stacked anti-vandal cabins for a non-league training base is a good, believable choice. The cabins have shuttered windows, doors with signage, a corrugated roof, external steel stairs and a walkway, and signage decals. Issues: (1) The cabins are perfectly clean pale grey with dead-black glass. There is no reflection or interior in the windows, no rust runs from the corner castings, no green algae on the lower panels, and the corner posts and ISO castings are understated. (2) Access logic is odd. The lower stairs rise to a door, but the upper-level stairs appear to start on a narrow ledge or walkway at mid-height that is barely visible and has no handrail run along it, so the upper doors look unreachable. Real stacked cabins use a separate external stair tower plus a gantry with full handrails. (3) The cabins sit straight on tarmac with no jacks, timber packers or kerbed base. (4) The brick hall is a plain box with a single-hue brick texture and a curved metal roof, with one strip of black glazing. It has no doors, downpipes, gutters, signage, plinth, soffit or louvres, and the brick texture scale looks large. (5) The hardstanding in front is a vast uniform grey-beige gravel field with no markings, edging or wear, so the buildings read as dropped on a blank plane. (6) Wheelie bins in the foreground are good scale cues but are dark-green blocks.",
+    "suggestions": [
+      "Cabin windows: give glass a reflective, slightly blue-grey material (roughness 0.05, albedo about sRGB 40) with a cheap interior parallax card or a baked blind or curtain texture, so they stop reading as black voids.",
+      "Cabin weathering: rust streaks from the corner castings and roof edge, algae and dirt on the bottom 400 mm, and slight panel colour variation per unit. One 1k grime atlas, applied by height and position.",
+      "Fix upper access: model a continuous 1.0 m-wide steel gantry along the upper floor with 1.1 m handrails and a single stair tower at one end, instead of stairs that appear to start mid-air.",
+      "Bed the cabins on visible jack legs or timber or concrete pads, 100 to 200 mm high, with a skirting board between them.",
+      "Brick hall: add a personnel door and a roller-shutter door, gutters with 4 to 6 downpipes, a 450 mm engineering-brick plinth course, a fascia with club signage, and brick texture at a true 215 x 65 mm module with a mortar normal and soot or weather staining.",
+      "Hardstanding: add white or yellow markings, a kerb edge, potholes and puddle decals, and tyre-track darkening. One tiled 1k texture plus a few decals keeps it cheap."
+    ],
+    "renderer_notes": "Black windows are partly the lack of SSR or environment reflection. A small reflection probe would help every glazed asset."
+  },
+  {
+    "asset": "training_non_league:car park & vehicles",
+    "score": 50,
+    "pass": false,
+    "summary": "Varied, recognisable modern cars with plates and alloys in a sensible layout, but cars clip each other and the bay lines, white bodies blow out, and the tarmac is a flat grey sheet.",
+    "critique": "Car silhouettes are identifiable and varied (saloons, estates, SUVs, hatchbacks), and wheels have proper alloy spokes, tyres and UK-style plates. Lighting columns line the aisle, and parking ticks are at the bay ends. Problems: (1) Placement: in the right-hand row the foreground cars overlap one another (bonnets intruding into the neighbouring car), and on the left the nearest car sits across the white bay line. Spacing is irregular in a way that reads as a placement bug, not human parking. (2) White and silver cars are a flat, very bright albedo with almost no clearcoat reflection. Bodies look like matte resin, the panel-gap normal is weak, and glass is opaque dark grey with no reflection or interior. (3) There is a very high share of white or silver cars, so the distribution looks unnatural. The UK fleet is roughly 20 percent white, 20 percent grey, 18 percent black, 12 percent blue, with silver and red making up the rest. (4) The tarmac is a single uniform grey with no aggregate texture, oil stains, tyre polish in the aisle, patch repairs, drainage gullies or kerbs. Bay markings are only short ticks with no full T-markings, and there are no wheel stops. (5) Cars sit slightly high on suspension with no contact shadow darkening under the tyres.",
+    "suggestions": [
+      "Placement: snap each car to its bay centre with a small random offset (lateral plus or minus 150 mm, yaw plus or minus 3 degrees) and reject overlaps with an OBB test against neighbours. Reduce occupancy to about 70 to 85 percent with gaps.",
+      "Car paint: shared clearcoat material (roughness 0.15 to 0.25, metallic flake for silver or grey), lower white albedo to about sRGB 215 to 225, and strengthen panel-gap and shut-line normals. Glass: roughness 0.05, albedo about sRGB 30, with a simple interior card (seats and headrests) so cabins do not read solid.",
+      "Colour distribution: weight car colours to UK registration statistics (grey, black, white, blue, silver, red) with small saturation jitter, and a little dust or dirt on lower sills.",
+      "Tarmac: tiling 1k asphalt texture with aggregate normal, darker tyre-path bands in the aisle, oil drips centred in each bay, a few patch repairs, and full white bay lines (100 mm wide, slightly worn) with gully grates. Add a raised concrete kerb with a 100 mm upstand around the edge.",
+      "Ground contact: a cheap per-car blob or AO decal under the body (one quad each) to seat the cars."
+    ],
+    "renderer_notes": "The hard blue-grey sky and lack of reflections hurt car paint and glass most of all. Partly a renderer limit, but the material values are still too matte."
+  },
+  {
+    "asset": "training_non_league:pitches & training kit",
+    "score": 55,
+    "pass": false,
+    "summary": "Mown stripes, a worn centre circle, mannequins, poles, cones, dugouts and floodlit pitches read like a real training ground, but the turf is a clean colour gradient and the kit is too sparse and small to notice.",
+    "critique": "This is the best part of the training-ground sheet. Mowing stripes, white lines with a worn centre-circle patch, yellow free-kick mannequin walls, slalom poles, orange cones, dugouts and goals on the far pitches, perimeter ball-stop fencing and floodlight columns make a convincing layout. Issues: (1) The turf is a smooth banded green with large blotchy colour patches and no blade-level texture in the mid-ground. Wear is limited to one centre-circle patch, while goalmouths, penalty spots, touchline runs and coaching-cone grids normally show heavy brown or yellow wear on a non-league pitch. (2) Line markings: the halfway line appears broken or dashed in places, and lines are uniform bright white with no paint-on-grass fade or slight wobble. (3) The training kit is placed in neat isolated groups and is very small in frame. A real session has a ball bag, a dozen scattered balls, bibs on the ground, water bottles, a mini goal or two, poppers in grids and pole gates. (4) Floodlight columns are thin, with tiny heads and no visible base cabinet. (5) A row of red and blue ISO containers sits at the far left edge of the site, plausible as storage but visually loud.",
+    "suggestions": [
+      "Turf wear: add a wear mask (512 px per pitch) that browns or thins goalmouths, penalty spots, the centre circle, linesman runs and a grid area used for drills, and ties a subtle normal or blade-height variation to it. Break up the large blotches with smaller-scale (1 to 3 m) colour noise.",
+      "Lines: fix the dashed halfway line (likely z-fighting or a mask sampling gap), use albedo about sRGB 230 rather than pure white, and add slight edge softness plus a faint 'paint on grass' streak.",
+      "Training kit density: per active pitch, scatter 10 to 20 instanced balls, 2 to 4 ball bags or carts, bibs, water bottles, 1 to 2 mini goals, pole gates and disc-cone grids at the dimensions in the reference (disc 300 mm, pole cone 450 mm). All are cheap instanced props.",
+      "Floodlight columns: thicken them (base diameter about 200 to 250 mm, tapering), add a base cabinet and a proper head-frame with 2 to 4 fixtures per column, aimed at the pitch.",
+      "Containers: use a muted palette (green, grey) for site storage, or screen them with a fence or hedge."
+    ],
+    "renderer_notes": "The haze and flat sky give the mid-distance turf a washed look. That is atmospheric, not the asset."
+  },
+  {
+    "asset": "training_non_league:landscape & site layout",
+    "score": 44,
+    "pass": false,
+    "summary": "A complete site in a rural setting with hedgerows and tree belts, but the aerial view reads as a grid of flat-coloured plots with regimented tree rows, and the surrounding fields are flat quads.",
+    "critique": "The site has a sensible programme: access road, car parks, buildings, multiple grass and 3G pitches, perimeter tree belt, hedgerows out into farmland. From the aerial it reads as a planner's diagram rather than a place. (1) The surrounding countryside is a patchwork of flat-coloured rectangular fields with thin straight dark lines for hedges, repeating hue blocks and no crop rows, tramlines, field margins, gates, hedgerow trees at natural spacing, ponds, lanes or farm buildings. (2) The site is a perfect rectangle of rectangular plots. Two large flat brown rectangles (bare earth or gravel) read as unfinished. A dense block of red objects (vehicles or containers) dominates one plot. (3) Perimeter trees are planted in rigid single rows alternating spruce, birch and oak at even spacing. UK training grounds have shelter belts of mixed native broadleaf (field maple, hawthorn, ash, oak) with understorey and irregular edges. Norway spruce lines alternating with silver birch look like a catalogue. (4) Close up, the birches have a pale, wispy, weeping canopy and the spruces are very narrow. Oak canopies are good but repeat. (5) The access road is a straight grey strip with no verge, kerbs, junction or entrance feature, signage or car park access lanes, and footpaths between pitches and buildings are missing.",
+    "suggestions": [
+      "Fields: give each field a crop or texture class (pasture, stubble, ploughed, oilseed yellow) with a tiling 1k albedo plus a directional row normal, drive tramlines, and add 3 to 5 m field-margin strips. Replace hedge lines with low hedge meshes (1.5 to 2.5 m H, 1 m W) with gaps, gates and hedgerow trees every 30 to 80 m at random.",
+      "Site plan: break the strict grid. Curve the access road with a bellmouth junction at the public lane, add a gated entrance with sign and barrier, kerbs and verges, and footpaths connecting car park to building to pitches. Turn the brown rectangles into specific uses (grass practice area, compound with Heras fencing) or remove them.",
+      "Tree belts: plant 2 to 3 rows of mixed broadleaf with irregular spacing (4 to 8 m jitter), plus a shrub understorey card layer. Use spruce sparingly as small clumps, and vary tree scale by plus or minus 25 percent and rotation.",
+      "Fix tree species reads: birches need a more upright crown with denser twig-level foliage and characteristic white bark with black lenticels; spruce crowns need about 1.5 to 2 times more width at the base.",
+      "Cost: all of this is texture and instancing work (field tiles, hedge segments, tree instances) and should not add unique geometry."
+    ],
+    "renderer_notes": "The aerial haze and lack of GI flatten the distant fields. The colour blocking and regularity are asset or layout issues, though."
+  }
+]

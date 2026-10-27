@@ -21,11 +21,12 @@ from ..ads import studio as STUDIO
 from ..core.nodes import material, srgb
 from ..core.scene import collection, empty, mesh_object, set_params
 from ..core.sockets import socket
-from ..stands.geometry import MeshAcc, WALL
+from ..stands.geometry import MeshAcc, WALL, _world
 from .seat import galvanised
 from .stand import _recalc, painted
 
 CREATIVE_M = 8.0        # an 8:1 creative spans 8 m of a 1 m board
+LED_FACE_RAKE = 0.17 / 0.87   # run of the LED board face per metre of height (it leans back ~11 deg)
 
 
 def _stable(text):
@@ -93,6 +94,28 @@ def _strip(run, t0, t1, s_bot, z_bot, s_top, z_top, u0, u_per_m, lift=0.004):
     return np.array(V), np.array(F), np.array(UV)
 
 
+FACADE_SIGN_OUT = 1.9    # facade signs stand this far out from the facade line (clear of fins and cushions)
+
+
+def facade_sign_band(height):
+    """Bottom and top of a facade sign: a tenth of the facade tall (1-4.5 m), its top just under the
+    coping."""
+    h = min(max(0.1 * height, 1.0), 4.5)
+    top = height - 1.2 - 0.06 * height
+    return top - h, top
+
+
+def board_struts(run):
+    """Kickstands behind an LED board run: a raking strut and a ground runner every 1.92 m."""
+    out = []
+    t = run.t0 + 0.96
+    while t < run.t1 - 0.3:
+        out.append((np.array([_world(run, t, 0.25, 0.75), _world(run, t, 0.78, 0.03)]), 0.02))
+        out.append((np.array([_world(run, t, 0.08, 0.03), _world(run, t, 0.84, 0.03)]), 0.022))
+        t += 1.92
+    return out
+
+
 def _mesh_with_vertex_uvs(name, V, F, UV, col, parent, mat):
     loop_uv = np.concatenate([UV[list(f)] for f in F]) if len(F) else np.zeros((0, 2))
     return mesh_object(name, V, F, col, parent, materials=[mat], uvs=loop_uv)
@@ -144,21 +167,27 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
         runs = PL.board_runs(pitch, gap, end_offset=end_off)
         if kind == "led":
             mat = led_material("Ads_LED", atlas, strength, (atlas.size[0], atlas.size[1]))
+            struts = []
             for run in runs:
                 acc = MeshAcc()
-                poly = np.array([(0.0, 0.0), (0.42, 0.0), (0.42, 0.92), (0.2, 1.0), (0.17, 0.97), (0.0, 0.1)])
+                # a slim cabinet leaning back ~11 deg; the LED face sits on its front, framed by the
+                # cabinet's edges above and below, and a kickstand behind every 1.92 m module pair
+                poly = np.array([(0.0, 0.04), (0.13, 0.04), (0.30, 0.985), (LED_FACE_RAKE * 0.885, 0.985), (0.0, 0.1)])
                 acc.add_prism(run, run.t0, run.t1, (poly, [0] * len(poly)), cap_tag=0)
                 V, F, _, UV = acc.arrays()
                 o = mesh_object(f"BoardHousing_{run.name}", V, F, col, root, materials=[housing], uvs=UV)
                 _recalc(o)
                 offset = (_stable(run.name) % n_atlas) / n_atlas
-                V, F, UVv = _strip(run, run.t0, run.t1, 0.02, 0.12, 0.165, 0.95, offset,
-                                   1.0 / (CREATIVE_M * n_atlas))
+                V, F, UVv = _strip(run, run.t0, run.t1, LED_FACE_RAKE * 0.02, 0.12, LED_FACE_RAKE * 0.85, 0.95, offset,
+                                   1.0 / (CREATIVE_M * n_atlas), lift=0.006)
                 _mesh_with_vertex_uvs(f"BoardLED_{run.name}", V, F, UVv, col, root, mat)
+                struts += board_struts(run)
                 length = (run.t1 - run.t0)
                 for k in range(int(length // CREATIVE_M)):
                     p, n = run.frame(run.t0 + (k + 0.5) * CREATIVE_M)
                     slot("perimeter_led", f"{run.name}_{k}", (p[0], p[1], 0.5), -n, CREATIVE_M * 0.85, "rotation")
+            from .stand import _tubes_mesh
+            _tubes_mesh("BoardStruts", struts, col, root, housing, sides=6)
         else:
             panel = 7.2
             legs = []
@@ -217,6 +246,34 @@ def build(cfg, pitch, stands, night, col=None, gap=0.0):
             footprint = float(np.ptp(V[:, 0]) * np.ptp(V[:, 1]))
             to_cam = cam - base
             slot("carpet_3d", f"carpet_{k}", (base[0], base[1], 0.0), to_cam / np.linalg.norm(to_cam), width * h, b)
+
+    # -- a sponsor sign high on the middle of each side's facade, on a dark frame
+    if stands and stands.get("facades"):
+        sign_mat = print_material("Ads_Print", atlas)
+        frames = MeshAcc()
+        for name, fc in stands["facades"].items():
+            run, _ = stands["runs"][name]
+            if run.curved:
+                continue
+            z0, z1 = facade_sign_band(fc["height"])
+            s = fc["line_s"] + FACADE_SIGN_OUT
+            half = (z1 - z0) * CREATIVE_M / 2 / run.metric(s)
+            tm = 0.5 * (run.t0 + run.t1)
+            b = keys[(_stable(name) + 1) % len(keys)]
+            bi = atlas_keys.index(b)
+            V, F, UVv = _strip(run, tm - half, tm + half, s, z0, s, z1, 0.0, 0.0, lift=0.0)
+            # read from outside, the creative runs with t
+            UVv[:, 0] = np.where(np.arange(len(UVv)) // 2 == 0, bi / n_atlas, (bi + 1) / n_atlas)
+            _mesh_with_vertex_uvs(f"FacadeSign_{name}", V, F, UVv, col, root, sign_mat)
+            pad = 0.3 / run.metric(s)
+            frame = np.array([(s - 0.3, z0 - 0.3), (s - 0.02, z0 - 0.3), (s - 0.02, z1 + 0.3), (s - 0.3, z1 + 0.3)])
+            frames.add_prism(run, tm - half - pad, tm + half + pad, (frame, [0] * 4), cap_tag=0)
+            p_, n = run.frame(tm)
+            slot("facade_sign", f"{name}_facade", (p_[0] + n[0] * s, p_[1] + n[1] * s, 0.5 * (z0 + z1)), n,
+                 (z1 - z0) ** 2 * CREATIVE_M, b)
+        V, F, _, UV = frames.arrays()
+        if len(F):
+            _recalc(mesh_object("FacadeSignFrames", V, F, col, root, materials=[housing], uvs=UV))
 
     # -- LED ribbons on upper-tier fascias
     rb = cfg.get("ribbons")

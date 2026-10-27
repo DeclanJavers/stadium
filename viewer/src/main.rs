@@ -17,7 +17,7 @@ mod pick;
 mod render;
 
 use glam::{Mat4, Vec3};
-use render::{sun_matrix, v4, Globals, Renderer, Targets};
+use render::{v4, Globals, Renderer, Targets};
 use serde_json::Value;
 use stadium_gen::catalog::Catalog;
 use std::path::{Path, PathBuf};
@@ -39,6 +39,11 @@ struct Camera {
 }
 
 impl Camera {
+    /// near clip plane: 0.3 m, closer when orbiting a small prop so a close camera never cuts it
+    fn near(&self) -> f32 {
+        (self.dist * 0.05).clamp(0.01, 0.3)
+    }
+
     fn eye(&self) -> Vec3 {
         self.target + Vec3::new(self.yaw.cos() * self.pitch.cos(), self.pitch.sin(), self.yaw.sin() * self.pitch.cos()) * self.dist
     }
@@ -79,39 +84,52 @@ fn globals(scene: &glb::Scene, cam: &Camera, size: (u32, u32), night: bool, r: &
     let aspect = size.0 as f32 / size.1.max(1) as f32;
     let eye = cam.eye();
     let view = Mat4::look_at_rh(eye, cam.target, Vec3::Y);
-    let proj = Mat4::perspective_rh(cam.fov, aspect, 0.3, 5000.0);
+    let proj = Mat4::perspective_rh(cam.fov, aspect, cam.near(), 5000.0);
     let vp = proj * view;
     // sun 38 deg up from the south-west (matches the Blender review renders)
     let (el, az) = (38f32.to_radians(), 215f32.to_radians());
     let sun_b = Vec3::new(el.cos() * az.sin(), -el.cos() * az.cos(), el.sin()); // Blender coords
     let sun = Vec3::new(sun_b.x, sun_b.z, -sun_b.y);
     let (lo, hi) = scene.bounds;
-    let pitch_id = scene
-        .pitch
-        .as_ref()
-        .map(|p| match p.pattern.as_str() {
-            "stripes" => 1.0,
-            "stripes_long" => 2.0,
-            "checkerboard" => 3.0,
-            "diagonal" => 4.0,
-            "diamond" => 5.0,
-            "circles" => 6.0,
-            _ => 0.0,
-        })
-        .unwrap_or(0.0);
-    let (pw, pa, ps, nat) = scene.pitch.as_ref().map(|p| (p.width, p.angle.to_radians(), p.strength, p.natural as u8 as f32)).unwrap_or((5.0, 0.0, 0.0, 1.0));
+    // shadow cascades: spheres round slices of the view frustum, the last over the whole scene
+    let (sc_c, sc_r) = ((lo + hi) * 0.5, (hi - lo).length() * 0.5);
+    let fwd = (cam.target - eye).normalize();
+    let right = fwd.cross(Vec3::Y).normalize();
+    let upv = right.cross(fwd);
+    let th = (cam.fov * 0.5).tan();
+    let slice = |n: f32, f: f32| -> (Vec3, f32) {
+        let mut pts = Vec::new();
+        for d in [n, f] {
+            for (sx, sy) in [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
+                pts.push(eye + fwd * d + right * (sx * d * th * aspect) + upv * (sy * d * th));
+            }
+        }
+        let c = pts.iter().fold(Vec3::ZERO, |a, p| a + *p) / pts.len() as f32;
+        (c, pts.iter().map(|p| (*p - c).length()).fold(0.0, f32::max))
+    };
+    let splits = [35.0f32, 140.0];
+    let spheres = [slice(cam.near(), splits[0]), slice(splits[0], splits[1]), (sc_c, sc_r)];
+    let mut light_view_proj = [[[0.0f32; 4]; 4]; render::CASCADES];
+    let (mut texel, mut range) = ([0.0f32; 4], [0.0f32; 4]);
+    for (k, (c, r)) in spheres.iter().enumerate() {
+        let (m, t, d) = render::sun_matrix(sun, *c, *r, sc_c, sc_r);
+        light_view_proj[k] = m.to_cols_array_2d();
+        texel[k] = t;
+        range[k] = d;
+    }
     let (sun_e, zen, hor, gnd) = if night {
-        (0.0, Vec3::new(0.0008, 0.0012, 0.003), Vec3::new(0.003, 0.003, 0.004), Vec3::new(0.002, 0.002, 0.002))
+        // ground: the floodlit pitch bouncing light up onto soffits, roof undersides and the
+        // back rows (about 2,000 lux on ~12 % albedo turf, slightly green)
+        (0.0, Vec3::new(0.0008, 0.0012, 0.003), Vec3::new(0.003, 0.003, 0.004), Vec3::new(0.10, 0.12, 0.085))
     } else {
         // ground: the bounce from the bowl floor (sunlit and shaded turf, track, concrete): a
         // green-grey light on the undersides of roofs and the shaded tiers
         (4.5, Vec3::new(0.12, 0.23, 0.50), Vec3::new(0.40, 0.45, 0.52), Vec3::new(0.27, 0.28, 0.22))
     };
-    let grass = scene.pitch.as_ref();
     Globals {
         view_proj: vp.to_cols_array_2d(),
         inv_view_proj: vp.inverse().to_cols_array_2d(),
-        light_view_proj: sun_matrix(sun, lo, hi).to_cols_array_2d(),
+        light_view_proj,
         cam_pos: v4(eye, 1.0),
         sun_dir: v4(sun, sun_e),
         sun_color: [1.0, 0.97, 0.92, 1.0],
@@ -119,16 +137,15 @@ fn globals(scene: &glb::Scene, cam: &Camera, size: (u32, u32), night: bool, r: &
         sky_horizon: v4(hor, 0.0),
         ground: v4(gnd, 0.0),
         params: [1.0, if night { scene.lights.len().min(max_lights()) as f32 } else { 0.0 }, night as u8 as f32, (!night) as u8 as f32],
-        pitch: [pw, pa, ps, pitch_id],
-        pitch2: [nat, 0.0, 0.0, 0.0],
         grid_origin: if std::env::args().any(|x| x == "--exact-lights") { [0.0; 4] } else { r.grid.0 },
         grid_size: r.grid.1,
-        grass_color: grass.map(|g| v4(g.color, g.wear)).unwrap_or([0.06, 0.12, 0.02, 0.25]),
-        grass_dry: grass.map(|g| v4(g.dry, g.wetness)).unwrap_or([0.25, 0.22, 0.07, 0.0]),
-        grass_dims: grass.map(|g| [g.half.x, g.half.y, g.height_mm / 1000.0, g.procedural as u8 as f32]).unwrap_or([52.5, 34.0, 0.025, 0.0]),
         sky_origin: r.sky.0,
         sky_size: r.sky.1,
         screen: [size.0 as f32, size.1 as f32, 0.0, time],
+        shadow: [splits[0], splits[1], 0.0, 0.0],
+        shadow_texel: texel,
+        shadow_range: range,
+        gmap: r.gmap,
     }
 }
 
@@ -188,6 +205,11 @@ async fn gpu(surface: Option<&wgpu::Surface<'static>>, instance: &wgpu::Instance
     (adapter, device, queue)
 }
 
+/// A training-ground layout rather than a stadium.
+pub fn is_site(layout: &Value) -> bool {
+    layout.get("schema").and_then(|s| s.as_str()) == Some("site-layout/1")
+}
+
 fn is_layout(p: &Path) -> bool {
     p.extension().is_some_and(|e| e == "json")
 }
@@ -203,18 +225,109 @@ pub fn load_mosaic(root: &Path, path: &str) -> Option<stadium_gen::patterns::Pic
     Some(stadium_gen::patterns::Picture { w: img.width() as usize, h: img.height() as usize, px })
 }
 
-/// Generate a stadium from a layout and turn it into a render scene.
-fn build_layout(layout: &Value, cat: &Catalog, lib: &library::Library) -> Result<(stadium_gen::stadium::Report, glb::Scene, Vec<String>, f32, f32), String> {
+/// What a layout built into: a stadium's report or a training ground's.
+pub enum Built {
+    Stadium(stadium_gen::stadium::Report),
+    Site(stadium_gen::site::SiteReport),
+}
+
+impl Built {
+    fn warnings(&self) -> &[String] {
+        match self {
+            Built::Stadium(r) => &r.warnings,
+            Built::Site(r) => &r.warnings,
+        }
+    }
+}
+
+/// Generate a stadium or training ground from a layout and turn it into a render scene.
+fn build_layout(layout: &Value, cat: &Catalog, lib: &library::Library) -> Result<(Built, glb::Scene, Vec<String>, f32, f32), String> {
     let t = Instant::now();
+    if is_site(layout) {
+        let site = stadium_gen::site::build(layout, cat)?;
+        let gen_ms = t.elapsed().as_secs_f32() * 1000.0;
+        let t = Instant::now();
+        let (scene, warnings) = build::site_scene(&site, cat, lib);
+        return Ok((Built::Site(site.report), scene, warnings, gen_ms, t.elapsed().as_secs_f32() * 1000.0));
+    }
     let root = lib.root.clone();
     let st = stadium_gen::stadium::build_with_images(layout, cat, &move |path: &str| load_mosaic(&root, path))?;
     let gen_ms = t.elapsed().as_secs_f32() * 1000.0;
     let t = Instant::now();
     let (scene, warnings) = build::scene(&st, lib);
-    Ok((st.report, scene, warnings, gen_ms, t.elapsed().as_secs_f32() * 1000.0))
+    Ok((Built::Stadium(st.report), scene, warnings, gen_ms, t.elapsed().as_secs_f32() * 1000.0))
 }
 
-fn load_scene(a: &Args) -> Result<(glb::Scene, Option<(stadium_gen::stadium::Report, Value, Arc<Catalog>, PathBuf)>), String> {
+/// Every prop in the library laid out on a lawn (`stadium-viewer props`), for checking them.
+fn prop_gallery(root: &Path) -> Result<glb::Scene, String> {
+    use stadium_gen::stadium::{Part, Placement, PropSet};
+    let lib = library::Library::load(root)?;
+    let mut keys: Vec<&String> = lib.props.keys().filter(|k| (k.starts_with("prop.") || k.starts_with("genprop.")) && !k.ends_with(".lod2")).collect();
+    keys.sort();
+    let big = |k: &str| k.contains("tree") || k.contains("crane");
+    let (mut small, mut large): (Vec<&String>, Vec<&String>) = keys.into_iter().partition(|k| !big(k));
+    small.sort();
+    large.sort();
+    let mut props = Vec::new();
+    for (i, k) in small.iter().enumerate() {
+        let (c, r) = (i % 10, i / 10);
+        props.push(PropSet { key: (*k).clone(), items: vec![Placement::at(glam::DVec3::new(c as f64 * 11.0 - 50.0, r as f64 * 11.0 - 30.0, 0.0), 0.0)], tints: vec![], net: None });
+    }
+    for (i, k) in large.iter().enumerate() {
+        props.push(PropSet { key: (*k).clone(), items: vec![Placement::at(glam::DVec3::new(i as f64 * 22.0 - 80.0, 70.0, 0.0), 0.0)], tints: vec![], net: None });
+    }
+    let mut ground = stadium_gen::mesh::MeshAcc::new();
+    stadium_gen::site::kernel::ground(&mut ground, &stadium_gen::site::kernel::rect(400.0, 300.0, 0.0, 20.0), -0.01, 0);
+    let parts = vec![Part { name: "Ground".into(), mesh: ground, mats: vec![stadium_gen::site::mats::lawn("amenity", glam::DVec2::ZERO, 0.0)], smooth_deg: 0.0 }];
+    let w = build::World { parts: &parts, props: &props, spots: &[], camera: glam::DVec3::new(0.0, -90.0, 40.0), pitch: None, capacity: None };
+    let (scene, warnings) = build::scene_of(w, &lib);
+    for w in warnings {
+        eprintln!("[gallery] warning: {w}");
+    }
+    println!("[gallery] {} props", small.len() + large.len());
+    Ok(scene)
+}
+
+/// One library prop alone at the origin on a lawn (asset review), and its bounds (glTF coords).
+fn single_prop(root: &Path, key: &str) -> Result<glb::Scene, String> {
+    use stadium_gen::stadium::{Part, Placement, PropSet};
+    let lib = library::Library::load(root)?;
+    let prop = lib.props.get(key).ok_or(format!("{key} is not in the library"))?;
+    let (mut lo, mut hi) = (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN));
+    for (mesh, local) in &prop.parts {
+        for p in lib.prims(*mesh) {
+            for v in &p.positions {
+                let q = local.transform_point3(Vec3::from(*v));
+                lo = lo.min(q);
+                hi = hi.max(q);
+            }
+        }
+    }
+    let _ = PROP_BOUNDS.set((lo, hi));
+    let props = vec![PropSet { key: key.to_string(), items: vec![Placement::at(glam::DVec3::ZERO, 0.0)], tints: vec![], net: None }];
+    let mut ground = stadium_gen::mesh::MeshAcc::new();
+    // at turf level: the grass blades grow round a prop's base (a raised plane hid flat props)
+    stadium_gen::site::kernel::ground(&mut ground, &stadium_gen::site::kernel::rect(400.0, 400.0, 0.0, 0.0), 0.0, 0);
+    let parts = vec![Part { name: "Ground".into(), mesh: ground, mats: vec![stadium_gen::site::mats::lawn("amenity", glam::DVec2::ZERO, 0.0)], smooth_deg: 0.0 }];
+    let w = build::World { parts: &parts, props: &props, spots: &[], camera: glam::DVec3::new(0.0, -10.0, 4.0), pitch: None, capacity: None };
+    let (scene, warnings) = build::scene_of(w, &lib);
+    for w in warnings {
+        eprintln!("[asset] warning: {w}");
+    }
+    Ok(scene)
+}
+
+static PROP_BOUNDS: std::sync::OnceLock<(Vec3, Vec3)> = std::sync::OnceLock::new();
+
+fn load_scene(a: &Args) -> Result<(glb::Scene, Option<(Built, Value, Arc<Catalog>, PathBuf)>), String> {
+    if let Some(key) = a.path.to_str().and_then(|s| s.strip_prefix("props:")) {
+        let root = repo_root(&std::env::current_dir().unwrap()).ok_or("cannot find the repository")?;
+        return Ok((single_prop(&root, key)?, None));
+    }
+    if a.path.as_os_str() == "props" {
+        let root = repo_root(&std::env::current_dir().unwrap()).ok_or("cannot find the repository")?;
+        return Ok((prop_gallery(&root)?, None));
+    }
     if !is_layout(&a.path) {
         return Ok((glb::load(&a.path)?, None));
     }
@@ -225,12 +338,21 @@ fn load_scene(a: &Args) -> Result<(glb::Scene, Option<(stadium_gen::stadium::Rep
     if a.night {
         layout["lighting"] = Value::from("night");
     }
-    let (report, scene, warnings, g, s) = build_layout(&layout, &cat, &lib)?;
-    for w in warnings.iter().chain(&report.warnings) {
+    let (built, scene, warnings, g, s) = build_layout(&layout, &cat, &lib)?;
+    for w in warnings.iter().chain(built.warnings()) {
         eprintln!("[editor] warning: {w}");
     }
-    println!("[editor] {}: capacity {} ({} seated, {} standing), generate {g:.0} ms, scene {s:.0} ms", a.path.display(), report.capacity.total, report.capacity.seated, report.capacity.standing);
-    Ok((scene, Some((report, layout, cat, root))))
+    match &built {
+        Built::Stadium(r) => println!("[editor] {}: capacity {} ({} seated, {} standing), generate {g:.0} ms, scene {s:.0} ms", a.path.display(), r.capacity.total, r.capacity.seated, r.capacity.standing),
+        Built::Site(r) => {
+            println!("[site] {}: {} pitches ({} lit), {} parking spaces, {:.1} ha, generate {g:.0} ms, scene {s:.0} ms", a.path.display(), r.pitches, r.lit, r.parking, r.area_m2 / 1e4);
+            if r.plots.iter().any(|p| matches!(p.facility.as_deref(), Some("youth_pitches" | "academy_building"))) {
+                let c = r.academy.category.map_or("not yet Category 4".to_string(), |c| format!("Category {c}"));
+                println!("[site] academy: {c}; for the next: {}", if r.academy.missing.is_empty() { "-".to_string() } else { r.academy.missing.join("; ") });
+            }
+        }
+    }
+    Ok((scene, Some((built, layout, cat, root))))
 }
 
 /// Draws an overlay into the screenshot (the editor UI for `--ui`).
@@ -268,8 +390,25 @@ fn screenshot(a: &Args, scene: &glb::Scene, mut overlay: Option<Overlay>) {
         (v.len() == 3).then(|| Vec3::new(v[0], v[2], -v[1]))
     });
     let fov = argv.iter().position(|x| x == "--fov").and_then(|i| argv.get(i + 1)).and_then(|s| s.parse().ok()).unwrap_or(55.0);
-    let cam = match (vec3("--eye"), vec3("--target")) {
-        (Some(e), Some(t)) => Camera::look(e, t, fov),
+    // --orbit az,el[,zoom]: round a single prop (props:<key>), az from its front, degrees
+    let orbit = argv.iter().position(|x| x == "--orbit").and_then(|i| argv.get(i + 1)).map(|s| s.split(',').filter_map(|t| t.trim().parse::<f32>().ok()).collect::<Vec<f32>>());
+    let cam = match (vec3("--eye"), vec3("--target"), orbit, PROP_BOUNDS.get()) {
+        (Some(e), Some(t), _, _) => Camera::look(e, t, fov),
+        (_, _, Some(o), Some((lo, hi))) if o.len() >= 2 => {
+            let mut c = (*lo + *hi) * 0.5;
+            let mut r = (*hi - *lo).length() * 0.5;
+            let zoom = o.get(2).copied().unwrap_or(1.0);
+            // a close-up of a tall prop (lamp post, flagpole, crane) frames its head, not mid-shaft
+            if zoom > 1.5 && hi.y - lo.y > 2.5 {
+                c.y = lo.y + (hi.y - lo.y) * 0.88;
+                r = r.min(1.2 * zoom);
+            }
+            let dist = r / (fov.to_radians() * 0.5).sin() * 1.08 / zoom;
+            let (az, el) = (o[0].to_radians(), o[1].to_radians());
+            // kit (x, y, z) -> glTF (x, z, -y); the prop's front is kit +y
+            let d = Vec3::new(az.sin() * el.cos(), el.sin(), -az.cos() * el.cos());
+            Camera::look(c + d * dist, c, fov)
+        }
         _ => Camera::preset(&a.camera, scene),
     };
     let g = globals(scene, &cam, (w, h), a.night, &r, 0.0);
@@ -333,7 +472,7 @@ fn screenshot(a: &Args, scene: &glb::Scene, mut overlay: Option<Overlay>) {
 /// World-space ray (origin, direction) through a pixel of the view (glTF coordinates).
 fn camera_ray(cam: &Camera, size: (f32, f32), px: (f32, f32)) -> (Vec3, Vec3) {
     let view = Mat4::look_at_rh(cam.eye(), cam.target, Vec3::Y);
-    let proj = Mat4::perspective_rh(cam.fov, size.0 / size.1.max(1.0), 0.3, 5000.0);
+    let proj = Mat4::perspective_rh(cam.fov, size.0 / size.1.max(1.0), cam.near(), 5000.0);
     let inv = (proj * view).inverse();
     let ndc = glam::Vec2::new(2.0 * px.0 / size.0 - 1.0, 1.0 - 2.0 * px.1 / size.1);
     let a = inv.project_point3(ndc.extend(0.0));
@@ -371,7 +510,7 @@ fn save_texture(device: &wgpu::Device, queue: &wgpu::Queue, tex: &wgpu::Texture,
 // ---------------------------------------------------------------------------------------------
 // interactive window
 
-type BuildResult = (u64, Result<(stadium_gen::stadium::Report, glb::Scene, Vec<String>, f32, f32), String>);
+type BuildResult = (u64, Result<(Built, glb::Scene, Vec<String>, f32, f32), String>);
 
 /// Editor state: the layout, a background builder and its results.
 struct Edit {
@@ -646,13 +785,13 @@ impl App {
                 }
                 e.shown = rev;
                 match result {
-                    Ok((report, scene, warnings, g, sc)) => {
+                    Ok((built, scene, warnings, g, sc)) => {
                         let t = Instant::now();
                         s.renderer.set_scene(&s.device, &s.queue, &scene);
                         let up = t.elapsed().as_secs_f32() * 1000.0;
                         e.editor.build_ms = (g, sc, up);
                         e.editor.error = if warnings.is_empty() { None } else { Some(warnings.join("; ")) };
-                        e.editor.report = Some(report);
+                        e.editor.set_built(built);
                         e.editor.status = format!("built in {:.0} ms", g + sc + up);
                         if !s.cam_set {
                             s.cam = Camera::preset(&self.args.camera, &scene);
@@ -796,9 +935,9 @@ fn main() {
             tris as f64 / 1e6
         );
         match edit.filter(|_| std::env::args().any(|x| x == "--ui")) {
-            Some((report, layout, cat, root)) => {
+            Some((built, layout, cat, root)) => {
                 let mut ed = editor::Editor::new(layout, cat, Some(a.path.clone()), root.join("layouts"));
-                ed.report = Some(report);
+                ed.set_built(built);
                 ed.expand_all = true;
                 let mut ov = |device: &wgpu::Device, queue: &wgpu::Queue, enc: &mut wgpu::CommandEncoder, view: &wgpu::TextureView, size: (u32, u32), fmt: wgpu::TextureFormat| {
                     let ctx = egui::Context::default();
@@ -868,14 +1007,97 @@ mod tests {
         names.sort();
         for p in names {
             let layout: Value = serde_json::from_str(&std::fs::read_to_string(&p).unwrap()).unwrap();
-            let (report, scene, warnings, _, _) = build_layout(&layout, &cat, &lib).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+            let (built, scene, warnings, _, _) = build_layout(&layout, &cat, &lib).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
             assert!(warnings.is_empty(), "{}: {warnings:?}", p.display());
+            let Built::Stadium(report) = built else {
+                continue;
+            };
             assert_eq!(scene.meshes.len(), scene.instances.len());
             let seats: usize = scene.instances.iter().map(|v| v.iter().filter(|i| i.color.w > 0.5).count()).sum();
             // two dugouts, two rows each
             let dug = layout.get("dugouts").filter(|d| d.is_object()).map(|d| 4 * d.get("seats").and_then(|v| v.as_u64()).unwrap_or(14).div_ceil(2)).unwrap_or(0) as usize;
             assert_eq!(seats, report.capacity.seated + dug, "{} seat instances", p.display());
         }
+    }
+
+    /// Every finished generated prop (out/assets/genprop.<id>.glb) that is in the library meets the
+    /// kit's conventions: textured PBR (colour, normal, metallic-roughness), within its triangle
+    /// budget, at its real size, standing on the ground at the centre of its footprint.
+    #[test]
+    fn generated_props_in_library() {
+        let root = repo_root(Path::new(env!("CARGO_MANIFEST_DIR"))).unwrap();
+        let Ok(lib) = library::Library::load(&root) else {
+            eprintln!("skipped: out/library/library.game.glb missing (tools/export_library.py)");
+            return;
+        };
+        let man: Value = serde_json::from_str(&std::fs::read_to_string(root.join("catalog/generated_props.json")).unwrap()).unwrap();
+        for p in man["props"].as_array().unwrap() {
+            let id = p["id"].as_str().unwrap();
+            let key = format!("genprop.{id}");
+            if !root.join(format!("out/assets/{key}.glb")).exists() || p.get("rejected").and_then(|v| v.as_bool()) == Some(true) {
+                continue;
+            }
+            let Some(prop) = lib.props.get(&key) else {
+                eprintln!("{key}: finished but not in the library yet (run tools/export_library.py)");
+                continue;
+            };
+            let (mut lo, mut hi, mut tris) = (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN), 0usize);
+            for (mesh, local) in &prop.parts {
+                for pr in lib.prims(*mesh) {
+                    let m = &lib.scene.materials[pr.material];
+                    tris += pr.indices.len() / 3;
+                    // (a glass case the finishing step adds is plain transmissive glass, outside the
+                    // generated prop's own size)
+                    if m.transmission > 0.0 {
+                        continue;
+                    }
+                    assert!(m.base_tex.is_some() && m.normal_tex.is_some() && m.mr_tex.is_some(), "{key}: material {} lacks a baked map", m.name);
+                    for v in &pr.positions {
+                        let q = local.transform_point3(Vec3::from(*v));
+                        lo = lo.min(q);
+                        hi = hi.max(q);
+                    }
+                }
+            }
+            let budget = p["budget"].as_u64().unwrap_or(15000) as usize;
+            assert!(tris <= budget + budget / 50, "{key}: {tris} triangles over its budget of {budget}");
+            // (glTF space: y up; the footprint is x, z)
+            let ext = hi - lo;
+            let size = &p["size"];
+            if let Some(h) = size.get("h").and_then(|v| v.as_f64()) {
+                assert!((ext.y as f64 - h).abs() < 0.03 * h, "{key}: {} m tall, the manifest says {h}", ext.y);
+            }
+            if let Some(l) = size.get("l").and_then(|v| v.as_f64()) {
+                assert!((ext.x.max(ext.z) as f64 - l).abs() < 0.03 * l, "{key}: {} m long, the manifest says {l}", ext.x.max(ext.z));
+            }
+            // (bedded in by up to 2 cm is fine, floating is not)
+            assert!(lo.y > -0.02 && lo.y < 0.002, "{key}: its lowest point is {} m off the ground", lo.y);
+            let c = (hi + lo) / 2.0;
+            assert!(c.x.abs() < 0.05 * ext.x.max(0.1) && c.z.abs() < 0.05 * ext.z.max(0.1), "{key}: footprint centred at ({}, {})", c.x, c.z);
+        }
+    }
+
+    /// A generated prop that is not in the library draws its fallback when it has one, and nothing
+    /// (without a warning) when it has none.
+    #[test]
+    fn generated_props_fall_back() {
+        let root = repo_root(Path::new(env!("CARGO_MANIFEST_DIR"))).unwrap();
+        let Ok(mut lib) = library::Library::load(&root) else {
+            eprintln!("skipped: out/library/library.game.glb missing (tools/export_library.py)");
+            return;
+        };
+        assert!(lib.fallbacks.get("genprop.framed_shirt").is_some_and(|k| k == "prop.framed_shirt"));
+        // pretend none of them has been finished
+        lib.props.retain(|k, _| !k.starts_with("genprop."));
+        for (key, fb) in lib.fallbacks.clone() {
+            assert_eq!(lib.resolve(&key), lib.props.contains_key(&fb).then_some(fb.as_str()), "{key}");
+        }
+        assert_eq!(lib.resolve("genprop.statue_legend"), None);
+        // a rejected generated prop is never in the library: its placements draw the fallback
+        let full = library::Library::load(&root).unwrap();
+        assert!(!full.props.contains_key("genprop.bicycle"), "a rejected generated prop was exported");
+        assert_eq!(full.resolve("genprop.bicycle"), Some("prop.bicycle"));
+        assert_eq!(lib.resolve("goal.box"), Some("goal.box"));
     }
 
     /// Saving a layout and opening it again gives the same document.
@@ -1003,7 +1225,7 @@ mod editor_tests {
     #[test]
     fn net_textures_follow_the_options() {
         use stadium_gen::stadium::NetSpec;
-        let spec = |mesh: &str, pattern: &str| NetSpec { mesh: mesh.into(), mesh_size_mm: 120, cord_tenths_mm: 40, pattern: pattern.into(), band_cells: 3, colors: vec![[247, 247, 245], [200, 16, 46]] };
+        let spec = |mesh: &str, pattern: &str| NetSpec { mesh: mesh.into(), mesh_size_mm: 120, cord_tenths_mm: 40, pattern: pattern.into(), band_cells: 3, colors: vec![[247, 247, 245], [200, 16, 46]], metric: false };
         let (hex, s, rn) = net::texture(&spec("hex", "solid"));
         assert!((s[0] - 1.0).abs() < 1e-5 && (s[1] - 1.0).abs() < 1e-5, "the default net keeps the library UVs: {s:?}");
         // alpha is the distance to the nearest cord; cords are where it is under rn

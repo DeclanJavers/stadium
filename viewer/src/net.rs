@@ -41,6 +41,21 @@ fn hex_segments(x0: f64, x1: f64, y0: f64, y1: f64, size: f64) -> Vec<Seg> {
     out
 }
 
+/// Chain-link: square cells turned 45 degrees (`size` is the diamond's side).
+fn diamond_segments(x0: f64, x1: f64, y0: f64, y1: f64, size: f64) -> Vec<Seg> {
+    let r = size * std::f64::consts::SQRT_2;
+    let span = (x1 - x0).max(y1 - y0);
+    let mut out = Vec::new();
+    let mut k = -(span / r).ceil() - 1.0;
+    while k * r <= x1 - x0 + span + r {
+        let c = x0 + k * r;
+        out.push(([c, y0], [c + span, y0 + span]));
+        out.push(([c, y1], [c + span, y1 - span]));
+        k += 1.0;
+    }
+    out
+}
+
 fn square_segments(x0: f64, x1: f64, y0: f64, y1: f64, size: f64) -> Vec<Seg> {
     let mut out = Vec::new();
     let mut x = x0;
@@ -72,8 +87,15 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2], f32) {
         return (c.1.clone(), c.2, c.3);
     }
     let size = (spec.mesh_size_mm.max(20) as f64) / 1000.0;
-    let hex = spec.mesh != "square";
-    let (w_rep, h_rep) = if hex { (size, 3f64.sqrt() * size) } else { (size, size) };
+    let hex = spec.mesh == "hex";
+    let diamond = spec.mesh == "diamond";
+    let (w_rep, h_rep) = if hex {
+        (size, 3f64.sqrt() * size)
+    } else if diamond {
+        (size * std::f64::consts::SQRT_2, size * std::f64::consts::SQRT_2)
+    } else {
+        (size, size)
+    };
     let bw = spec.band_cells.max(1) as f64 * size;
     // a tile spans whole pattern repeats and one period of the colour pattern (two bands)
     let reps = |rep: f64, banded: bool| if banded { ((2.0 * bw / rep).round() as usize).max(2) & !1 } else { 1 };
@@ -81,7 +103,13 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2], f32) {
     let (nu, nv) = (reps(w_rep, spec.pattern == "checker"), reps(h_rep, bands));
     let (tw, th) = (nu as f64 * w_rep, nv as f64 * h_rep);
     let (w, h) = ((nu as f64 * PX_PER_REPEAT) as u32, (nv as f64 * PX_PER_REPEAT * h_rep / w_rep).round() as u32);
-    let segs = if hex { hex_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size) } else { square_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size) };
+    let segs = if hex {
+        hex_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size)
+    } else if diamond {
+        diamond_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size)
+    } else {
+        square_segments(-w_rep, tw + w_rep, -h_rep, th + h_rep, size)
+    };
     let r = spec.cord_tenths_mm as f64 / 20000.0 * 1.6; // radius, a touch thicker so it holds up at distance
     let range = 0.5 * size;
     let colors: Vec<[u8; 3]> = if spec.colors.is_empty() { vec![[247, 247, 245]] } else { spec.colors.clone() };
@@ -106,7 +134,7 @@ pub fn texture(spec: &NetSpec) -> (Arc<Image>, [f32; 2], f32) {
         }
     }
     let img = Arc::new(Image::new(w, h, rgba));
-    let scale = [(LIB_W / tw) as f32, (LIB_H / th) as f32];
+    let scale = if spec.metric { [(1.0 / tw) as f32, (1.0 / th) as f32] } else { [(LIB_W / tw) as f32, (LIB_H / th) as f32] };
     let rn = (r / range) as f32;
     CACHE.lock().unwrap().push((spec.clone(), img.clone(), scale, rn));
     (img, scale, rn)

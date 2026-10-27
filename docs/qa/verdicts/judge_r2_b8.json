@@ -1,0 +1,203 @@
+[
+  {
+    "asset": "seat.bench.bracket",
+    "score": 34,
+    "pass": false,
+    "summary": "Cantilever bench bay with grooved slats on a single post and strut; untextured flat grey, missing base plate, so anchor nuts float on the ground beside the post.",
+    "critique": "Construction: the post ends bare at ground level with no base plate, and three anchor nuts/studs sit loose on the grass 50-150 mm away from it. This is a visible assembly bug at any distance and reads as debris. The slat block is split into three thick extrusions (about 90-100 mm tall with rounded leading edges and 3-4 grooves each). From the side it looks like three loaf-shaped blocks on a dark rail, not individual timber or recycled-plastic slats with gaps. The bracket is a square post with one diagonal strut welded into the post face, plus a stubby rectangular cleat block under the seat that does nothing visible. Real stand bench brackets are a folded or cast steel cantilever arm with a flange plate bolted to the riser or tread. The mounting point is wrong for a terrace bench: it should fix to the concrete step riser or tread, not stand freely on a single ground post. Proportions: the seat depth (about 0.45 m) is plausible, but the slat group is far too thick. Materials: every part is the same flat light grey with no roughness variation. There is no galvanising spangle, no paint, no timber grain, no weathering, no rust bleed at the bolts and no dirt line where the post meets the ground. The screw heads on the slat tops are the only detail.",
+    "suggestions": [
+      "Fix the base: add a 200x200x10 mm base plate under the post with four M12 bolt heads and nuts actually on the plate, or delete the stray nuts. Better, mount the bracket to a step riser with a 150x100 mm wall flange plate and two visible bolts. That adds about 60 tris.",
+      "Rebuild the seat as 4-5 separate slats about 95x30 mm with 10-12 mm gaps, 3 mm bevels and rounded ends (about 40 tris per slat at 1.8 m bay length). Drop the grooved loaf blocks and use one end-grain cap so the side view reads as separate boards.",
+      "Replace the post and strut with a single folded-plate cantilever bracket (6 mm steel, L-profile arm with a gusset), about 80 tris, painted club colour or galvanised.",
+      "Materials: galvanised steel albedo about 0.55 with roughness 0.45-0.6 and mottled spangle noise, or a satin paint colour. For hardwood slats use albedo about 0.35 warm brown with grain and a UV-greyed top face. For recycled plastic use a dark grey or club colour at roughness 0.7. Add rust streaks below each bolt and a darker grime band on the bottom 80 mm of the post. A 256 px trim sheet is enough.",
+      "Remove the floating cleat block under the seat or make it a proper slat-carrier rail (40x40 SHS) that runs the full seat depth with bolts through the slats."
+    ],
+    "renderer_notes": "The grass blades are oversized relative to a 30 mm nut, which exaggerates how small the nuts look. That does not change the floating-nut verdict."
+  },
+  {
+    "asset": "bollard",
+    "score": 56,
+    "pass": false,
+    "summary": "Believable steel street bollard with a domed cap, two reflective bands, light scuffing and a ground ring; clean and correctly proportioned but generic.",
+    "critique": "Proportions look right: roughly 1.0 m tall, about 140 mm diameter, domed cap with a small top recess. The silhouette is believable. The two white bands read as retro-reflective tape, but they are slightly proud of the tube and perfectly crisp, with no edge lift, seam overlap or dirt. The body is uniform dark grey with a few light chip marks in the mid-section. Real bollards collect wear in predictable places: vehicle-bumper scuffs and black rubber marks at 350-600 mm, chipped paint to bare or galvanised metal at the base and cap edge, and rust streaks running down from chips. Here the base has a slightly warm brown tone but no convincing rust or grime gradient. The ground disc is a flat pale ring with no thickness, no bolts and no concrete or paving collar, so the bollard looks stamped onto the grass rather than set into a surface. The cap meets the tube with a hard edge and no casting seam. Roughness looks uniform.",
+    "suggestions": [
+      "Wear placement: add a horizontal scuff band at 400-550 mm (tyre or bumper rubber marks: dark streaks plus scraped-through paint showing grey primer). Chip the cap rim and add 2-3 rust drips below chips. This is texture-only, about 256x1024 on the tube UV.",
+      "Base: replace the flat disc with either a 300 mm concrete core collar (a 20 mm-high chamfered cylinder with a cracked, stained top, about 48 tris) or a 200 mm square base plate with four bolt heads. Add a darker dirt gradient on the bottom 150 mm.",
+      "Reflective bands: inset them flush (or 0.5 mm proud) and give them a tape seam line, slightly greyed and dirty edges, and a retro-reflective material response (high spec at grazing angles if the shader allows). Albedo should be about 0.75, not pure white.",
+      "Cap: add a small casting lip (5 mm step) where the cap meets the tube. Also add a subtle roughness variation: matte powder coat about 0.6, worn polished patches about 0.35.",
+      "Offer 2-3 variants by seed: black/gold heritage band, galvanised unpainted, and a yellow-sleeved car-park version. That costs material swaps only."
+    ],
+    "renderer_notes": "The tall, tufted grass hides the base contact; on paving the missing collar would be more obvious."
+  },
+  {
+    "asset": "seat.rail_seat.plain",
+    "score": 50,
+    "pass": false,
+    "summary": "Recognisable safe-standing rail seat (post, top rail, flip-up seat locked upright, hinge bar); right concept but thin and toy-like in construction and materials.",
+    "critique": "This is the correct object: a vertical post with a horizontal top rail and a tip-up seat folded and locked to the post. The seat shell has ribs, two fixing holes and a curved lip, which reads as moulded polypropylene. Problems: (1) The top rail is a short, isolated 0.45 m length of tube on a T. Real rail seats sit on a continuous barrier rail running the whole row, so as a single-bay instance the rail ends need end caps and a sleeve or coupler at each end to tile cleanly. (2) The post is a thin black square tube going straight into the ground with tiny studs and no base plate. Real units bolt to the tread or riser front with a substantial base or riser plate. (3) The hinge assembly (rod plus two side blocks plus two fins) looks like loose cubes on a skewer. Real units have a pressed-steel seat bracket with a sprung-locking hinge and a rubber bump stop. (4) From the side the seat is only a single thin curved sheet and the post-to-seat clearance is very small. (5) Materials: flat matte black on all steel with no galvanising or powder-coat sheen, edge wear or scuffs. The red seat is saturated and uniform with no sun-fading, number plaque or dirt in the ribs. The back of the seat (the side seen from the row behind) is plain.",
+    "suggestions": [
+      "Add a riser or tread mounting: a 250x120x10 mm plate at the post foot with four bolt heads (about 50 tris). The post should be a 60x60 or 80x40 RHS with a welded cap, not a 30 mm bar.",
+      "Make the top rail a 48.3 mm CHS that spans the full seat pitch (500 mm) with a coupler sleeve at one end so instances chain into a continuous rail. Add a rounded handrail profile and a darker grip-wear band in the middle.",
+      "Rebuild the hinge as one pressed-steel U-bracket (about 40x60 mm profile) with two pivot bosses and a rubber stop. Delete the free-floating fins (about 80 tris).",
+      "Give the seat shell 6-8 mm thickness at the rim (a visible edge loop), a seat-number plaque (small aluminium rectangle with a digit decal) and a moulded textured underside.",
+      "Materials: powder-coat black at albedo about 0.04 is too dark; use about 0.08 with roughness 0.45 and lighter edge wear. For the red PP, use roughness 0.55, a slight top-face fade toward pink and dirt accumulation in the ribs via an AO-driven grime mask."
+    ],
+    "renderer_notes": "Shown standing on grass on its own; in reality it would sit on a concrete step, so judge the base fixing against that context."
+  },
+  {
+    "asset": "lamp_post",
+    "score": 52,
+    "pass": false,
+    "summary": "Good silhouette of a modern 8 m LED column with swan-neck outreach and flat lantern; very plain surface and base detail, and the close-up misses the lantern.",
+    "critique": "The proportions read correctly: a tall slender column with stepped diameter sections (base about 150 mm tapering in sleeves), a smooth swan-neck bend and a flat aerofoil LED lantern about 0.6 m long, tilted slightly. A small inspection-door or label shape is visible at about 1.5 m. Issues: (1) The diameter steps are abrupt, with plain cylinders stacked. Real columns are either continuously tapered or have welded swaged joints with a small collar. (2) The base is a flat pale disc on the grass with no root or flange detail. Planted columns usually have a bitumen-wrapped root and a ground collar; flange-mounted ones have a base plate with bolt covers. (3) The colour alternates between a light silver upper and a darker grey lower section, which looks like a material mismatch rather than intentional design. (4) The lantern underside has no visible LED optic array or lens, and there is no photocell node on top. (5) There is no column number plate (councils fit yellow or black ID plates at about 2.5 m), no electrical door with a lock, and no galvanising dulling or dirt splash at the base.",
+    "suggestions": [
+      "Base: add an inspection door (300x100 mm recessed panel with two triangle-key locks) at 600-900 mm, and a ground collar or flange plate with four bolt covers. Also add a 300 mm-tall dirt and splash gradient on the bottom section (about 100 tris plus decal).",
+      "Use one continuous tapered shaft (or swaged joints with a 5 mm collar ring) and one consistent galvanised material: albedo about 0.55, roughness 0.5 with mottled spangle noise and darker oxidised patches lower down.",
+      "Lantern: model a slight housing depth (60-80 mm), a recessed flat lens panel on the underside with an emissive LED grid texture (a 128 px tile), and a small photocell (NEMA) button on top. Keep it under 300 tris.",
+      "Add a column ID plate decal (yellow rectangle with black numbers) at 2.5 m and an optional banner bracket or sign-clamp variant.",
+      "Re-shoot the detail view on the lantern and door: the current close-up only shows a plain shaft, so the most detailed parts were not reviewable."
+    ],
+    "renderer_notes": "The close-up is framed on an empty section of shaft. The lantern's shadow is visible but the lantern itself is not."
+  },
+  {
+    "asset": "cone_disc",
+    "score": 40,
+    "pass": false,
+    "summary": "Orange disc cone with square cutouts; reads as the right object but as a stiff, straight-walled lampshade, not a flexible saucer marker.",
+    "critique": "Real training disc cones (saucer markers) are a low, flexible, soft-PE dome about 190-200 mm diameter at the base (larger flat-disc versions are about 300 mm) and about 50-70 mm tall. They have a flared, slightly concave profile, a thick rolled base lip, a 50-60 mm top hole and four rounded or oval cutouts. This asset has a straight conical frustum wall, a top opening that is too large (about 45 percent of the base diameter), sharp square cutouts with thin hard-edged walls, and no base lip at all, so the rim is knife-edge thin. It also looks too tall for its diameter. The material is an even satin orange with no vinyl or PE character: no soft sheen variation, no scuffs, no grass stains, no muddy underside and no moulding text. Sitting on the turf it looks like a rigid machined part.",
+    "suggestions": [
+      "Re-profile: base diameter 190 mm, height 55 mm, top hole 55 mm diameter. Give the wall a concave (slightly flared) profile with 4-5 profile rings and a rolled base lip 6-8 mm thick, curving outward. That is about 16 radial segments x 6 rings, roughly 200 tris.",
+      "Make four cutouts with rounded corners (or oval), each about 35 mm wide at mid-height, spaced at 90 degrees. Give their inner edges a 3 mm wall thickness rather than a single face.",
+      "Material: soft PE with roughness 0.5-0.6, a slight subsurface brightening if the shader supports it, albedo orange about (0.85, 0.35, 0.08). Add a scuff and mud mask on the lip and a grass-green stain smear (64-128 px texture), plus a small embossed brand mark.",
+      "Add colour variants (yellow, red, blue, white) and a 'stack of 10' variant for the kit bag scene, since stacks are how these are usually seen."
+    ],
+    "renderer_notes": "The grass blades render at roughly 150-200 mm tall around a 200 mm object, so the cone appears to float in a hayfield. That is a lawn-scale issue in the viewer, not an asset fault, but it hides the base contact."
+  },
+  {
+    "asset": "tree_dead",
+    "score": 42,
+    "pass": false,
+    "summary": "Dead tree with pale bulbous trunk and spiky straight twigs; reads as a stylised dead stick-tree rather than a real dead UK hardwood.",
+    "critique": "Silhouette: the trunk is short with a bulbous base that bulges like a baobab, then bends into two leaders. The biggest scaffold branch kinks almost horizontally with a visible joint where it leaves the trunk. The twig layer is made of perfectly straight, uniformly thick cylinders radiating at regular angles, which makes the crown look thorny or spiky and artificial. Real dead branches fork repeatedly with gradually decreasing diameter, curve, have snapped-off stubs and broken tips, and keep fine twiggy ends (or lose them, leaving stubby broken limbs). Branch junctions are not blended, so cylinders intersect each other. The bark is near-white with faint marks. Dead oak or elm is grey to grey-brown, with bark sloughing off to reveal paler, smoother silver-grey wood in patches, plus green algae on the north side, fungal brackets and cracks. The litter disc at the base is a flat circle of brown leaves with a hard edge. A few loose twigs lie on the ground, which is good, but they look like the same straight cylinders. Overall scale (about 6-7 m) is small for a mature dead UK tree but fine for a hedgerow or field tree.",
+    "suggestions": [
+      "Branch generation: replace the straight twig cylinders with recursive L-system or space-colonisation branches that taper (child radius = parent radius x 0.6-0.7), curve 10-25 degrees per segment and stop at 3-4 levels. Snap 30 percent of terminal branches into short broken stubs with jagged end caps. Weld branch junctions with a collar flare (a small cone where child meets parent). Target 3-6k tris for the hero LOD and card the finest twigs.",
+      "Trunk: remove the baobab bulge. Use a gentle root flare limited to the bottom 0.5 m with 3-5 buttress lobes, then a near-cylindrical trunk. Add one or two large torn-off limb scars or a hollow.",
+      "Bark material: two-layer texture (512 px tiling). Grey-brown furrowed bark (albedo about 0.25-0.3) plus patches of exposed silver-grey dead wood (about 0.5) with longitudinal cracks. Add green algae on one side (world-space up and north mask) and a few bracket fungi (instanced small half-discs, 10-20 tris each).",
+      "Ground: break the litter disc edge with a noisy alpha falloff. Add fallen branch pieces that reuse the trunk bark material at believable diameters (30-80 mm), and some ivy up the trunk as an optional variant."
+    ],
+    "renderer_notes": "The long dramatic shadows come from a low sun; that is fine and not marked down."
+  },
+  {
+    "asset": "scrap_car",
+    "score": 53,
+    "pass": false,
+    "summary": "Abandoned hatchback on wooden blocks with no wheels, smashed windscreen, 'Police Aware' sticker and rust; strong storytelling, but body form and rust are flat and CG.",
+    "critique": "Storytelling is good: wheels stolen with the hubs and brake discs on blocks, a cracked windscreen with a 'POLICE AWARE' sticker, missing glass, a UK plate (R412 KLM era-appropriate) and a dropped stance. Body shape: the overall length-to-height ratio of a C-segment hatch is roughly right, but the forms are faceted and slab-sided. The flanks are flat planes with no shoulder line or tumblehome, the rear is a box with a squared-off tail, and the bonnet is a flat plane. Wheel arches are clean semicircles cut into the body with no arch lip or inner liner, so you see into a void. The front fascia (headlight bar, grille strip, bumper) is drawn on rather than sculpted. The rust is a uniform pinkish-orange paint with brown blotches that read as stains. Real neglected-car rust bubbles at sills, arch lips, door bottoms and around the screen, and the paint should show oxidised chalky fading (UV-bleached roof and bonnet, darker protected lower panels), with dents and scrapes. The panel gaps are mostly painted lines. The interior (seats, dash) is visible and darkish, which is good. The wooden blocks are simple cubes with no grain.",
+    "suggestions": [
+      "Body sculpt: add a shoulder crease and 3-5 degree tumblehome to the side glass. Round the roof edges, curve the bonnet with a central rise, and taper the rear with a lip spoiler and rounded tail-lamp corners. Target 8-12k tris for LOD0 with chamfered panel edges (2-3 mm) so highlights break at panel gaps.",
+      "Arches: add a 25 mm rolled arch lip and black plastic inner liners, and show the suspension strut and spring behind the hub so the wheel arch reads as solid. Put the hubs on stacked bricks or a mix of breeze blocks and timber offcuts with grain and moss.",
+      "Rust and paint: drive rust from a curvature plus height mask concentrated at sills, arch lips, door bottoms and the screen surround, with bubbling (normal map) and flaking paint edges. UV-fade the horizontal panels (roof and bonnet lighter and chalkier, roughness 0.75) versus the sides (roughness 0.5). Add a few dents (normal map) and keyed scratches along one side. A 1024 px body atlas is enough.",
+      "Details: one door ajar or missing a mirror, a punctured tyre or none, bird droppings on the roof, leaves in the scuttle and wiper well, a flat 'Police Aware' sticker with sun-curl, and green algae on the lower rubber seals.",
+      "Sink it into the ground: add a grass-overgrowth or flattened-grass decal under the sills, and nettle tufts around the blocks."
+    ],
+    "renderer_notes": "No GI means the interior and wheel arches read very dark; that is fine and not marked down."
+  },
+  {
+    "asset": "stadium_sunday_league:seating & stands",
+    "score": 46,
+    "pass": false,
+    "summary": "One covered seated stand with green tip-ups, aisles and handrails between plain tan brick-less end walls; believable layout for a grassroots ground but clean and generic.",
+    "critique": "The main stand is a single shallow tier of about 10-12 rows of green tip-up seats on concrete steps, with two stepped aisles and centre handrails, behind a low green-painted perimeter wall. Seat rows, risers and aisles read correctly from a distance. Issues: the end screen walls are flat tan planes with no brick or block texture, no coping, no expansion joints and no staining. They read as a placeholder, especially the bare front edge beside the boards. Seat colour is uniform with no faded or broken seats, no numbering and no gaps. Steps have no nosing paint or yellow edge strips, and no tread wear. The far-side cover (the long dark low structure on the opposite touchline in the overall shots) is too small to read; it looks like a black bar. At Sunday-league level, much of the ground should be standing: grass banks, hardstanding with a pipe-rail barrier, and a small 'bus-shelter' stand. The second stand reads only as a dark slab.",
+    "suggestions": [
+      "End walls: give them a brick or concrete-block texture (512 px tiling, with a block course of 225x75 mm or 440x215 mm block), a coping cap 50 mm proud, a darker grime band at the base and rain-streak staining under the coping. Bevel the front edge.",
+      "Seats: add per-instance colour jitter (±5 percent value) and 1-2 percent of seats flipped up, missing or faded. Paint yellow step nosings and row letters on the riser ends. Instance cost is unchanged; it only needs an extra per-instance attribute.",
+      "Steps: tread wear in the aisles (lighter concrete), and puddle and moss stains on the lowest rows and front corners.",
+      "Far-side cover: build it out as a proper 10-15 m 'Arena' modular shelter (steel posts, sheet roof, two to three steps of hardstanding and a pipe barrier), so the overall view reads as a real non-league ground."
+    ],
+    "renderer_notes": "The underside of the roof and the back rows are flat-shaded grey without GI, which hides seat-row depth."
+  },
+  {
+    "asset": "stadium_sunday_league:roof",
+    "score": 44,
+    "pass": false,
+    "summary": "Mono-pitch sheet roof on round green columns with a lattice front fascia truss and a white rooflight band; plausible but toy-like, with an oversized scaffold gantry on top.",
+    "critique": "Structure: five round green columns at the front carry a flat Warren truss fascia and simple rafters back to the rear wall. This is a believable small-club stand type. Problems: the roof sheet is a single flat plane with no visible profiled-sheet corrugation from below, no purlins and no bracing. The underside is a uniform grey slab. The columns are very thick and smooth, with no base plates or cap connections, and they meet the truss without gussets. The white rooflight strip is perfectly uniform and bright on top, with no dirt or algae. The camera or TV gantry is a skeletal scaffold cube sitting on top of the roof, with no access ladder, no fixings to the roof structure and no platform rails. It reads as a placeholder. There is no gutter, downpipes or fascia flashing, and no club name on the fascia, which every non-league stand has.",
+    "suggestions": [
+      "Add a trapezoidal profiled-sheet normal map (32 mm deep ribs at 200 mm pitch) on both faces, with visible purlins (Z-section, 1.5 m spacing) and 2-3 rafters on the underside. Use about 1-2k tris for the whole roof plus a tiling 256 px normal map.",
+      "Add a 150 mm box gutter along the rear and front, with two downpipes on the end walls. Add a fascia board along the front truss carrying the club name decal in club colours.",
+      "Columns: change them to UC/I-sections or slimmer 168 mm CHS with base plates (four bolts) and welded cap plates. Add bolted haunch plates where they meet the truss.",
+      "Gantry: either remove it or make a proper gantry. That means a mesh-floor platform with toe boards and handrails, a caged access ladder down the back wall, and fixings into the rafters.",
+      "Weathering: green algae streaks at the low edge of the sheet, dirt on the rooflight band, and pigeon-dropping streaks on the truss."
+    ],
+    "renderer_notes": "The flat-shaded underside is partly a no-GI and no-AO effect, but there is also no geometry or normal detail there to catch light."
+  },
+  {
+    "asset": "stadium_sunday_league:exterior/facade",
+    "score": 38,
+    "pass": false,
+    "summary": "Stand rear is a plain brown wall with a small flat-roofed kiosk/clubhouse box and a sign; very little to read and mostly untextured.",
+    "critique": "From the aerial three-quarter view, the stand's rear and sides are uniform brown-tan planes. A cream fascia strip runs along the top. A small boxy annex with dark door openings sits on the back, with a flat canopy over a serving hatch and a green name sign. There is no brick bond, windows, doors with frames, signage clutter, external lighting, CCTV, turnstile block or perimeter fencing. A real non-league ground's rear elevation is cluttered: a breeze-block or brick wall with painted club crest, a tea-bar hatch with a roller shutter, turnstile huts, palisade or weldmesh fencing, bins and a car-park edge. The tall pale square column standing alone to the right of the stand (detail view, bottom-left) looks like an orphaned object with no function.",
+    "suggestions": [
+      "Texture the rear wall with a brick (215x65 mm bond) or painted-block material (512 px tiling) plus a 1 m grime base band, and add a cream render plinth.",
+      "Add modular elevation details as cheap instances: a steel door with frame (about 40 tris), a roller-shutter tea-bar hatch with a menu board decal, 2-3 wall-mounted floodlights, a CCTV dome, a turnstile hut (3x2x2.5 m) and a club crest decal.",
+      "Perimeter: run a 2.4 m palisade or weldmesh fence around the ground with a gate at the turnstiles. One instanced 2.5 m panel at about 100 tris is cheap and makes the ground read as an enclosed venue.",
+      "Delete or explain the stray pale column next to the stand. If it is a tunnel or flagpole, give it the correct geometry."
+    ],
+    "renderer_notes": "One detail view (top-right) frames only empty sky and a board edge; there is no facade close-up, so this score relies on the aerial and side views."
+  },
+  {
+    "asset": "stadium_sunday_league:floodlights",
+    "score": 46,
+    "pass": false,
+    "summary": "Six to eight slim tubular masts with small LED or lamp heads on cross-arms and base cabinets; correct for a step-6/7 ground but thin and low on detail.",
+    "critique": "Heights look about 15-18 m, which is correct for grassroots and non-league. The masts are tapered, with a small control box at the base and a 3-4 lamp headframe. From the aerial view each lamp head is a small grey rectangle with no visible visor or reflector, and the headframe has no cable trays or access steps. The masts are plain single-colour galvanised cylinders with no section joints, climbing pegs, access door or anti-climb guard. The lamps do not appear to be aimed: all heads face the pitch level and uniformly, whereas real fittings are individually tilted at different angles. Mast spacing along the touchlines is regular and plausible. The base cabinets are good touches, but the masts sit on bare grass with no concrete plinth.",
+    "suggestions": [
+      "Head frame: model each fitting as a 600x400x150 mm LED floodlight with a heat-sink fin normal map and an angled visor, at individual tilts (10-25 degrees down, ±10 degrees yaw). Add a cable tray along the cross-arm. That is about 150 tris per fitting.",
+      "Mast: add 2-3 swaged section joints, a base door at 0.8 m, a concrete plinth 0.8 m square and 150 mm high, an anti-climb collar at 3 m and a caged ladder or climbing pegs on one side (instanced pegs, 12 tris each).",
+      "Materials: galvanised spangle noise and darker weathering with rust bloom at the base and at joints. Add an optional emissive state for night scenes."
+    ],
+    "renderer_notes": "No emissive or night state was shown, so the light output could not be judged."
+  },
+  {
+    "asset": "stadium_sunday_league:pitch & goals & nets",
+    "score": 58,
+    "pass": false,
+    "summary": "Mown-stripe pitch with correct markings, convincing goalmouth and centre-circle bald patches, and good white goals with nets; the strongest part of the ground.",
+    "critique": "Markings (halfway line, centre circle, boxes, penalty arc, spots) are correctly laid out, and the line width looks right at about 100-120 mm. The worn goalmouths and centre-spot patches are the best part. They sit in exactly the right places, with mud-brown and patchy blending into the grass, which sells a well-used Sunday pitch. Problems: the mowing stripes are very high-contrast, perfectly straight and even. At low angles they look like painted bands rather than light catching mown grass in opposite directions. Real stripes are subtle (a 5-10 percent value difference) and view-dependent. The touchline worn strip (linesman's run) is present but faint. The lines are crisp and uniform at full brightness even across the bald goalmouths, where real paint thins, breaks up and goes muddy. The goals are good: a correct 7.32 x 2.44 m frame, a white round section, freestanding back-frame stanchions and a square-mesh net with plausible sag. The net mesh looks slightly too regular and taut. Real nets show knots, hang lower at the back and have ground pegs or weights. There are no anchor weights or sandbags on the freestanding goals, which grassroots clubs always use.",
+    "suggestions": [
+      "Stripes: reduce the contrast to about 6-8 percent luminance, and make them view-angle-dependent (flip brightness with the dot of view direction and mowing direction) if the shader allows. Add slight waviness and a perpendicular cross-cut pass.",
+      "Line paint: modulate the line opacity with the wear mask. Lines should fade, break and go brown in the goalmouth and centre spot, and appear double-painted (slight offset ghost line) in places.",
+      "Goals: add sandbag or steel counterweights on the back-bar (2 per goal, about 100 tris each), plus net pegs or hooks at the base. Give the net mesh about 5 percent random sag, and add a slightly scuffed white paint with grass stains on the bottom 300 mm of the posts.",
+      "Pitch surface: add footprint and stud-scuff detail in the bald areas (a 512 px decal), divots in the 'D', and a slightly uneven ground plane (±30 mm low-frequency displacement)."
+    ],
+    "renderer_notes": "The distant farmland and the long diagonal shadow across the landscape (overall sheet top-right; detail sheet top-right and bottom-right) come from the environment or sun setup, not from the pitch."
+  },
+  {
+    "asset": "stadium_sunday_league:dugouts & tunnel",
+    "score": 44,
+    "pass": false,
+    "summary": "Two perspex-sided team shelters with bright green flat roofs in front of the stand; correct type for this level but boxy and clean, and no tunnel or player entry is visible.",
+    "critique": "The dugouts are rectangular boxes about 4-5 m long with clear sides, a white or grey back and a flat lime-green roof. Benches are faintly visible inside. They sit on a concrete pad, and the touchline technical-area markings (dashed white lines) are present, which is good. Problems: the roof is a flat slab with a saturated, uniform lime green that clashes with the stand's darker green. Real units use curved polycarbonate or aluminium-framed roofs with a fascia drip edge. The clear panels have no aluminium frame sections, rivets, scratches or dirt film. The back panel is plain white. There are no club or sponsor decals and no rear seat backs. There is no visible tunnel, player walkway or retractable tunnel. At this level, players walk out from the clubhouse through a gap in the barrier, often under a short telescopic tunnel or a caged walkway, and none is shown.",
+    "suggestions": [
+      "Rebuild the shell with an extruded aluminium frame (40x40 mm) at all edges and mullions, a curved or sloped roof with a 30 mm drip lip, and polycarbonate panels with roughness 0.15, slight grey tint and dirt streaks on the lower 200 mm. That is about 400 tris per shelter.",
+      "Inside: bucket seats or a bench with back, a club-crest decal on the back panel, 'HOME' and 'AWAY' signage, and a water-bottle crate.",
+      "Tone the roof green down to match the stand's club green (lower saturation), with some algae at the drip edge.",
+      "Add a player walkway: either a 2.5 m-wide telescopic fabric tunnel (about 600 tris, extended state) from the clubhouse corner to the halfway line, or a fenced walkway with a gate in the pitch-side barrier."
+    ],
+    "renderer_notes": "The transparent panels lack reflections (no SSR or reflection probe), so they read flatter than real polycarbonate would."
+  },
+  {
+    "asset": "stadium_sunday_league:advertising boards & screens",
+    "score": 50,
+    "pass": false,
+    "summary": "Rows of sponsor boards with plausible local-business branding and good typography; flat-printed planks with no frame, supports or weathering.",
+    "critique": "The sponsor content is spot-on for a grassroots ground: local garages, builders, a sports shop, with legible typography and plausible layout (name, strapline). The boards are angled at different tilts and some sit on bare grass, which suits a pitch-side layout. Problems: each board is a single flat panel with crisp vector print and no visible frame, fixing legs, bolts or back support. Real perimeter boards at this level are aluminium composite or painted ply on steel legs or a post-and-rail barrier, with visible edges, faded and peeling vinyl, mud splash on the lower edge and slight warping. Some boards tilt back steeply, as in the detail-view foreground, which reads more like a sloped 3D carpet than an upright fixed board. There is no consistent board height or alignment, and the joins between adjacent boards do not line up. All colours are bright and unfaded. There is no screen or scoreboard, which is fine at this level, but a small manual scoreboard or a hand-painted club sign is typical.",
+    "suggestions": [
+      "Geometry: give each board a 20 mm thickness, a 30 mm aluminium edge trim, and 2 rear A-frame legs or posts fixed to a pipe-rail barrier (about 80 tris per board). Keep them upright at 0-10 degrees back-tilt along touchlines.",
+      "Weathering: a UV-fade mask (sky-facing area lighter, red and blue shifting toward pink and cyan), peeling vinyl corners, mud splash on the bottom 150 mm, and rivet or screw heads at the corners. A 256 px shared grime overlay multiplied over each print keeps cost low.",
+      "Layout: snap boards to a common height (900 mm) and baseline, with 20-50 mm gaps or overlaps. Add a rail-fixed pitch-side barrier (48 mm pipe rail on posts at 2 m) that the boards hang on.",
+      "Add one manual scoreboard (painted timber 2 x 1 m with hook-on number plates) or a painted 'Welcome to...' gable sign for grassroots flavour."
+    ],
+    "renderer_notes": "Text is crisp; texture filtering is fine."
+  }
+]

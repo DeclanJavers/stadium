@@ -29,6 +29,8 @@ DEFAULTS = {
     "line_color": "#f5f5f0",
     "hand_painted": 0.0,      # 0 = machine-painted, 1 = wobbly volunteer lines
     "optional_marks": True,
+    "markings": "full",       # full | outline (small-sided: touchlines, halfway, centre circle) | none
+                              # | 5v5 | 7v7 | 9v9 (FA youth formats, see YOUTH)
     "seed": 1,
 }
 
@@ -39,6 +41,16 @@ CIRCLE_R = 9.15
 PEN_MARK = 11.0
 SPOT_R = 0.11
 CORNER_R = 1.0
+
+# FA youth formats (FA Rules: goalpost and pitch sizes; FA mini-soccer and 9v9 guidance), metres:
+# penalty area (depth, half width), goal area (depth, half width), penalty mark, centre circle.
+# 5v5 has a curved area round the goal instead; in 5v5 and 7v7 the halfway line is the retreat
+# line, in 9v9 a dashed retreat line runs midway between the halfway line and each penalty area.
+YOUTH = {
+    "5v5": {"curved_area": 5.94, "circle": 2.75},
+    "7v7": {"area": (9.14, 8.23), "mark": 7.32, "circle": 4.57},
+    "9v9": {"area": (11.89, 14.63), "goal_area": (3.66, 6.10), "mark": 8.23, "circle": 6.4, "retreat": True},
+}
 
 
 def resolve(params):
@@ -63,12 +75,22 @@ def marking_paths(p):
     L, W, w = p["length"], p["width"], p["line_width"]
     hl, hw = L / 2, W / 2
     lines, discs = [], []
+    kind = p.get("markings", "full")
+    if kind == "none":
+        return lines, discs
     # boundary (lines belong inside the field)
     lines.append((np.array([[hl - w / 2, hw - w / 2], [-hl + w / 2, hw - w / 2],
                             [-hl + w / 2, -hw + w / 2], [hl - w / 2, -hw + w / 2]]), True))
     lines.append((np.array([[0, -hw + w / 2], [0, hw - w / 2]]), False))
-    lines.append((M.arc((0, 0), CIRCLE_R - w / 2, 0, 2 * np.pi, 0.08)[:-1, :2], True))
+    y = YOUTH.get(kind)
+    r_c = y["circle"] if y else CIRCLE_R if kind == "full" else min(CIRCLE_R, W / 6)
+    lines.append((M.arc((0, 0), r_c - w / 2, 0, 2 * np.pi, 0.08)[:-1, :2], True))
     discs.append(((0.0, 0.0), SPOT_R))
+    if y:
+        _youth_marks(y, hl, hw, w, lines, discs)
+        return lines, discs
+    if kind != "full":
+        return lines, discs
     for s in (1, -1):
         gx = s * (hl - w / 2)
         for depth, half in ((PENALTY_AREA, GOAL_HALF + PENALTY_AREA), (GOAL_AREA, GOAL_HALF + GOAL_AREA)):
@@ -92,6 +114,35 @@ def marking_paths(p):
                 x = s * (hl - CORNER_R - CIRCLE_R)
                 lines.append((np.array([[x, t * (hw + 0.05)], [x, t * (hw + 0.55)]]), False))
     return lines, discs
+
+
+def _youth_marks(y, hl, hw, w, lines, discs):
+    """Penalty and goal areas, penalty marks, corner arcs and retreat lines of a youth format."""
+    for s in (1, -1):
+        gx = s * (hl - w / 2)
+        if "curved_area" in y:
+            a = math.pi if s > 0 else 0.0
+            lines.append((M.arc((s * hl, 0), y["curved_area"] - w / 2, a - math.pi / 2, a + math.pi / 2, 0.08)[:, :2], False))
+        for key in ("area", "goal_area"):
+            if key in y:
+                depth, half = y[key]
+                fx = s * (hl - depth + w / 2)
+                yy = half - w / 2
+                lines.append((np.array([[gx, yy], [fx, yy], [fx, -yy], [gx, -yy]]), False))
+        if "mark" in y:
+            discs.append(((s * (hl - y["mark"]), 0.0), SPOT_R))
+        for t in (1, -1):
+            a0 = math.atan2(0, -s)
+            a1 = math.atan2(-t, 0)
+            d = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+            lines.append((M.arc((s * hl, t * hw), CORNER_R - w / 2, a0, a0 + d, 0.05)[:, :2], False))
+        if y.get("retreat"):
+            # dashed: a metre of paint, a metre gap, across the pitch
+            x = s * (hl - y["area"][0]) / 2
+            yy = -hw + w
+            while yy + 1.0 <= hw - w + 1e-9:
+                lines.append((np.array([[x, yy], [x, yy + 1.0]]), False))
+                yy += 2.0
 
 
 def _step(pts, base):
@@ -210,11 +261,9 @@ def _gauss(nb, x, y, cx, cy, sx, sy):
 
 def surface_group(p):
     """Shader node group: grass colour, roughness, soil mask and stripe factor at the shading point."""
-    name = "PitchSurface"
-    old = bpy.data.node_groups.get(name)
-    if old:
-        bpy.data.node_groups.remove(old)
-    tree = bpy.data.node_groups.new(name, "ShaderNodeTree")
+    # one group per surface: materials built earlier (other pitches, training-ground lawns) keep theirs
+    tree = bpy.data.node_groups.new("PitchSurface", "ShaderNodeTree")
+    p["_surface_group"] = tree.name
     for nm, kind in (("Color", "NodeSocketColor"), ("Roughness", "NodeSocketFloat"),
                      ("Soil", "NodeSocketFloat"), ("Stripe", "NodeSocketFloat")):
         tree.interface.new_socket(nm, in_out="OUTPUT", socket_type=kind)
@@ -261,30 +310,48 @@ def surface_group(p):
     elif natural:
         view = nb.vmath("SCALE", geo["Incoming"], scale=-1.0)
         d = nb.vmath("DOT_PRODUCT", nb.vmath("MULTIPLY", view, (1.0, 1.0, 0.0)), lean)
+        if p["mow"].get("pattern") == "circles":
+            # the lean swings round each ring; a little crushed-blade contrast keeps ring edges readable
+            d = nb.add(nb.mul(d, 0.75), nb.mul(s, 0.3))
         stripe = nb.madd(d, k, 1.0)
     else:
         stripe = nb.madd(s, k, 1.0)
     col = nb.mix(1.0, col, nb.comb(stripe, stripe, stripe), blend="MULTIPLY")
 
-    # wear: goalmouths, keeper's line, centre spot, assistant referees' lanes
+    # wear where play happens (the viewer's shader.wgsl has the same field): an oval in each
+    # goalmouth, the keeper's crease along the goal line, the penalty spots, the centre spot, a faint
+    # channel down the middle, and the assistant referees' lanes (each on their own half)
+    # (sized for a 105 m pitch, scaled down with smaller ones: youth formats have no assistant referees)
+    ks = min(max(L / 105.0, 0.35), 1.0)
+    lane_k = min(max((ks - 0.6) / 0.3, 0.0), 1.0)
+    lane_k = lane_k * lane_k * (3 - 2 * lane_k)
     terms = []
     for sgn in (1, -1):
-        terms.append(_gauss(nb, x, y, sgn * (L / 2 - 5.5), 0.0, 4.5, 6.0))
-        terms.append(nb.mul(_gauss(nb, x, y, sgn * (L / 2 - 1.2), 0.0, 1.4, 3.6), 1.4))
-        terms.append(nb.mul(_gauss(nb, x, y, sgn * (L / 2 - PEN_MARK), 0.0, 0.8, 0.8), 0.8))
-        lane_y = sgn * (W / 2 + 1.0)
-        half = nb.smooth(-2.0, 2.0, nb.mul(x, float(sgn)))
-        lane = nb.mul(_gauss(nb, x, y, 0.0, lane_y, 1e4, 0.7), nb.smooth(0.45, 0.7, nb.noise(pos, 0.9, detail=3)))
-        terms.append(nb.mul(nb.mul(lane, half), 0.4))
-    terms.append(nb.mul(_gauss(nb, x, y, 0.0, 0.0, 2.2, 2.2), 0.7))
+        terms.append(_gauss(nb, x, y, sgn * (L / 2 - 4.0 * ks), 0.0, 3.2 * ks, 5.0 * ks))
+        terms.append(nb.mul(_gauss(nb, x, y, sgn * (L / 2 - 0.9), 0.0, 1.0, 3.4 * ks), 1.3))
+        terms.append(nb.mul(_gauss(nb, x, y, sgn * (L / 2 - PEN_MARK * ks), 0.0, 0.9, 0.9), 0.9))
+        if lane_k > 0:
+            lane_y = sgn * (W / 2 + 1.0)
+            half = nb.smooth(-2.0, 2.0, nb.mul(x, float(sgn)))
+            lane = nb.mul(_gauss(nb, x, y, 0.0, lane_y, 1e4, 0.7), nb.smooth(0.45, 0.7, nb.noise(pos, 0.9, detail=3)))
+            terms.append(nb.mul(nb.mul(lane, half), 0.45 * lane_k))
+    terms.append(nb.mul(_gauss(nb, x, y, 0.0, 0.0, 2.2 * ks, 2.2 * ks), 0.7))
+    terms.append(nb.mul(_gauss(nb, x, y, 0.0, 0.0, 25.0 * ks, 7.0 * ks), 0.25))
     wear_f = terms[0]
     for t in terms[1:]:
         wear_f = nb.add(wear_f, t)
-    breakup = nb.noise(pos, 1.6, detail=6, rough=0.65)
+    # solid cores, ragged edges: low-frequency breakup only where the wear thins out
+    breakup = nb.add(nb.mul(nb.noise(pos, 0.5, detail=3), 0.6), nb.mul(nb.noise(pos, 2.0, detail=4), 0.4))
     wear_amt = p["wear"] * (1.0 if natural else 0.25)
-    wmask = nb.clamp01(nb.mul(nb.mul(wear_f, nb.madd(breakup, 1.4, -0.2)), wear_amt * 1.6))
-    soil_col = nb.mix(nb.noise(pos, 6.0, detail=5), srgb("#4b3826"), srgb("#6b553a"))
-    col = nb.mix(nb.mul(nb.smooth(0.12, 0.55, wmask), 0.85), col, srgb(g["color_dry"]))
+    core = nb.mul(wear_f, wear_amt * 1.35)
+    edge = nb.math("MINIMUM", nb.mul(core, 2.5), 1.0)
+    wmask = nb.clamp01(nb.add(core, nb.mul(nb.mul(nb.sub(breakup, 0.5), 0.7), edge)))
+    # bare soil is a muddy grey-brown, thin turf a washed-out straw
+    soil_col = nb.mix(nb.noise(pos, 6.0, detail=5), srgb("#574a38"), srgb("#6f604a"))
+    dry = srgb(g["color_dry"])
+    lum = 0.3 * dry[0] + 0.55 * dry[1] + 0.15 * dry[2]
+    thin = tuple(0.65 * c + 0.35 * lum for c in dry[:3]) + (1.0,)
+    col = nb.mix(nb.mul(nb.smooth(0.12, 0.55, wmask), 0.8), col, thin)
     soil = nb.smooth(0.45, 0.9, wmask)
     col = nb.mix(soil, col, soil_col)
 
@@ -417,7 +484,7 @@ def add_blades(p, root, lines_obj, region, focus, density=20000.0, near=3.0, far
     col = collection("GrassBlades")
     shapes_col = collection("BladeShapes")
     shapes = _blade_shapes(p, shapes_col)
-    group = bpy.data.node_groups["PitchSurface"]
+    group = bpy.data.node_groups[p["_surface_group"]]
     bm = blade_material(p, group)
     for o in shapes:
         o.data.materials.append(bm)

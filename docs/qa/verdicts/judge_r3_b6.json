@@ -1,0 +1,119 @@
+[
+  {
+    "asset": "bramble",
+    "score": 52,
+    "pass": false,
+    "summary": "Believable low mounded shrub with arching sprays, flowers and berries, but it reads as a generic leafy bush rather than a bramble: no thorny cane structure, one-tone saturated foliage that melts into the lawn.",
+    "critique": "Good: the mound is low and wide with lax outer sprays that droop to the ground, the cast shadow is properly broken, and the white flowers and red/black fruit are a nice species cue. Problems: (1) Species read. Bramble (Rubus fruticosus) is defined by thick arching first-year canes (8-15 mm) that loop up to 1-1.5 m and come down to root at the tips, red-purple to brown with prickles. Here the canes are thin, mostly hidden, and the outer stems are straight wiry sprigs, so the silhouette is a dome with a few strays, not a tangle of arches. (2) Leaves. They look like small lobed maple/currant leaves at one size. Bramble leaves are compound (3 or 5 serrated leaflets on a palmate stalk), dark matt green on top, noticeably paler and greyer underneath, often with purple-red tints and dead brown leaves inside. All leaf cards here share one mid-saturated green that is almost the lawn colour, so the plant has no value contrast with the ground. (3) The interior has no depth. Real thickets go nearly black inside, with dead grey canes and leaf litter; this one is evenly lit and see-through like a single shell. (4) Fruit and flowers are scattered evenly like confetti. Real fruit comes in terminal clusters (5-15 per truss) at different ripeness (green, red, black) on the tips of second-year canes. (5) Scale is plausible (~1 m tall, 2.5 m spread).",
+    "suggestions": [
+      "Build the skeleton from 8-14 thick arching canes: a quadratic arc from the crown rising 0.8-1.4 m and landing 1.2-2 m out, 6-sided tubes 10 mm diameter tapering to 4 mm, with albedo around sRGB (95,45,50) red-purple shading to (110,85,60) on older canes. Let 2-3 tips touch the ground and 'root'. Add a few prickles as tiny instanced cones or a cheap alpha card strip. About 1.5-2.5k tris.",
+      "Replace the leaf card with a compound-leaf atlas tile: 3 and 5 serrated leaflets on one stalk, albedo top around (45,70,35), underside lighter and greyer (110,125,95) via a two-sided back-face tint, 10-15% of cards in purple/red autumn tones and 5% dead brown. One 512x512 atlas with 4 variants.",
+      "Darken the interior: apply AO or a vertex-colour gradient from the crown centre outward, down to ~30% albedo at the core, and add a few bare grey dead canes inside. This gives the value contrast against the lawn that it badly needs.",
+      "Group fruit into terminal trusses on cane tips with mixed ripeness (green 30%, red 30%, glossy black 40%, black roughness 0.25). Show flowers only on some trusses. Instance one low-poly drupelet-cluster mesh (~40 tris).",
+      "Break the dome: make one side taller and add a couple of high arching canes above the mass, so instanced copies do not all read as the same hemisphere."
+    ],
+    "renderer_notes": "The lawn's saturated green is close to the foliage colour and flattens the read. Asset-side contrast is still the fix."
+  },
+  {
+    "asset": "storage_container",
+    "score": 62,
+    "pass": false,
+    "summary": "Correct 20 ft ISO proportions with a convincing door end (lock rods, cam keepers, handles, plates), but the side corrugation is too shallow, the rust is a uniform sprinkle and the steel is too clean and flat.",
+    "critique": "Proportions check out: the side elevation is about 2.33:1, matching 6058 x 2591. Corner castings, top/bottom rails, horizontally corrugated doors, four locking bars with keepers and handles, CSC/data plates, the owner code KSTU 482913 5 and the 22G1 size/type code are all present and well placed. That door end is the strongest part. Problems: (1) Side-wall corrugation is mostly normal-map depth. Silhouette edges and grazing views show nearly flat panels. Real trapezoidal corrugation is about 36 mm deep at about 278 mm pitch on a 20 ft side, and it should make a visibly crenellated top edge and shadow stripes. (2) The rust and paint loss is a uniform sprinkle of small orange dots over every face, including the mid-panel and roof, which reads as procedural noise. Real containers rust along the bottom side rail, corner castings, door sills, the cross-member ends, dented panel edges and roof pooling areas, with streaks running down from the top rail. (3) The paint is a single flat blue with no chalky UV fade on the roof and upper sides, no dents, no repaint patches in a slightly different blue, and no dirt band at the base. (4) The KESTREL logo distressing is fine. The black/white marking text is small and soft, and the door end has no ventilation grilles or customs seal plate. (5) The roof is fine, though the rust blotches look smeared.",
+    "suggestions": [
+      "Model the side corrugation in geometry: about 22 trapezoidal ribs per 20 ft side, 36 mm deep, in a single extruded profile. That adds about 400 tris per side and fixes the silhouette and the grazing light. Keep the normal map only for small dents.",
+      "Drive wear from masks, not uniform noise: rust bands along the bottom rail (0-150 mm) and corner castings, rust run streaks from the top rail (vertical stretched noise, 300-900 mm long), and paint chips concentrated at the door edges, hinge pins and rib crowns (curvature mask). Keep the mid-panels mostly clean.",
+      "Add paint variation: a roof and upper-side fade toward a chalky lighter blue (roughness 0.7 vs 0.5), 1-2 rectangular repaint patches in a slightly different blue covering old lettering, and a grime gradient on the lower 300 mm.",
+      "Add 2-4 shallow dents or creases (vertex offsets on the corrugation, ~10-20 mm) per side so instanced units do not look pressed from one die, and randomise them per seed.",
+      "Add the small missing parts: two ventilation grilles near the top rail on each side, forklift pockets in the bottom rail (20 ft only), and sharper, larger owner-code and tare/max-gross stencils on the right door, per ISO 6346 layout."
+    ],
+    "renderer_notes": "There is no GI, so the corrugation recesses get no bounce darkening; the geometric ribs and AO would help."
+  },
+  {
+    "asset": "grass_tuft",
+    "score": 62,
+    "pass": false,
+    "summary": "Nicely made tussock with fine arching blades, dead straw at the base and seed stems, but too few, too uniform and too symmetrical, and the one tall seed spike reads as a separate prop.",
+    "critique": "Good: the blades are thin and taper, they arch outward from a tight crown, there are dead buff-coloured blades at the base, and the colour is a slightly bluish tussock green distinct from the mown lawn. The close-up holds up reasonably well. Problems: (1) The tuft is a radially symmetric fountain of one blade length; real tussocks (Deschampsia, Dactylis) are lopsided, with flopped and broken blades, a dense dark core and much more dead material (often 30-50% straw). (2) There are only one or two flowering culms, and the tall one rises about 2-3x the tuft height on a single bare stalk with sparse seeds, which looks like a sprig stuck in. Real culms come in groups of 5-20 at similar heights, with a feathery panicle and a slight lean or nod. (3) The base sits on the ground with no thatch or litter skirt, and the blade colour runs one green from base to tip, with no yellowing toward the tips and no darker sheaths. (4) At distance the tuft is sparse and partly transparent.",
+    "suggestions": [
+      "Make the shape asymmetric: offset the crown centre by 10-20% of the radius, bias the blade length (0.6-1.3x) and droop by azimuth, and let 10-15% of blades fold or break at mid-length. This costs no extra tris.",
+      "Raise the share of dead blades to about 30%: albedo around (165,145,100), roughness 0.8, mostly underneath and outside the living blades, plus a flat litter disc (one alpha quad, 2 tris) of straw under the base.",
+      "Replace the single tall culm with 6-12 culms of similar height (1.4-1.8x the tuft), each with a nodding panicle on an alpha card (~4 tris per culm). Tint the panicles purple-brown to buff.",
+      "Add a vertical colour gradient: base sheaths darker and more yellow (60,70,35), mid-blade green, tips lighter and yellowing (150,150,90). Use vertex colour or a UV-v gradient in the blade texture.",
+      "Increase the blade count in the core (or use 2-3 crossed alpha cards for the dense centre) so the tuft is opaque at the middle and stays visible at distance. Target under 600 tris per instance."
+    ],
+    "renderer_notes": "The ground around the tuft shows a circular patch of darker, coarser grass texture that is not part of the asset."
+  },
+  {
+    "asset": "ball_cart",
+    "score": 66,
+    "pass": false,
+    "summary": "Credible training ball cart: powder-coated steel frame, welded mesh, hinged lid with a stay, push handle with grip, braked castors and well-textured balls. It is let down by factory-new cleanliness and thin welds/joints.",
+    "critique": "Good: the proportions match a typical cart (~1.1 m to the top rail, ~0.8 x 0.6 m footprint). The 50 mm mesh is believable, the lid hinges at the back with a support stay, the handle has a rubber grip, the castors have swivel forks and red brake tabs, and there is a mid-height rail. The balls are a good touch: a mix of white/blue, orange and yellow trainers with panel patterns and a printed label. Problems: (1) Everything is pristine: dark green powder coat with no chips at the corners, no rust at welds, no scuffed bottom rail, no grass or mud on the castors and lower mesh. Training balls are spotless too. Real training kit is scuffed, grass-stained and faded. (2) The mesh-to-frame joints have no visible welds and the mesh wires are uniformly thin, with no wraps or welded beads. The frame tube looks round and fine, but the corner joints are plain intersections. (3) The lid has no latch or hasp and padlock, which every club ball cart has. (4) The balls are packed in an orderly lattice (visible in the side view). They sit in neat layers rather than piled at random, and none is deflated or squashed against the mesh. (5) The castor wheels are plain black discs without a tread or hub detail, and the castor plates lack bolt heads.",
+    "suggestions": [
+      "Add wear masks: powder-coat chips to bare grey steel and orange rust on edge curvature (top rail, handle bends, lid corners, bottom rail), a mud and grass-stain gradient on the bottom 200 mm and castors, and a slightly faded, chalkier green on top surfaces (roughness 0.55 to 0.7). Texture only, no tris.",
+      "Dirty the balls: per-ball scuffs, grass stains (green-brown smears on white panels), faded print, and roughness variation 0.35-0.6. Randomise the ball rotation and give 1-2 balls a slightly flattened shape.",
+      "Pile the balls with a physics-style drop (or jitter positions by 20-40 mm and rotations randomly) so the stack is not a lattice. Let a few rest against the mesh with a 5-10 mm bulge.",
+      "Add a hasp and staple at the lid front plus a small padlock (~150 tris), and weld beads at the frame corners and mesh-to-frame junctions (tiny torus segments, or a normal-map ring).",
+      "Detail the castors: a hub cap, a tread groove, and 4 bolt heads on each top plate (~100 tris per castor)."
+    ]
+  },
+  {
+    "asset": "seat.tipup_classic.std",
+    "score": 55,
+    "pass": false,
+    "summary": "Right idea (moulded tip-up shell on a steel pedestal with a pivot axle, ribbed underside, seat number) but the ribs read as wire rods, the pan and back form an odd V, and the hardware is crude.",
+    "critique": "Good: a sculpted polypropylene shell with a contoured back, a tip-up pan shown raised, a cast-look pedestal on a bolted base plate, a seat-number plaque on the back and a mounting spine. Problems: (1) The stiffening ribs on the back and pan underside are thin rods that stand off the shell. In the side view they are separate thin curves with daylight between them and the shell. Real moulded ribs are solid webs 2-4 mm thick, 10-20 mm deep, fused to the shell and filleted, forming a grid. (2) Pan-back relationship: in the side view, the back leans well back and the raised pan leans forward-ish, so the two make a wide V and the pan looks hinged too far forward of the back. On real tip-up seats the raised pan stands near-vertical tucked against the front of the back's lower edge, leaving a gangway clearance of 300+ mm. (3) The pivot is a long bar running past both brackets, with nut caps on the ends, like a generic axle. Real seats have a short spring-loaded pivot inside a moulded hinge housing or a bracket on each side of the pan, usually hidden. (4) The pedestal is a plain box-section post. Real riser/floor brackets are folded or cast with lightening holes and gussets, typically painted dark grey. (5) The red plastic is uniform with a faint noise. There is no UV fade on the top surfaces, no scuffs or dirt in the pan, and no moulded logo. (6) The concrete pad under the plate is reasonable for a sample, but if the seat is instanced on terraces it should be optional.",
+    "suggestions": [
+      "Rebuild the ribs as solid webs fused to the shell: extrude 3 mm walls 12-15 mm deep on a 3x3 grid with a 2 mm fillet into the shell. About 300-500 tris per shell. Remove the stand-off gap entirely.",
+      "Fix the tip-up pose: put the pivot 30-50 mm in front of the back's lower edge, rotate the raised pan to 85-90 degrees so it stands nearly vertical against the back, and check that the gap between pan and back is under 40 mm.",
+      "Replace the through-axle with two short moulded hinge bosses on the pan sides (cylinders 35 mm diameter, 30 mm long) meeting a folded steel bracket on each side. Hide the spring. About 200 tris.",
+      "Give the pedestal a folded C-section or tapered cast form with a gusset and one lightening hole, plus 4 visible anchor bolts on the base plate (already partly there). Use dark grey (60,62,65) semi-matt rather than near-black.",
+      "Add plastic wear: a sun-fade on upward-facing surfaces toward (200,90,85) with roughness 0.55 to 0.7, grime in the pan crease and rib roots, and a small moulded manufacturer logo or row/seat number embossing. Randomise the fade per instance via vertex colour for whole-stand variety."
+    ]
+  },
+  {
+    "asset": "mini_goal",
+    "score": 58,
+    "pass": false,
+    "summary": "Steel mini goal with correct ~1.5 x 1 x 0.8 m proportions, bent top corners, rear stays and net clips, but the net is a sparse, wobbly, broken-looking string grid and the frame is showroom clean.",
+    "critique": "Good: the frame proportions and the ~60 mm tube diameter look right, the top corners are swept bends with corner fittings, the side stays run down to a rectangular ground frame, and there are net clips along the crossbar and posts and black foot caps. Problems: (1) The net is the main fault. The mesh is coarse (about 150-200 mm cells), the strands are irregular and wavy with visible gaps where cords appear to stop, and the net has no sag, no knots, and no tension toward the clip points. Real mini-goal nets are 3-4 mm braided polyethylene on about 100 mm square mesh with visible knots. They drape slightly between clips and are pulled tight at the corners, so they read as a regular, slightly sagging lattice. (2) The cords are almost the same white as the frame and are thin enough to shimmer and disappear at distance. (3) The frame is pristine white with uniform roughness: no grass and mud staining at the feet, no scuffing on the front of the posts from ball strikes, no rust at the weld seams and clip holes. (4) There is no ground anchoring (pegs or U-stakes over the ground bar), and the ground bar sits on the grass with no contact shadow.",
+    "suggestions": [
+      "Regenerate the net as a regular 100 mm diamond or square lattice: straight cord segments between nodes with a small knot sphere or quad at each node, catenary sag of 10-30 mm between clip points, and tension pulling the mesh toward each clip. Render the cords as camera-facing ribbons 4 mm wide, or bake the net into a 1024 px alpha texture on 5 planes (~10 tris) for distance LOD.",
+      "Make the net colour distinct from the frame (off-white (220,220,210), or green or black as variants), with roughness 0.8 and a slight alpha-to-coverage fade, so it doesn't shimmer away at range.",
+      "Add frame wear: green-brown grass staining and dried mud on the bottom 150 mm, scuffs on the front faces of the posts and crossbar, slight yellowing of the white powder coat on top surfaces, and rust spots at clip holes and corner joints.",
+      "Add 2-4 U-shaped ground pegs over the rear ground bar (~40 tris each) and a soft contact AO strip under the ground frame."
+    ],
+    "renderer_notes": "Thin net cords alias at distance in this forward renderer; the alpha-card LOD would help."
+  },
+  {
+    "asset": "container_40",
+    "score": 60,
+    "pass": false,
+    "summary": "Correct 40 ft proportions (~4.7:1) with the same good door end as the 20 ft, but it reuses the 20 ft surface treatment: shallow corrugation, uniform rust sprinkle, an undersized logo and a roof rust pattern copied verbatim.",
+    "critique": "Proportions are right: the side elevation is about 4.67:1 vs 12192 x 2591. The door end has the same convincing locking bars, keepers, handles and plates as the 20 ft. Problems: (1) The same faults as the 20 ft: corrugation that is essentially flat in silhouette, a uniform rust/chip sprinkle over every surface, flat single-tone paint, and no dents, fade or repaint patches. (2) The top-down detail is the same rust blotch layout as the 20 ft roof (same blotch shapes in the same relative positions), so the two read as the same texture stretched or tiled. Seen side by side in a yard, this repetition will be obvious. (3) The KESTREL logo is the same size as on the 20 ft and looks small on a 12 m side. Operators scale the logo up to span much of the side on 40 ft boxes. (4) The 40 ft has no gooseneck tunnel at the floor end and no visible underside cross-members along the bottom rail. These are cues for a 40 ft unit seen from low angles. (5) The long side has no visible panel joins: real 40 ft sides are welded from several corrugated sheets with faint seams and slightly different paint ageing.",
+    "suggestions": [
+      "Geometric corrugation as for the 20 ft: about 46 trapezoidal ribs per side, 36 mm deep (about 800 tris per side), with 4-5 faint vertical sheet seams.",
+      "Use world- or object-space wear masks seeded per instance, not a shared UV texture, so the roof and side rust differ between the 20 ft and 40 ft and between copies. Concentrate rust on the bottom rail, corner castings and roof pooling areas, with streaks from the top rail.",
+      "Scale the operator logo to about 50-60% of the side length and about 1.2 m tall, centred, and repeat the owner code on the roof corner for top-down views.",
+      "Add the gooseneck tunnel recess at the front underside (a box cut of about 3 m x 1 m x 120 mm) and expose the bottom cross-member ends along the lower rail (small rectangles at 300-600 mm pitch, normal-mapped or a few hundred tris).",
+      "Add per-instance paint variation (hue jitter of plus or minus 5%, fade amount, 1-2 repaint patches), plus a few randomised dents, so a stack of 40 ft units doesn't look cloned."
+    ]
+  },
+  {
+    "asset": "tree_willow",
+    "score": 38,
+    "pass": false,
+    "summary": "The leaf cards are nice, but the tree structure is wrong: curtains hang as straight vertical columns from an invisible flat ceiling, not from arching limbs, giving a boxy, flat-topped, see-through block with bare black branch stubs poking through.",
+    "critique": "Weeping willow (Salix babylonica / x sepulcralis) reference: 12-20 m tall, 15-20 m crown spread, a short massive trunk 0.5-0.9 m in diameter that forks low into a few heavy ascending limbs, which arch over into a rounded dome, with thin pendulous branchlets cascading from every arch and reaching the ground at the outer edge. Problems: (1) The silhouette is a box: a flat top, straight vertical sides, and curtains that start at nearly the same height all round, so the crown reads as a cylinder of hanging tinsel. A real willow is a dome with a skirt, highest in the middle and sweeping down and out. (2) The hanging strands are not connected to the branch skeleton. The dark limbs end in bare stubs mid-crown while strands hang down independently from a plane above them, so the branches look like a separate tree buried in the foliage. Strands must grow off the arching branch tips. (3) The strands are dead straight and plumb. Real branchlets curve out from the limb before falling, overlap in layers, sway, and taper, longer at the outside. (4) The trunk is thin (it reads at about 0.25-0.3 m) and grey-brown-black with no bark furrows or buttressing. Willows have thick, deeply ridged grey-brown bark and often a leaning, gnarled trunk. (5) The crown is sparse and see-through, with the same density everywhere and no dark interior, so it lacks the heavy mass of a willow. (6) Close-up: the lanceolate yellow-green leaf texture with a lighter underside is good, but the leaves fan upward along the strand like feathers. Willow leaves hang down along the pendulous shoots. (7) The overall size looks small (about 8-10 m), with a crown narrower than its height plus skirt. Spread should be at least equal to height.",
+    "suggestions": [
+      "Rebuild the skeleton first: a trunk 0.6-0.8 m in diameter, 2-3 m to the first fork, 3-5 major limbs rising at 30-50 degrees then arching over (a quadratic bezier peaking at 10-14 m), and secondary branches continuing the arch outward and down. Generalised cylinders at 8-12 sides tapering, about 3-5k tris.",
+      "Spawn the pendulous branchlets from points along the arched branches (every 0.3-0.6 m on the outer 60% of each arch), each a curve that leaves the branch at 20-40 degrees below horizontal and bends to vertical under gravity, with length scaled so the outer ones reach 0.2-1 m above ground and the inner ones are shorter. Each strand is a 2-4 segment ribbon or a narrow alpha card with drooping leaves; target 400-800 strands, about 8-15k tris total.",
+      "Orient the leaves on the strand so they hang downward and slightly outward (leaf tip pointing down the strand), with a random roll; the current upward fan is backwards.",
+      "Add volume and shading: a darker inner layer of shorter strands near the trunk, AO or vertex darkening toward the crown interior (down to 40% albedo), and a slightly lighter, yellower outer skirt. Reduce gaps so the canopy is about 70-85% opaque from the side.",
+      "Bark: a ridged, deeply furrowed grey-brown material (base (95,85,75), roughness 0.9) with a vertical furrow normal map, a flared root base, and a slight trunk lean. Scale the whole tree to 14-16 m tall and 15-18 m spread to match a mature UK willow.",
+      "Provide a billboard or impostor LOD with the dome silhouette for distance instancing."
+    ],
+    "renderer_notes": "There is no wind animation in the viewer; static straight strands look even stiffer because of that, but the geometry problem stands regardless."
+  }
+]

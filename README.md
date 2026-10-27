@@ -24,6 +24,8 @@ $B -b --factory-startup -P tools/export_library.py                # asset librar
 viewer/build.sh --offline && viewer/target/release/stadium-viewer layouts/premier.json   # live stadium editor (see viewer/README.md)
 viewer/target/release/stadium-viewer out/stadiums/mega.game.glb   # real-time viewer for game exports
 (cd viewer && cargo test --offline --release --workspace)          # Rust port parity + editor tests
+$B -b --factory-startup -P tools/export_site.py -- layouts/training_superclub.json --game   # training ground -> out/sites/*.game.glb
+viewer/target/release/stadium-viewer layouts/training_premier.json   # live training-ground editor
 ```
 
 Review shots: `broadcast`, `behind_goal`, `goalmouth`, `goal_side`, `grass_macro`, `corner_flag`,
@@ -55,7 +57,52 @@ The first Cycles run compiles GPU kernels (about 5 minutes); later shots take 10
 | `premier` (three-tier bowl) | 61,192 |
 | `mega` (four-tier bowl) | 152,854 |
 
-A stadium is one JSON file; see `layouts/`. Grass types carry starting gameplay values (ball roll,
+| training ground layout | what it is |
+|---|---|
+| `training_sunday_league` | two rough-grass pitches, a single-storey changing pavilion, a gravel car park and maintenance containers among scrub, rubble and old courts |
+| `training_non_league` | floodlit drained pitch, rough pitch, floodlit 3G cage, portacabins, an old warehouse and container yard next door |
+| `training_championship` | four pitches plus one under construction, two-storey building, hydrotherapy block, goalkeeper area, old bowling green |
+| `training_premier` | riverside centre: floodlit match-replica pitch with filming tower and viewing deck, steel indoor hall, flagship building, solar-canopy car park |
+| `training_superclub` | seven pitches (six floodlit), full-size indoor hall with a second under construction, flagship and single-storey buildings, three car parks |
+
+| academy layout | what it is |
+|---|---|
+| `academy_cat4` | Category 4 (entry level): two full-size pitches, rough 9v9 pitches and more under construction, portacabins, a drop-off lay-by, among farm barns, old courts and a warehouse still to clear |
+| `academy_cat3` | Category 3: 5v5, 7v7, 9v9 and U13 pitches at FA sizes (some with FA colour-coded lines), a showpiece pitch with a 400-seat covered stand, 3G cage cluster, air dome, academy block, drop-off loop |
+| `academy_cat2` | Category 2: floodlit full-size grass and 3G pitches, goalkeeper area, academy centre with classrooms and sports science, air dome |
+| `academy_cat1` | Category 1: four floodlit pitches, a 60 m stand with filming tower, full-size indoor hall, a Category One centre with a scholars' lodge, secure arrival with barrier and CCTV |
+
+| building layout | what it is |
+|---|---|
+| `medical_t1` | Physio room (quality 1) in a one-storey unit: a first-aid room, treatment rooms with folding couches, stores |
+| `medical_t2` | Medical suite (quality 2): reception, curtained treatment bays with electric couches, doctors' rooms, a rehab gym |
+| `medical_t3` | Medical and rehab centre (quality 3), two storeys: hydrotherapy pool, recovery suite with ice baths and sauna, ultrasound and X-ray, sports science lab |
+| `medical_t4` | Performance medicine (quality 4), the largest size: adds cryotherapy, DEXA, an anti-gravity treadmill and isokinetic testing, sleep pods |
+| `scouting_t1` | Scouts' office (quality 1) in a one-storey office: desks with one screen, piles of match reports, a TV and DVD library, filing cabinets, an archive |
+| `scouting_t2` | Scouting department (quality 2): reception, an open-plan scouting office on bench desks, the head of recruitment's office, a video room, kitchen |
+| `scouting_t3` | Recruitment centre (quality 3), two storeys: a recruitment room with the squad-planning board, video analysis suites, an agents' lounge, a data science lab, a server room |
+| `scouting_t4` | Recruitment and data hub (quality 4), the largest size: adds a match centre with a nine-screen video wall, a boardroom table under a video wall, quiet booths |
+| `commercial_t1` | Club shop (quality 1) in a kiosk: a store with garment rails, a slatwall of kits and scarves and a mannequin, a ticket window, stock rooms |
+| `commercial_t2` | Store and café (quality 2): adds a café with its counter, back bar and menu board, a commercial kitchen, public toilets, a commercial office |
+| `commercial_t3` | Fan hub (quality 3), two storeys: a sports bar, a trophy room, a hospitality lounge, private dining, a function suite of banqueting tables |
+| `commercial_t4` | Hospitality and retail centre (quality 4), the largest size: adds a restaurant, a shirt-printing station, a second private dining room |
+| `media_t1` | Media room (quality 1) in a one-storey unit: a press room with roller banners, a top table and a tripod camera, an edit desk, kit store |
+| `media_t2` | Media suite (quality 2): reception, a press conference room with a sponsor backdrop and rows of press seats, a flash-interview set, edit suites, a podcast studio |
+| `media_t3` | Club media centre (quality 3), two storeys: a TV studio with an LED backdrop, pedestal cameras and a lighting grid, its gallery, a journalists' workroom, content studios, make-up |
+| `media_t4` | Broadcast and content hub (quality 4), the largest size: a second studio, more edit and podcast rooms, three studio cameras |
+
+Buildings with interiors (`medical_centre`, `scouting_centre`, `commercial_centre` and
+`media_centre` on the `building_lot` template) have two upgrade axes: the tier is quality (which
+rooms and kit, from `catalog/facilities.json`), the `size` option is expansion (unit, block, two-
+storey centre, campus). The `view` option opens them up: `closed`, `dollhouse` (no roof) or
+`cutaway` (walls cut at 1.3 m), with `floor` choosing the storey shown. Rooms are furnished from
+`catalog/rooms.json`.
+
+The site report grades an academy (`report.academy`): the category its built facilities reach and
+what the next one still needs, modelled on the Premier League's academy categories.
+
+A stadium is one JSON file; see `layouts/`. A training ground is a `site-layout/1` file
+(plots with states, facilities and tiers; [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#training-grounds-site-layout1)). Grass types carry starting gameplay values (ball roll,
 bounce, traction, wear rate, climate range) for the match engine to calibrate.
 
 ## Layout
@@ -68,6 +115,9 @@ kit/ads/       studio.py (creative rendering), placement.py (boards, carpets, TV
 kit/stands/    sightlines.py, geometry.py, patterns.py, roofs.py, facades.py, floodlights.py
                (pure numpy: the runtime generators the game can port)
 kit/assembler.py   layout JSON -> scene, by snapping assets onto sockets
+kit/site/      training-ground generator (plain Python): templates, plots, occupants, facilities,
+               buildings, construction, landscape
+kit/assets/    props*.py, vehicles.py, vegetation.py (the prop library), site.py (sites in Blender)
 catalog/       variant presets (data, shared with the game)
 layouts/       example stadiums
 kit/core/game.py, bake.py   game export: baked PBR, tint split, metric UVs, light conversion

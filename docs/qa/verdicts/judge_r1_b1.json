@@ -1,0 +1,164 @@
+[
+ {"asset": "agility_ladder", "score": 44, "pass": false,
+  "summary": "Correct layout and proportions (9 flat yellow rungs, about 0.45 m square cells, about 4 m long) but it reads as a vector diagram: straps are thin round wires and everything is perfectly straight and rigid.",
+  "critique": "From a distance the shape is right. A real speed ladder is two flat nylon webbing straps, 25-38 mm wide and about 1-2 mm thick, with flat polypropylene rungs about 400-500 x 40-50 x 4-6 mm that slide on the straps through moulded sleeves or clips at each end. In the renders the side straps look like dark round cords a few mm across that hide behind the grass, so the ladder looks like a wireframe. The rungs are plain flat bars of uniform, fully saturated yellow, with no end sleeves where the strap passes through. Everything is dead straight and coplanar, but a real ladder lying on grass is never taut: the straps wander a few cm between rungs, rungs sit slightly off square, and a strap tail or loop with a buckle hangs off each end. There is no wear, no dirt, and no variation between rungs. In the close view the rungs are long thin slats with square ends; real rungs have rounded ends and a slight central rib or curve.",
+  "suggestions": [
+   "Replace the cord straps with flat ribbon quads, 30 mm wide and 1.5 mm thick, in dark grey or black webbing with a woven-texture normal (tileable 64x64). Give each strap 2-3 subdivisions per cell and a small random lateral offset (+-15-30 mm) and yaw per rung (+-3 deg) so the ladder lies naturally on the ground. Under 300 tris.",
+   "Add a moulded clip or sleeve at each rung end: a 50 x 60 x 10 mm box with bevelled edges wrapping the strap. 9 rungs x 2 x 12 tris is negligible.",
+   "Round the rung ends (4-6 segment cap) and add a 1-2 mm bevel. Make the rungs slightly convex or C-section (5 mm high at the centre) so they catch a highlight.",
+   "At each end, add a 150-200 mm strap tail ending in a folded loop with a small plastic buckle or carry clip.",
+   "Material: drop the yellow albedo to about sRGB (220,190,40) with roughness 0.5. Add per-rung tint jitter of +-5% and a grime or scuff mask (darker, rougher underside edge, grass stains). Webbing roughness 0.85, albedo about 0.04.",
+   "Ship an optional variant with an orange or red alternate colour and a 'coiled or bundled' state for storage props."
+  ],
+  "renderer_notes": "Lawn blades occlude the thin straps at grazing angles, which exaggerates the wire look. A flat 30 mm strap fixes this regardless."},
+
+ {"asset": "bramble", "score": 36, "pass": false,
+  "summary": "Reads as a generic leafy dome made of cards over a hemisphere shell, not a bramble: no arching canes, the wrong leaf shape, and black holes where the shell shows through.",
+  "critique": "A bramble (Rubus fruticosus) is defined by its silhouette: long arching, reddish-purple thorny canes 5-15 mm thick that loop up to 1-1.5 m and arc back down to root at their tips, giving a tangled, irregular, wider-than-tall mound. Its compound leaves have 3-5 serrated, dark-green ovate leaflets, often with blackberries or white-pink flowers. This asset is a near-perfect hemisphere about 1.2 m across, covered in small mixed green and brown leaf cards. Only a few thin straight sticks poke out, at the left and right edges. Large black blotches all over the surface (most visible in the close view) show either a dark inner proxy shell or the card shell's underside, which looks like burnt holes. The leaf texture mixes in many tan or brown leaves, so the bush looks autumnal or dead rather than evergreen bramble. The hard dome profile with a clean ground contact is the biggest giveaway. Real brambles have ragged outliers, canes arching beyond the leaf mass, and an open, dark but visibly stemmy base.",
+  "suggestions": [
+   "Build the silhouette from canes first. Generate 12-25 arching canes as swept tubes (5-6 sides, radius 6-10 mm) along quadratic arcs, each rising 0.6-1.3 m and landing 0.8-1.8 m from the centre, some re-rooting. Colour them reddish-purple to green (sRGB about 110,50,60 to 90,100,50) at roughness 0.6. Place leaf cards along the canes, not on a sphere. About 1.5-3k tris.",
+   "Remove or fix the inner shell. If a shell is needed for density, make it a dark-green (not black) shrunken irregular blob with noise displacement, sitting 10-20 cm inside the cards. Or drop it and rely on denser cards near the core.",
+   "Repaint the leaf atlas with proper bramble leaves: 3-5 leaflet palmate clusters, serrated edges, dark glossy upper (about sRGB 45,75,35) and paler underside. Keep brown or red to 10-15% of cards, mostly on older outer leaves.",
+   "Add berry clusters (small dark spheres or a card with 5-15 drupelets, mix of red and black) and a few white flower cards as optional seasonal variants.",
+   "Add thorn detail via the cane normal map, or 2-tri spike cards along the canes. Visible on close-ups only.",
+   "Break the dome: non-uniform scale (1.0 : 0.8 : 1.4), a flattened top, an asymmetric lean, and outlier canes that extend 30-50% beyond the main mass.",
+   "Use a two-sided foliage shader with a simple wrap or translucency term so backlit cards glow rather than going black."
+  ],
+  "renderer_notes": "Without GI or translucency the interior of any foliage clump goes very dark. Some of the blackness is the renderer, but the sharp-edged black patches visible from above are geometry (shell or backfaces) and belong to the asset."},
+
+ {"asset": "ev_charger", "score": 40, "pass": false,
+  "summary": "Right overall idea (a pedestal post with a green cap, a screen and two holsters) but the body is a featureless extrusion, the cables are thin wiggly wires with no connectors, and the label reads 'EU CHARGE'.",
+  "critique": "Height looks about 1.6-1.8 m, which is at the top of or above the 1.2-1.5 m pedestal range, and the body is a plain rounded-square extrusion about 0.3 m wide. That proportion is plausible, but the surface has no panel seams, no access door, no vents, no LED status ring or light bar, no branding, no compliance or kW decals, and no bolt-down plinth detail. The close view from above shows a completely blank white column. The 'screen' is a flat black rectangle with no bezel or glass. The green label's text renders as 'EU CHARGE' because of the V glyph. The holsters are flat grey boxes with nothing docked in them. The cables are 10-15 mm round tubes in a regular sine-wave S that run from the holster down into the grass and back up. Real Type 2 tethered cables are about 25-35 mm thick, hang in a heavy catenary loop or coil over a cable hook, and end in a chunky moulded connector (about 200 x 70 mm) seated in the holster. The current cable shape looks procedural and alien, almost like insect legs, and it is the first thing a viewer notices.",
+  "suggestions": [
+   "Rebuild the cables. Make a 28-30 mm, 6-8-sided swept tube along a gravity catenary. The cable leaves the body near the base or the side, hangs in one loop to about 0.25 m above ground (or rests partly on a cable hook at about 1.1 m), and ends in a Type 2 connector handle (a pistol-grip body about 180 x 70 x 60 mm with a round 55 mm nose) seated nose-down in the holster. About 600-900 tris per side.",
+   "Make the holster a recessed cup with a dust-flap shape, not a solid box. Add a sculpted 'C' bracket or cable hook below it.",
+   "Detail the body: two vertical shadow-line seams (5 mm inset) defining a front door panel, a lock or key cylinder, a 20 mm bevel on the vertical edges, a ventilation grille strip near the base (normal-mapped), and a recessed screen with a 10 mm bezel, a glass layer (roughness 0.05) and a dim UI texture. A vertical LED light bar (emissive green or blue strip, about 20 x 400 mm) is the signature feature of most UK chargers.",
+   "Fix the decal font (the V renders as U) and add more decals: an operator logo panel, a 7 kW / 22 kW badge, a QR code sticker, a bay number, and a warning triangle. All of these can go in one 512x512 decal atlas.",
+   "Scale the total height to about 1.35-1.5 m and add a 20 mm base plinth with 4 bolt heads, or a cast concrete foundation pad edge.",
+   "Materials: body albedo about 0.75 (not pure white), roughness 0.35, with subtle dirt gradient and streaks running down from the cap edge. Make the cap a different moulded plastic (roughness 0.4). Add a little scuffing on the lower 300 mm."
+  ],
+  "renderer_notes": "Shading and shadows look correct. The flat look is the asset's own lack of detail."},
+
+ {"asset": "hedge", "score": 45, "pass": false,
+  "summary": "Leaf texture density is convincing from mid distance, but the shape is a hard-edged box with a visible differently-textured end cap and no base, batter or edge fringe.",
+  "critique": "This is a short clipped-hedge segment about 1.5 m high (in the 1.5-2.5 m reference range). From a distance the leaf texture reads as privet or box. Up close it has these problems: (1) The block is an almost perfect cuboid with crisp edges, while real clipped hedges have rounded shoulders, a battered profile (wider at the base, typically 10-15 deg per side), and an uneven, lumpy top. (2) The end faces use a lighter, larger-scale or differently projected texture, with a hard straight seam where they meet the long faces (very visible in views 2 and 4). It reads as a separate plane glued on. (3) Leaf cards only fringe some edges, so other edges stay razor-sharp. (4) Leaves run all the way into the ground. Real hedges show a darker, thinner base with bare woody stems in the bottom 50-200 mm and leaf litter. (5) Colour is uniform with no patches of new growth or die-back.",
+  "suggestions": [
+   "Apply the same world-space or triplanar leaf texture to every face so the ends match. Then round the shoulders with a 0.1-0.15 m bevel (3-4 segments) on all top and end edges so no hard seam remains.",
+   "Add batter: taper the long faces inward by about 8-12 deg toward the top, and add low-frequency noise displacement (+-30-50 mm) on the faces and a lumpy top (+-50 mm). This only needs a 6x4 grid per face, about 200-400 tris.",
+   "Fringe every edge with alpha leaf cards (or shell layers): 2-3 cards per 0.3 m of edge, with a few longer 100-200 mm unclipped shoots sticking up from the top.",
+   "Darken and thin the bottom 150 mm: drop the albedo, add a few 8-15 mm woody stem cylinders visible through gaps, and add a leaf-litter decal on the ground around the base.",
+   "Break up the albedo with a 1-2 m-scale noise mask: lighter yellow-green new growth on the top and sunny face, plus occasional brown die-back patches.",
+   "Since hedges are tiled in long runs, make the segment tileable along its length with matched end profiles. Use the end caps only where the run actually ends."
+  ],
+  "renderer_notes": "The near-black shaded face in views 2 and 3 is mostly the renderer (no GI or sky bounce into foliage). A small ambient boost or baked AO term for foliage would help. The end-cap texture mismatch is an asset issue."},
+
+ {"asset": "pipe_stack", "score": 42, "pass": false,
+  "summary": "Correct UK orange uPVC drainage pipe colour and socket ends on timber bearers, but the pipes are solid capped cylinders with no bore, the stack is irregular, and the surfaces are clean, flat CG.",
+  "critique": "The colour (terracotta or orange uPVC, BS EN 1401) and the socketed ends are good, recognisable choices. The biggest realism break is that every pipe end is a flat disc (grey on the spigot end, black on the socket end) instead of an open tube with a 4-6 mm wall and a dark interior. That makes them look like logs or rods. The stack is odd: in view 1 the front ends form a ragged cluster with a gap and an offset sub-group rather than a tidy pyramid. Real stacked pipes are usually banded in a hexagonal-packed pack, or laid in a pyramid with timber chocks. The pipe surfaces are uniform matte with no printed spec line (the black stencilled 'BS EN 1401 ... 110 mm SN4' running along each pipe is very characteristic), no socket seal ring detail, no mud, dust or sun-fading, and no slight gloss. The timber bearers are thin and short with no chocks or wedges to stop the pipes rolling.",
+  "suggestions": [
+   "Make each pipe a hollow tube: outer and inner cylinders (16-20 sides) joined by an annulus at each end. Wall thickness 3.2 mm for 110 mm or 4.7 mm for 160 mm. Use a dark interior (albedo 0.05-0.1, plus an AO fade about 3 diameters deep). The open bore is the single biggest win and adds about 40 tris per pipe end.",
+   "Make the socket end a flared bell: about 1.1x OD over 120-150 mm, with a 15 mm transition chamfer and a black rubber seal lip visible inside the mouth.",
+   "Restack as a regular hex-packed pyramid (e.g. 4-3-2 or 3-2-1), all spigots one way or alternating. Add two or three steel or polyester bands around the pack, and 75 x 50 mm timber bearers with nailed chocks at the ends. Seed small random axial offsets of +-20-60 mm only.",
+   "Add a decal strip along each pipe: a black stencil line of spec text repeating every 1 m (512x32 texture), plus a small manufacturer logo.",
+   "Material: orange uPVC about sRGB (200,95,40) at roughness 0.35-0.45 (semi-gloss). Add a dust or dirt gradient on the upper surfaces and bottom contact lines, a few scuffs, and slight UV fade on the top pipe.",
+   "Optional: blue or black or green duct variants (ducting colour codes) from the same mesh."
+  ],
+  "renderer_notes": "Lighting is fine. The end-disc colour difference (grey vs black) between ends may just be how the caps are shaded, but either way the asset should be hollow."},
+
+ {"asset": "seat.padded_vip.std", "score": 40, "pass": false,
+  "summary": "Recognisable as a padded stadium seat, but it is three blocky slabs with no tip-up mechanism, no upholstery shaping, a floating backrest and over-glossy plastic.",
+  "critique": "Real VIP or directors' box seats (e.g. Ferco, Kotobuki, Daplast padded tip-ups) have a contoured upholstered back with a headrest roll and lumbar curve, stitched seams or fluting, piping along the edges, a moulded rear shell, a tip-up cushion on a visible pivot bracket, and a moulded or timber-capped armrest on a standard that bolts to the tread or riser. This asset has: a flat rectangular back slab (looks about 0.6 m tall, with a top around 1.1 m, which is tall for the 0.85-0.9 m reference) that does not visibly connect to anything; a box cushion with bevelled edges; and a single wedge-shaped side standard with a rounded armrest, rendered in near-mirror black plastic. In the side view the standard and seat appear to float above the ground with no mounting foot. That may be by design if the seat mounts on a riser, but then it needs a bracket or base plate. There is no stitching, no fabric texture, no seat number, and no club crest. The fabric is a flat blue-grey with uniform low roughness, so it reads as plastic rather than upholstery.",
+  "suggestions": [
+   "Connect the parts: add a steel back bracket (two 30 x 10 mm flat bars from the back's lower rear into the standard), a pivot hub (50 mm disc) where the cushion meets the standard, and a floor foot or riser plate (150 x 100 x 8 mm with 2 bolt heads) at the base of the standard.",
+   "Shape the upholstery: build the back from a 6x8 grid with a lumbar bulge (+20-30 mm), a headrest roll at the top 120 mm, and rounded 20-30 mm edges. Make the cushion domed (+15 mm centre) with a rounded front lip. Add 2-3 horizontal or vertical flute seams via the normal map, and an edge-piping bevel. About 800-1200 tris per seat in total.",
+   "Fabric material: albedo per club colour at value about 0.15-0.25, roughness 0.8-0.9, with a tileable fabric weave normal (128x128) and subtle sheen. Embroider the crest as a decal on the headrest.",
+   "Back shell: add a moulded plastic rear shell with a 10 mm lip, slightly smaller than the upholstered front. Put a seat-number plate (40 x 25 mm aluminium decal) on the armrest end or the cushion front edge.",
+   "Standard and armrest: reduce the gloss (roughness 0.35-0.45, albedo about 0.04). Add a soft-touch or timber armrest cap, and a cupholder ring at the armrest end, which is common on VIP seats.",
+   "Bring the back top down to about 0.95-1.0 m above the floor and tilt the back about 12-15 deg. Check the seat height (about 0.45 m) and width (about 0.5-0.55 m for VIP)."
+  ],
+  "renderer_notes": "The strong specular on the black standard is partly sun and sky reflection. With no SSR or reflections the shiny surfaces look plasticky. Raising the roughness avoids depending on this."},
+
+ {"asset": "ticket_machine", "score": 34, "pass": false,
+  "summary": "A plain dark-blue box with a floating, tilted lid and a sparse front panel. It does not yet read as a UK pay-and-display machine, and the close-up view shows nothing but a blank side.",
+  "critique": "Proportions are roughly right for a Flowbird Strada class machine (1674 H x 475 W x 379 D), though this one looks slightly slimmer. However: (1) The top 'hood' is a separate slab floating above the body with a visible gap, tilted forward like a lid knocked off. Real P&D heads are a continuous moulded canopy, often with a solar panel on top, that overhangs the front by 50-80 mm and sits flush on the body. (2) The front panel has only a 'PAY HERE' sticker, a black screen square, a 3x4 grid of grey keys and a dark slot. A real machine's face carries a large tariff or instruction board (the most visible element at distance), a coin slot, a card slot with a contactless pad and logo, a ticket collection cup or recess with a flap, a 'ticket' button, the operator or council logo, and a machine ID plate. (3) The body is a plain extrusion with no door seam, lock, plinth or bolt cover, and no hinge line. (4) Materials are a single uniform navy at medium roughness, with no scuffs, stickers, graffiti tag, rust at the base, or dirt on the lower 200 mm. (5) The close detail view frames only the blank side panel, which shows how empty the asset is.",
+  "suggestions": [
+   "Merge the head into the body: make the canopy a moulded cap that overhangs the front by 60 mm and the sides by 20 mm, with an 8-10 deg slope and a 12 mm radius on its edges. Put a solar panel inset (dark blue-black, cell-grid texture, roughness 0.15) on the top.",
+   "Build out the front face in a recessed bezelled panel (inset 15 mm): a screen with glass at 120 x 90 mm; a tariff or instruction board (decal, about 300 x 250 mm, white with a blue header) above or beside it; a coin slot (chrome bezel, 30 x 5 mm slot); a card slot and contactless pad decal; keypad buttons as 15 mm raised domes; and a ticket recess at about 0.9 m high (140 x 60 x 40 mm cavity with a flap). About 400-600 tris plus one 1024 decal atlas.",
+   "Body detail: add a full-height door seam on the front or rear, a lock cylinder, a 15 mm vertical edge bevel, a base plinth (40 mm high, slightly wider) with 4 bolt covers, and an asset tag plate.",
+   "Material: powder-coat navy or black with roughness 0.45-0.55 and a subtle orange-peel normal. Add grime on the lower third, edge wear to grey primer on the corners, a couple of stickers ('No change given', 'Cashless parking - call 0xxx'), and optional graffiti variants.",
+   "Fix the close-up camera framing so the review shows the interaction panel, not the plain side."
+  ],
+  "renderer_notes": "The side view looks very dark because the shaded faces get only sky ambient. This is not an asset defect."},
+
+ {"asset": "stadium_classic:seating & stands", "score": 52, "pass": false,
+  "summary": "Convincing English lower-league layout with 'THE BLUES' seat mosaic, gangways and rails, but the stands are shallow, the seats read as flat tiles, and the grey end stand looks empty and unfinished.",
+  "critique": "Positives: the 'THE BLUES' lettering in the seat colours, mixed stand styles (a classic UK mix-and-match ground), aisles with handrails, and the dark grey terraced end with crush barriers. Problems: (1) At mid distance the seats read as a blue pixel grid on stepped planes with no visible backs or shadows between rows, so the tiers look painted. (2) In the close view the grey end stand has dark seats with near-black shading and uniform rows. There are no vomitories or entrance tunnels breaking the rake, no row or block lettering, no front wall or parapet with padding, no stairs nosing colour (yellow edge markings are standard on UK stand steps), and no wheelchair or press platforms. (3) The stands are shallow relative to the roof height, with lots of empty back wall and no rear seating rows tucked under the roof. (4) The corners are open gaps (authentic for 'classic' grounds), but the stand ends are cut flat with no end screens or gable walls in the side stands.",
+  "suggestions": [
+   "Seats: make sure each seat instance has a visible backrest silhouette (back height about 0.35 m above the pan) so the rows read as rows with a shadow line. Add a per-seat colour jitter of +-4% and about 1-2% faded or replacement seats in a slightly different shade.",
+   "Add vomitories: every 15-25 m along the long stands, cut a 2.2 m wide tunnel mouth through the middle tier with a concrete surround and handrails.",
+   "Add yellow step nosings on the gangway stairs (a 50 mm strip), white or yellow block letter signs at the gangway heads, and row letters on the step risers (decal).",
+   "Add a front parapet wall (1.1 m) with a padded or painted top and club-colour fascia, and a press or TV gantry box in the main stand.",
+   "Close the stand ends with gable or end-screen walls (glazed or clad), and add the tunnel or player entrance cut-out in the main stand front."
+  ],
+  "renderer_notes": "The deep black under the roofs in the close view is the lack of GI or bounce. Real stands under a roof are dim but not black. Ambient occlusion with a sky-bounce floor value of about 0.25-0.3 would help every stand."},
+
+ {"asset": "stadium_classic:roof", "score": 48, "pass": false,
+  "summary": "Correct cantilever and post-and-beam roof types with trusses visible underneath, but the top surfaces are flat white slabs with no sheeting profile, gutters, fascia or weathering.",
+  "critique": "The underside truss work is believable in the close view (lattice rafters on columns). From above (view 2) all roofs are flat light-grey planes with a faint line pattern and no profiled metal sheeting, ridge or fall, gutters, downpipes, rooflights, or fascia band except a blue edge on one stand. The rooftop 'plant boxes' (small grey boxes on the roof back edge) are plain cubes. A classic ground's roofs show corrugated or trapezoidal steel with streaky weathering, translucent rooflight strips, and a deep painted fascia with the club name or a sponsor. The roofs also all share the same colour and value, so they read as one material.",
+  "suggestions": [
+   "Use a trapezoidal sheet normal map (about 200 mm pitch, 35 mm depth) on the top surfaces, with a world-space grime texture: rust or rain streaks running down the fall and darker gutters. Use 1-3 translucent rooflight strips per bay (albedo about 0.6, slight emission or transmission fake).",
+   "Add a 0.6-1.0 m deep front fascia on every roof, in club colour, with painted lettering or a sponsor decal. Add a box gutter along the back and 100 mm downpipes at the columns.",
+   "Give each stand roof its own colour or age (one newer bright, one faded or greyed) to sell the 'built over decades' classic look.",
+   "Replace the plant cubes with HVAC boxes that have grilles, or remove them. Add a 2% visible fall on the roof plane."
+  ],
+  "renderer_notes": "The overexposed white roofs in the aerial view are partly tonemapping. Albedo should be about 0.5-0.6, not near 1."},
+
+ {"asset": "stadium_classic:exterior/facade", "score": 46, "pass": false,
+  "summary": "The brick main-stand facade with a window grid is a good classic-ground cue, but it is a uniform tiled wall with no entrances, turnstiles, signage or base detail, sitting on a flat concrete apron.",
+  "critique": "The red brick and window rhythm reads as an Archibald Leitch-style or 1960s main stand from above. However, the windows repeat with machine regularity, the brick is a flat tiled texture with no plinth, string courses, piers or parapet coping, and there are no turnstile blocks, ticket office, club crest, signage, doors, gates or exit stairs. The other stands show plain blue cladding with no detail. The surrounding apron is a uniform flat grey slab with a hard oval edge, with no fences, gates, bollards or lamp posts nearby (other kit assets could populate this).",
+  "suggestions": [
+   "Break the brick facade into bays with brick piers every 4-6 m (100 mm projection), a darker engineering-brick plinth (0.9 m), a stone or concrete string course at each floor, and a parapet coping. These are cheap box mesh additions.",
+   "Add ground-floor openings: turnstile banks (a row of 1 m wide doors with a 'TURNSTILES A-F' sign), a main reception with a crest and canopy, and roller-shutter gates. Vary 10-20% of windows (some blinds, some dark, some lit).",
+   "Put a large club-name sign on the main stand facade, and add exit stairs or steel escape stairs on the cladded stands.",
+   "Add a perimeter fence or wall with gates, plus lamp posts and bins from the kit, around the apron. Texture the apron with slab joints and staining."
+  ]},
+
+ {"asset": "stadium_classic:floodlights", "score": 55, "pass": false,
+  "summary": "Classic four-corner lattice pylons with lamp-array heads are an authentic, recognisable silhouette, but the lattice is thin wire-like lines and the heads are simple grids.",
+  "critique": "The four tall tapered lattice towers with rectangular lamp heads are exactly what a classic English ground should have, and their height looks plausible for 30-40 m. The headframe throws a believable dotted shadow pattern on the pitch. Weaknesses: the lattice members are uniformly thin lines with no hierarchy (heavier corner legs vs lighter bracing), no access ladder or cage, no rest platforms, and no base plinth or foundation. The lamp heads are plain grids of identical dark dots, with no individual lamp housings, no visors, and no aiming angles. Also, in views 1 and 4 the pylons appear strongly raked inward, which is typical but should be checked against the camera.",
+  "suggestions": [
+   "Give the main legs (e.g. 150-200 mm angle or tube) visibly heavier sections than the bracing (50-60 mm). Use real geometry for the legs and alpha cards for the bracing.",
+   "Add a caged access ladder up one face, 2-3 rest platforms with handrails, and a service platform behind the headframe.",
+   "Model the head as 24-48 individual lamp boxes (each 0.5 x 0.5 x 0.3 m with a visor) on horizontal rails, tilted 10-20 deg toward the pitch. Give the faces glass with a slight emissive term for night use.",
+   "Add a concrete base plinth and bolt cluster, and galvanised material (roughness 0.5, albedo about 0.55) with patchy weathering."
+  ]},
+
+ {"asset": "stadium_classic:pitch & goals & nets", "score": 62, "pass": false,
+  "summary": "The strongest part: two-direction mowing pattern, correct markings, believable worn goalmouths and good nets; let down by hard-edged stripe bands and overly blotchy brown wear.",
+  "critique": "The pitch markings, centre circle, penalty arcs and stripe pattern are correct, and the goal frames with nets look right in the close view. Problems: (1) The checkerboard stripe bands have perfectly hard edges and uniform tone. Real mowing stripes come from the grass lean, so they shift with view angle and have soft, slightly wavy edges. (2) The wear patches are mottled bright brown or orange noise with a saturated, sandy look. Real goalmouth wear is a muddier grey-brown with bare soil, sand dressing and divots, concentrated along the 6-yard box and penalty spot. (3) The lines are uniform bright white with no break-up from grass texture. (4) No corner flags are visible at this scale. (5) The goal posts lack the net support stanchions or back bar detail at this view (hard to tell).",
+  "suggestions": [
+   "Soften the stripe edges with a 0.1-0.3 m blend and low-frequency wobble. Make the stripe contrast angle-dependent (anisotropic lean: lighter when mowed away from the camera).",
+   "Re-author the wear mask: desaturate toward sRGB (110,95,70), add a sand-dressed lighter tone, put normal or height dips and divot decals in the goalmouth and centre spot, and add a worn linesman's channel along one touchline.",
+   "Break up the line paint with the grass albedo (multiply about 85% white, with some speckle) and add slight width variation.",
+   "Make sure the corner flags (1.5 m post, a flag about 0.45 m square) and the goal net stanchions or back bars are present and visible at stadium distance."
+  ],
+  "renderer_notes": "Some of the stripe hardness is the shading of a flat albedo pattern without a grass-lean BRDF."},
+
+ {"asset": "stadium_classic:dugouts & tunnel", "score": 38, "pass": false,
+  "summary": "The dugouts are barely visible as small brown-red brick boxes near the halfway line, and no tunnel is visible.",
+  "critique": "In the low view (bottom-left) two small dark-red boxes sit in front of the main stand. At this scale they read as placeholder blocks: there is no Perspex canopy, no seats visible, and no technical area marking. No players' tunnel (an extendable or fixed tunnel with an inflatable or steel canopy) is visible in front of the main stand. The fourth official's area and the technical-area white dashed box are missing too.",
+  "suggestions": [
+   "Use a proper dugout: a 6-8 m long, 2.2-2.4 m high shelter with a curved polycarbonate canopy (transparent, roughness 0.1), a club-colour steel frame, two rows of padded bucket seats, and a front kickboard with club branding.",
+   "Mark the technical area (1 m from the dugout, extending 1 m either side) with a dashed white line, and add a 4th-official board stand between the dugouts.",
+   "Add a tunnel mouth in the main stand front centre, with an extendable telescopic tunnel (white or club-colour tube, 2.5 m wide x 2.5 m high, 3-5 segments) reaching toward the touchline."
+  ]},
+
+ {"asset": "stadium_classic:advertising boards & screens", "score": 62, "pass": false,
+  "summary": "Varied, plausible fictional sponsor boards and a corner scoreboard on stilts with a live score are good; the boards are flat panels without frames, legs or LED character.",
+  "critique": "The perimeter boards show convincing graphics (Tidewater, Meridian Tyres, Lumen Sport, Kestrel Bank, Volta) at varied widths and colours. The corner video screen with '2 - 1 67:12' is a nice classic-ground touch. However, the boards are thin flat panels with no visible support frame, back struts or bottom edge padding. There are no gaps between boards or cable runs. LED boards should have a slight bezel and emissive or pixel look, while static boards should have rough fabric or printed vinyl with wrinkles and wear. The screen housing is a plain black box on stilts with no access steps, back framing or bracing. Sun reflections are uniform.",
+  "suggestions": [
+   "Give each perimeter board a 50 mm frame or bezel and an angled rear A-frame strut (two per 6 m board). Add a 10-20 mm gap between boards and a padded or rubber bottom lip.",
+   "Choose per board whether it is LED (emissive, roughness 0.2, faint pixel-grid normal) or printed vinyl (roughness 0.7, slight wrinkle normal). Add mud splashes along the lower 15%.",
+   "Scoreboard: add a steel support truss behind it, a maintenance platform and ladder, and a 100 mm bezel. Add a slight emissive bloom to the digits."
+  ]}
+]

@@ -1,0 +1,148 @@
+[
+{"asset":"goal.classic","score":52,"pass":false,
+ "summary":"Correct 7.32 x 2.44 frame with stanchion-style sloped net; reads as a goal but the net is a rigid, perfectly taut CG sheet and the frame has no hardware.",
+ "critique":"Proportions look right (7.32 x 2.44 m, round posts around 100-120 mm, rear depth about 2 m). The silhouette is fine from distance. What gives it away: (1) the net is a rigid planar sheet with zero sag, zero billow and perfectly straight edges; real nets droop between support points, bag at the bottom-rear and pull into scallops where they are tied to the frame. (2) The hexagonal mesh is uniformly bright white with identical cell size everywhere, so it reads as a texture, not knotted cord; there is no thickness variation or slight grey/dirt. (3) The frame is a featureless white tube: no net hooks/clips along the crossbar and posts, no joint collars or welded corner brackets, no ground sockets/anchor plates, no slight off-white or scuffing at the foot where boots and the groundsman's line marker hit it. (4) The rear ground bar and side stanchion bars are the same bright white as the posts; on classic goals these are often galvanised grey or thinner. (5) In the side view the side net panel reads as a single flat triangle with no tension sag along its top edge.",
+ "suggestions":[
+  "Give the net sag: displace net vertices with a catenary between tie points (5-8 cm sag mid-span on the roof/back, 10-15 cm belly at the bottom-rear) and let the back panel bag outward slightly at ground level; a 16 x 8 vertex grid per panel is enough (~1-2k tris total).",
+  "Add net clips/hooks every ~300 mm along the crossbar and posts (tiny instanced boxes, ~12 tris each) and scallop the net edge between them so the net pulls in slightly at each tie point.",
+  "Tone the net albedo down to ~0.75 linear (off-white) with a subtle per-cell alpha/brightness noise and very slight grey dirt toward the ground; mesh cell size should read as 120-140 mm.",
+  "Add frame hardware: joint collars where crossbar meets posts, ground sockets/flush caps at post feet (a 140 mm disc, slightly darker), and a galvanised mid-grey (albedo ~0.45, roughness 0.4) for rear ground bar and stanchions if classic style.",
+  "Add subtle wear: scuff/grass-stain band at the bottom 200 mm of the posts, very faint roughness variation along the tubes (roughness 0.35-0.5)."
+ ],
+ "renderer_notes":"Net anti-aliasing is good; the lack of shadowing from the net onto itself is a renderer limit, not asset."},
+{"asset":"survey_peg","score":30,"pass":false,
+ "summary":"Toy-like square peg with chunky low-poly ribbon and lumpy clay mound; recognisable but far from a real timber survey stake.",
+ "critique":"Real survey pegs are 50 x 50 mm (or 25 x 50 mm) sawn softwood, 450-600 mm long, pointed and driven so only ~150-300 mm protrudes, with a dayglo-painted top 50-100 mm and often a nail in the top. Here the peg looks too tall and too thick relative to the mound, the orange paint band is far too long (~25 % of the visible height) and blends into the timber via a noisy orange speckle gradient that looks like a procedural noise artefact rather than spray overspray. The timber texture is a uniform beige noise with no grain direction, sawn fibres, end-grain or knots. The pink flagging tape is the worst element: it is a wide, thick, flat-shaded strip with hard folds that reads as a plastic ribbon prop; real tape is ~25 mm wide, very thin, knotted round the peg once with two short tails hanging and fluttering. The dirt mound is a lumpy faceted disc with flat-shaded stones scattered on the grass, looking like clay rather than disturbed turf/soil. Top nail barely reads.",
+ "suggestions":[
+  "Fix proportions first: 50 x 50 mm section, 250-300 mm exposed height, slight 2-3 mm chamfer on the arrises; shorten the paint to the top 60-80 mm with a hard edge plus a little overspray drip (~150 tris total for the peg).",
+  "Replace the timber albedo with a sawn softwood texture: vertical grain streaks, pale yellow-brown (sRGB ~200,170,120), darker weathered grey toward the ground, roughness 0.8; add a visible end grain and a galvanised nail head on top.",
+  "Rebuild the flagging tape as a 25 mm wide, near-zero-thickness double-sided strip: one knot band hugging the peg, two tails 150-250 mm long with gentle smooth twists (12-16 segments each, smooth normals), fluorescent pink with slight translucency/sheen.",
+  "Replace the clay mound with a small ring of disturbed soil (a 200-250 mm decal or low dome flush with turf, dark brown, a few crumbs) rather than a raised faceted lump; drop the scattered flat stones or make them tiny and darker.",
+  "Optionally add a spray-paint dot/arrow decal on the grass next to the peg, which is how these are usually seen on site."
+ ],
+ "renderer_notes":"The grass card field is coarse and dominates the close-up but is not the asset."},
+{"asset":"heras_panel","score":50,"pass":false,
+ "summary":"Right 3.5 x 2 m proportions, rounded-corner frame, rubber feet and couplers present; mesh too sparse and broken-looking, frame too clean.",
+ "critique":"Overall proportions match the reference (3500 W x 2000 H, rounded top corners, centre vertical, two black rubber feet). Problems: (1) The weld mesh is far too coarse and reads as a sparse grid of lines; real Heras mesh is roughly 75 x 225 mm (or 100 x 200 mm anti-climb) 3-4 mm wire, giving a dense, visibly tight pattern. In the close view the wires break up into dashes and disappear, so it looks like a few stray wires rather than a welded mesh sheet. (2) The frame tube looks the right diameter but has no weld beads where mesh meets frame, no galvanised spangle, no drainage holes or end caps on the legs. (3) The feet look like generic black blocks; real feet are moulded recycled-rubber/plastic blocks ~700 x 200 x 150 mm with two leg holes, chamfered edges and moulded ribs/lettering. (4) Only one coupler shown per side, floating on the post; real panels are joined by a two-bolt clamp straddling two posts. (5) No anti-climb top rail, no braces or sandbags, no banner or signage that is often cable-tied on. (6) The frame bottom rail appears at the same height as the foot top; panels should sit with legs into the foot holes, bottom rail ~150-200 mm above ground.",
+ "suggestions":[
+  "Densify the mesh: use an alpha-tested texture on a single quad (2 tris) with wire spacing ~75 x 225 mm and wire width ~3-4 mm, with mipmapped alpha-to-coverage so it doesn't break up; that is cheaper and more convincing than geometric wires.",
+  "Model the foot properly: 700 x 200 x 150 mm block with chamfered top edges, two leg holes, moulded ribs; dark charcoal (albedo ~0.05) with roughness 0.85 and dusty grey on top (~80 tris).",
+  "Add the coupler as a two-part bolted clamp (two C-brackets plus bolt) spanning between this panel's post and the next; ~60 tris, instanced at 2 heights.",
+  "Galvanised frame material: albedo ~0.55 grey, roughness 0.35-0.55 with mottled spangle and white-rust/zinc oxide patches near the welds and feet; add small weld blobs at mesh-to-frame junctions via normal map.",
+  "Offer variants: cable-tied debris netting or a printed scrim banner, a stabiliser brace strut with a second foot, and a slight lean/twist per instance to break the grid look in long runs."
+ ],
+ "renderer_notes":"Mesh aliasing in the close view is partly a texture filtering issue; alpha-to-coverage or MSAA would help regardless of density."},
+{"asset":"car_suv","score":44,"pass":false,
+ "summary":"Reads as a generic modern SUV with good wheels, roof rails, plate and lights, but the body is slab-sided and the bonnet/cabin proportions are off.",
+ "critique":"Detail pieces (alloy wheels, roof rails, shark-fin antenna, UK plates, LED tail light strip, grille mesh, wing mirrors, wipers) are good for an instanced car. The body itself is the weakness. (1) Proportions: the bonnet is very long, flat and nearly horizontal, and the A-pillar base sits well back, giving a saloon/estate profile rather than a crossover; a Qashqai-class car (4425 L x 1835 W x 1620 H, WB 2646) has a short, higher, sloping bonnet and a cabin that starts roughly above the front axle. The roofline looks low relative to body height. (2) Surfacing: the flanks are flat vertical slabs with no shoulder/character line, no tumblehome on the glasshouse, no wheel-arch flare or cladding thickness; the body corners are sharp boxes with tiny bevels. (3) The front fascia is a big flat rectangle grille with a tacked-on badge, front corners look chopped. (4) Glass is opaque near-black with no reflection or visible interior through side windows; door shut lines and handles barely read. (5) Wheel arches show a gap between tyre and arch that is fine but the arch liner is not visible (no black inner). (6) Paint is a flat uniform blue with no clearcoat sheen variation, no dirt on the sills or lower doors.",
+ "suggestions":[
+  "Re-proportion the side profile: raise bonnet front edge to ~850-900 mm, shorten bonnet to ~1.0-1.1 m and slope it ~8-10 deg, move the A-pillar base forward to sit just behind the front wheel centre, roof height ~1620 mm with slight rearward drop; keep ~1.6-1.7 m rear overhang ratio realistic.",
+  "Add surfacing: a shoulder crease running from headlight to tail light, 3-4 deg tumblehome inward lean on the glasshouse, and 30-40 mm flared black plastic wheel-arch cladding with the lower sill cladding; extra cross-sections in the body loft (~1-2k tris).",
+  "Give the glass a proper material: dark tinted with high specular (roughness 0.05, environment reflection) and a simple interior silhouette (seats/headrests) visible through the side windows; add door shut lines and handles via normal map.",
+  "Paint: metallic clearcoat (metallic 0.6, roughness 0.25) with flake noise, plus a thin road-dirt gradient on sills, lower doors and rear bumper; black inner arch liners.",
+  "Refine the front: integrate the grille into a V-shaped fascia with thinner LED headlight strips, lower intake and skid plate; check for blocky corners and bevel all major body edges by 15-25 mm."
+ ],
+ "renderer_notes":"No reflections (no SSR/probes) makes the glass and paint look flatter than the asset deserves; a sky cubemap reflection would help considerably."},
+{"asset":"tree_birch","score":58,"pass":false,
+ "summary":"Convincing weeping silver-birch habit and white bark from mid distance; crown too columnar and thin-branched, bark lacks the black markings.",
+ "critique":"The pendulous drooping twig curtains, small light-green leaves and white trunk with dark base are the right cues and the tree reads correctly at mid range. Issues: (1) The crown is a narrow, almost cylindrical column with a near-flat bottom edge; mature silver birch has an irregular oval to narrow-pyramidal crown with a few strong ascending main limbs and hanging outer twigs. (2) The visible central leader is a thin straight white stick running to the top with very thin, almost perpendicular side branches, so the skeleton looks like a pole with sprigs; main limbs should be thicker and fork, angling up at 30-45 deg before the twigs weep. (3) Bark: white but uniform; silver birch has horizontal dark lenticel bands, black diamond-shaped fissures under branch scars, peeling papery strips and the rough black fissured base that should extend 0.5-1.5 m in older trees. The black base here is a hard-edged cuff. (4) Foliage is uniformly bright with little self-shadowing/darker interior, so the crown looks semi-transparent; leaf clusters are evenly distributed with no gaps or clumping. (5) Trunk height to first branch looks ~3-4 m which is okay, but the overall tree looks short of the 15-25 m mature height (fine if it is a young specimen).",
+ "suggestions":[
+  "Rework the skeleton: 3-5 main limbs from 3-5 m up, 0.12-0.2 m thick at base, ascending at 30-45 deg and forking twice, then hanging twig cards from the outer thirds; break the column into an irregular oval crown 6-8 m wide.",
+  "Bark texture: add horizontal dark lenticels, black diamond scars beneath limb junctions and a fissured black base with a ragged noise boundary that fades upward (one 1k bark atlas shared by all birches).",
+  "Darken the crown interior: bake per-vertex AO or a radial gradient into leaf-card colour so inner cards are 40-50 % darker, and vary leaf hue per cluster (yellow-green to deeper green).",
+  "Clump foliage: group twig cards in 6-10 masses with visible sky gaps between them; vary hanging-curtain lengths so the lower edge is ragged rather than a flat hem.",
+  "Provide 3-4 seed variants and a billboard/impostor LOD; keep the hero at ~6-10k tris with alpha cards."
+ ],
+ "renderer_notes":"No translucency/subsurface for leaves and no GI makes the crown look flatter than it would in a stronger renderer."},
+{"asset":"roller","score":56,"pass":false,
+ "summary":"Credible small tandem roller with ROPS, seat, beacon, decals and wear; drums are undersized and hidden, and the bodywork is too boxy and clean-edged.",
+ "critique":"Good: overall layout (two drum frames, central operator platform, ROPS with beacon and work lights, seat, steering wheel, hazard chevrons, decals with model name, light speckled wear). Problems: (1) Drums: on a BW120-class roller the drums are ~700 mm diameter and 1200 mm wide and are the dominant visual element, exposed front and back under the frames with scraper bars. Here the drums are small and almost fully boxed by the yellow drum housings; from the side they look like small wheels with hub caps. (2) The yellow housings are crisp rectangular boxes with tiny bevels; real hoods are rounded/radiused GRP or pressed steel with louvres, hinges, latches and fuel/water fillers. (3) The articulation joint and steering rams between the frames are not legible; the centre reads as a flat plate. (4) Wear is a uniform speckle of dark dots; real rollers show bitumen/tarmac splatter on the drums and lower frames, polished steel drum faces, faded paint on top surfaces, rust on edges and water spray-bar residue. (5) Steering wheel and seat look generic and slightly oversized relative to the platform. (6) Drum surface looks dark grey matte; working drums are polished bright steel in the centre with dull edges.",
+ "suggestions":[
+  "Enlarge and expose the drums: 700 mm diameter x 1200 mm wide, visible for at least the lower half front and back, with a scraper bar and water spray bar (perforated tube) across each drum (~400 tris).",
+  "Round the bodywork: radius the top edges of both housings by 60-100 mm, add engine louvres, two hinge lines, rubber latch straps and filler caps (water tank and fuel), via geometry for the radius and normal map for louvres.",
+  "Show the articulation: a central hinge with two hydraulic steering cylinders and hoses between front and rear frames.",
+  "Materials: polished drum steel (metallic 1, roughness 0.2 centre band, 0.5 at edges) with black bitumen splatter decals; replace dot speckle with edge-wear masks (paint chips on corners, faded/chalky top surfaces, grime streaks below fillers).",
+  "Scale-check operator parts against a 1.8 m human: seat cushion ~450 mm wide, steering wheel ~350 mm diameter."
+ ],
+ "renderer_notes":"Fine."},
+{"asset":"goal.box","score":54,"pass":false,
+ "summary":"Clean box-frame goal with correct proportions and well-drawn hex net; net is rigid and the frame lacks fittings and wear.",
+ "critique":"The box goal shape (full rectangular rear frame, top rear bar, side ground bars) and dimensions look right, the posts are a believable diameter and the hex net reads clearly in close-up. As with the classic goal, the net is a perfectly flat, perfectly taut set of planes with no sag, no tie-point scalloping and no bunching at the corners; the roof panel in particular should droop between the crossbar and rear top bar. Mesh is uniform bright white. The frame has no welded corner brackets, net clips, wheel/anchor points or ground weights, and all bars are identical pure-white tubes with no scuffs. The rear frame tubes look the same diameter as the posts; on real box goals the rear frame is usually thinner (50-60 mm) than the 100-120 mm posts and crossbar.",
+ "suggestions":[
+  "Add catenary sag to the roof (~80-120 mm at centre) and slight outward billow on the back panel; scallop edges between clips (same net system as goal.classic).",
+  "Make rear frame tubes thinner (50-60 mm) than front posts/crossbar (100-120 mm), with welded corner gussets at the rear and simple ground anchor plates.",
+  "Net material: off-white ~0.75, per-cell variation, slight grime at the bottom 300 mm; frame material roughness 0.4 with scuffing at post feet and on the crossbar centre.",
+  "Add net hooks every ~300 mm (instanced, ~12 tris each) and a few cable ties at corners."
+ ],
+ "renderer_notes":"Fine."},
+{"asset":"stadium_classic:seating & stands","score":52,"pass":false,
+ "summary":"Believable British four-sided ground: tiered blue seating with vomitories, gangways, lettering, a pillared main stand and an all-grey stand; seats are repetitive and the concrete is flat.",
+ "critique":"Strong classic cues: 'THE BLUES' seat lettering, roof-support pillars in front of the main stand, vomitory openings, aisle steps, handrails, a lower and upper tier, and a contrasting grey/older stand. However: (1) Every seat is an identical blue shell in perfect rows; there is no colour/fade variation, no missing or broken seats, no seat numbers or row letters. (2) Concrete risers and gangways are a single flat grey with no staining, expansion joints or weathering, and the rake/tread looks uniform across stands. (3) The grey end stand reads ambiguously (unpainted seats or terrace with barriers) and its rear wall is plain. (4) Front walls of the lower tiers are flat blue panels with no padding/advertising rail detail, and pitch-side wall thickness is unconvincing. (5) Stand ends (gable side screens) are missing or plain, so you see raw edges at the corners.",
+ "suggestions":[
+  "Add per-instance seat variation: 3-5 % hue/value jitter, sun-faded upper rows, occasional lighter replacement seats, and 0.5 % tipped-up/missing seats; seat numbers via a tiny decal atlas.",
+  "Concrete material: water-stain streaks below each riser, darker gangway centres from foot traffic, expansion-joint lines every ~6 m, slight greening at the front rows (single tiling texture plus vertex-colour grime).",
+  "Close stand ends with gable screens (brick or clad) and corner infill walls; give the front wall a capping rail and 200 mm thickness.",
+  "Clarify the grey stand: either paint seats a second club colour or make it a true terrace with crush barriers at 1.5-2 m spacing and clear standing steps."
+ ],
+ "renderer_notes":"Without AO, the under-roof seating rows lack the contact darkness real stands have; an SSAO pass would help a lot."},
+{"asset":"stadium_classic:roof","score":46,"pass":false,
+ "summary":"Simple cantilever and post-supported roofs with visible trusses on one stand; roof sheets are flat planes with little profile, gutters or edge detail.",
+ "critique":"The mix of a pillared main-stand roof and trussed cantilever end roofs is appropriate for a classic ground. But the roof surfaces read as single thin flat planes: the underside is a uniform grey sheet with faint diagonal lines and no purlins, profiled cladding, lighting rigs or PA speakers (the one hanging rectangle helps a little); the top in aerial views has generic corrugation stripes but no ridge, skylight strips or gutters. Fascias are thin flat blue strips with no depth. The truss members in the right-hand stand are good but too clean and uniform. The main-stand pillars are plain white cylinders with no base plates or capitals.",
+ "suggestions":[
+  "Model purlins under the roof (C-sections every ~1.5 m, instanced) and use a trapezoidal profiled-sheet normal map on both faces; add rows of translucent rooflights on top (every 4th sheet lighter).",
+  "Give fascias 600-900 mm depth with a gutter and downpipes at the ends; add PA speakers and lighting gantries under the leading edge (instanced).",
+  "Add base plates, haunches and knee braces to the main-stand columns; slight rust staining at column feet and roof sheet laps.",
+  "Weather the roof top: dirt streaks along the fall line, moss at gutters, paint fade on the fascia."
+ ],
+ "renderer_notes":"Undersides look flat partly due to missing AO/GI."},
+{"asset":"stadium_classic:exterior/facade","score":44,"pass":false,
+ "summary":"A brick main-stand facade with regular windows gives a plausible Leitch-era block from far, but it is a repetitive extruded box with flat brick and a bare concrete apron.",
+ "critique":"From the aerial views the main stand rear is a tall red-brick box with a grid of identical windows and ground-floor openings; other stands show plain brick or clad rear walls. Issues: the window grid is perfectly regular with no hierarchy (no main entrance, club crest, gable pediment, turnstile block, ticket office or signage beyond one small board); brick is a uniform tiling with no string courses, plinth, lintels or parapet; roof-to-wall junction is a simple overlap. The building height looks excessive for the stand behind it (5 floors). The surrounding apron is a flat light-grey slab with a few trees and some clutter; no car park markings, kerbs, turnstile queues, gates, railings or bins.",
+ "suggestions":[
+  "Break the facade into bays every 6-8 m with pilasters, a stone/render plinth, stone string course at each floor, window lintels/sills, and a central entrance block with pediment/gable carrying the club name and crest.",
+  "Add turnstile blocks with numbered doors, roller shutters, external staircases and steel perimeter gates on the other stands; corrugated or brick rear cladding with signage.",
+  "Brick material: variation per brick (2-3 tones), dark mortar, soot/water staining below sills and at the base; tile 1 brick texture plus a large-scale grime mask.",
+  "Detail the apron: kerbs, tactile paving, painted bays, bollards, bins, floodlit lamp columns, and grass verges using existing kit props."
+ ],
+ "renderer_notes":"Fine."},
+{"asset":"stadium_classic:floodlights","score":56,"pass":false,
+ "summary":"Classic four-corner lattice pylons with angled lamp heads read well and suit the theme; lattice is clean-cut and the heads lack detail.",
+ "critique":"Tall tapering lattice masts at the corners with rectangular lamp-head frames are exactly the right classic-British look, and the lattice silhouette holds at distance. Close up the members are uniform thin lines with no bolted joints, ladder or cage, rest platforms or cable trays; the lamp heads are a flat panel of lamp squares without visible luminaires, back framing or service walkway. The base has no plinth/foundation block. Material is uniform clean grey; real old pylons are galvanised with rust bloom or painted with chipped paint.",
+ "suggestions":[
+  "Add a caged ladder up one face and 1-2 rest platforms (instanced, low poly), and a service walkway behind the head frame.",
+  "Head frame: 4 x 6 grid of individual luminaire boxes with visors and slight per-lamp aim variation, plus back bracing (~1-2k tris per head).",
+  "Concrete plinth (1.5 m square, 0.5 m high) at each leg with base plates; bolted gusset plates at lattice joints via normal map or tiny boxes.",
+  "Material: galvanised grey with rust streaking and darker weathering toward the top, roughness 0.5-0.7."
+ ],
+ "renderer_notes":"The pylons appear to lean dramatically in one overall view; that is wide-angle lens distortion, not the asset."},
+{"asset":"stadium_classic:pitch & goals & nets","score":56,"pass":false,
+ "summary":"Good mowing stripes, crisp markings and believable goalmouth wear; centre-circle logo blur and goals with rigid nets limit it.",
+ "critique":"Pitch reads well: alternating stripes, sharp white lines with correct layout, worn goalmouth and centre-circle patches. Weaknesses: the stripe pattern is both directions (checkerboard) with hard tile-like edges in places, giving a slightly synthetic look; the wear patches are blurry blobs without soil/stud-mark texture; line paint is perfectly uniform with no slight overspray or grass-through. The centre spot/circle has a smudged logo that reads as a stain. Goals carry the same rigid, un-sagging net as the standalone goal assets, and nets are almost invisible from the stands. Corner flags present.",
+ "suggestions":[
+  "Soften stripe transitions (blade-direction sheen via normal/roughness variation rather than albedo only) and keep the checkerboard optional per club.",
+  "Worn areas: add a detail texture of bare soil, divots and stud scuffs blended by the wear mask, with darker damp soil in the six-yard box.",
+  "Line paint: slight per-pixel alpha noise so grass shows through, 120 mm width, faint overspray edges.",
+  "Give goals sagging nets (see goal assets) and slightly greyer net colour so they read from distance; add goal-line hoop pegs."
+ ],
+ "renderer_notes":"Pitch checkerboard brightness also comes from viewing-angle-independent shading; anisotropic sheen in the shader would sell mown grass better."},
+{"asset":"stadium_classic:dugouts & tunnel","score":38,"pass":false,
+ "summary":"Dugouts and tunnel are blocky brick-red boxes with seats inside; recognisable but greybox-adjacent.",
+ "critique":"The placement (two dugouts flanking a central tunnel at the halfway line) is correct. But the dugouts are plain rectangular boxes with flat red walls and an open front, no curved polycarbonate canopy, no perspex side panels, no bucket/team seats with headrests, no technical-area markings visible in front, no step down. The tunnel is a flat box with a pair of glass doors and a red fascia; there is no extendable/telescopic tunnel cover, no club branding or crest above the opening, and no padding or rubber flooring. Walls have no thickness reading, bevels or material breakup.",
+ "suggestions":[
+  "Rebuild dugouts as modern team shelters: steel frame with a curved or sloped clear polycarbonate roof and side panels (transparent material with slight tint and dirt), 2 rows of padded bucket seats with headrests in club colour, rubber floor (~2-3k tris each).",
+  "Or for a classic look: a sunken brick dugout with a flat concrete roof slab, rendered front wall with club name, painted timber bench and step down; either way add wall thickness (200 mm) and bevels.",
+  "Tunnel: add a telescopic/inflatable tunnel cover extending 3-6 m onto the track, club crest and lettering above, padded inner walls.",
+  "Paint the technical areas (dashed white boxes 1 m out) and add a fourth-official table/board between dugouts."
+ ],
+ "renderer_notes":"Fine."},
+{"asset":"stadium_classic:advertising boards & screens","score":52,"pass":false,
+ "summary":"Varied, well-designed perimeter board graphics and a legible scoreboard on a lattice mount; boards are flat slabs without real construction.",
+ "critique":"Board artwork is the strongest element: varied fictional brands, typography and colours that look like real perimeter advertising, plus a convincing match scoreboard with score, clock and team names. However, boards are simple thick slabs with no supporting A-frame legs or rear struts, no visible frame edges, no padding or gaps between units, and identical heights across the whole perimeter. Printed boards show no sheen, wrinkles or weathering; digital LED boards (if intended) have no pixel/emissive treatment. The scoreboard housing is a plain box on a thin lattice with no service access, cable or bracket detail.",
+ "suggestions":[
+  "Add A-frame legs/struts and a visible 30-40 mm aluminium frame edge per board, with 20-50 mm gaps between units and rubber feet (instanced, ~100 tris per board).",
+  "Material: printed vinyl with slight roughness variation, subtle wrinkle normal map, fading on the top edge; for LED boards add an emissive term and a fine pixel-grid normal/detail texture.",
+  "Scoreboard: add a housing bevel and frame, emissive pixel grid, rear service doors, mounting brackets and conduit on the lattice.",
+  "Vary board heights/types slightly (0.9 m standard plus occasional taller LED runs) to break uniformity."
+ ],
+ "renderer_notes":"Fine."}
+]

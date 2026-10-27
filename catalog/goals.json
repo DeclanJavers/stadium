@@ -1,5 +1,5 @@
 {
-  "_doc": "Goal styles. Depths in metres. post_profile: elliptical | round | square | rectangular.",
+  "_doc": "Goal styles. Depths in metres. post_profile: elliptical | round | square | rectangular. width / height: inside the posts (default 7.32 x 2.44; youth sizes from the FA rules on goalpost and pitch sizes).",
   "box": {
     "label": "Box net (elite)", "post_profile": "elliptical", "post_size": [0.10, 0.12],
     "net_top_depth": 2.0, "net_bottom_depth": 2.0, "support": "rear_poles", "slack": 0.05,
@@ -14,5 +14,23 @@
     "label": "Portable aluminium (grassroots)", "post_profile": "round", "post_size": [0.10, 0.10],
     "net_top_depth": 1.0, "net_bottom_depth": 2.0, "support": "rear_frame", "slack": 0.06,
     "frame_finish": "worn_aluminium"
+  },
+  "youth_mini": {
+    "label": "Youth portable 12 x 6 ft (5v5, 7v7)", "width": 3.66, "height": 1.83,
+    "post_profile": "round", "post_size": [0.07, 0.07], "net_top_depth": 0.6, "net_bottom_depth": 1.2,
+    "support": "rear_frame", "slack": 0.06, "frame_finish": "powder_coat",
+    "mesh": "square", "mesh_size": 0.1, "cord_mm": 3.0
+  },
+  "youth_9v9": {
+    "label": "Youth portable 16 x 7 ft (9v9)", "width": 4.88, "height": 2.13,
+    "post_profile": "round", "post_size": [0.08, 0.08], "net_top_depth": 0.8, "net_bottom_depth": 1.5,
+    "support": "rear_frame", "slack": 0.06, "frame_finish": "powder_coat",
+    "mesh": "square", "mesh_size": 0.1, "cord_mm": 3.0
+  },
+  "youth_u13": {
+    "label": "Youth portable 21 x 7 ft (U13-U14 11v11)", "width": 6.40, "height": 2.13,
+    "post_profile": "round", "post_size": [0.09, 0.09], "net_top_depth": 0.9, "net_bottom_depth": 1.8,
+    "support": "rear_frame", "slack": 0.06, "frame_finish": "powder_coat",
+    "mesh": "square", "mesh_size": 0.1, "cord_mm": 3.0
   }
 }

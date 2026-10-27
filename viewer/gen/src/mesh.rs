@@ -117,6 +117,134 @@ impl MeshAcc {
     }
 }
 
+/// Horizontal unit normal at every vertex of a polyline (central differences), pointing away from
+/// the pitch centre (port of shapes.outward).
+pub fn outward(line: &[DVec3]) -> Vec<DVec2> {
+    let n = line.len();
+    (0..n)
+        .map(|i| {
+            let (a, b) = (line[i.saturating_sub(1)], line[(i + 1).min(n - 1)]);
+            let (mut tx, mut ty) = (b.x - a.x, b.y - a.y);
+            let l = tx.hypot(ty);
+            if l > 1e-12 {
+                tx /= l;
+                ty /= l;
+            } else {
+                (tx, ty) = (1.0, 0.0);
+            }
+            let o = DVec2::new(ty, -tx);
+            if o.x * line[i].x + o.y * line[i].y < 0.0 { -o } else { o }
+        })
+        .collect()
+}
+
+/// The polyline moved `o` outward and `dz` up (shapes.offset).
+pub fn offset_line(line: &[DVec3], normals: &[DVec2], o: f64, dz: f64) -> Vec<DVec3> {
+    line.iter().zip(normals).map(|(p, n)| DVec3::new(p.x + n.x * o, p.y + n.y * o, p.z + dz)).collect()
+}
+
+const BOX_FACES: [[usize; 4]; 6] = [[0, 2, 3, 1], [4, 5, 7, 6], [0, 1, 5, 4], [2, 6, 7, 3], [0, 4, 6, 2], [1, 3, 7, 5]];
+
+impl MeshAcc {
+    /// Closed section [(o outward, dz up)] swept along a polyline, one ring per vertex
+    /// (shapes.sweep).
+    pub fn sweep(&mut self, line: &[DVec3], section: &[DVec2], tag: i32, normals: Option<&[DVec2]>, caps: bool) {
+        let j = line.len();
+        if j < 2 {
+            return;
+        }
+        let own;
+        let o = match normals {
+            Some(n) => n,
+            None => {
+                own = outward(line);
+                &own[..]
+            }
+        };
+        let k = section.len();
+        let base = self.verts.len() as u32;
+        for (p, n) in line.iter().zip(o) {
+            for q in section {
+                self.verts.push(DVec3::new(p.x + n.x * q.x, p.y + n.y * q.x, p.z + q.y));
+            }
+        }
+        let mut along = vec![0.0];
+        for w in line.windows(2) {
+            along.push(along[along.len() - 1] + (w[1].x - w[0].x).hypot(w[1].y - w[0].y));
+        }
+        let mut per = vec![0.0];
+        for i in 0..k {
+            per.push(per[i] + (section[(i + 1) % k] - section[i]).length());
+        }
+        // winding as add_prism's (whose frame has t x n pointing down), mirrored for a line that
+        // runs the other way round
+        let area: f64 = (0..k).map(|i| section[i].perp_dot(section[(i + 1) % k])).sum();
+        let t0 = (line[1] - line[0]).truncate();
+        let inward = (area > 0.0) == (t0.x * o[0].y - t0.y * o[0].x <= 0.0);
+        let ku = k as u32;
+        for jj in 0..j - 1 {
+            for i in 0..k {
+                let a = base + jj as u32 * ku + i as u32;
+                let b = base + jj as u32 * ku + ((i + 1) % k) as u32;
+                self.faces.push(vec![a, b, b + ku, a + ku]);
+                self.tags.push(tag);
+                self.flip.push(inward);
+                self.uvs.extend_from_slice(&[
+                    DVec2::new(along[jj], per[i]),
+                    DVec2::new(along[jj], per[i + 1]),
+                    DVec2::new(along[jj + 1], per[i + 1]),
+                    DVec2::new(along[jj + 1], per[i]),
+                ]);
+            }
+        }
+        if caps {
+            for (jj, flip) in [(0usize, true), (j - 1, false)] {
+                let mut idx: Vec<u32> = (0..k).map(|i| base + jj as u32 * ku + i as u32).collect();
+                let mut uv: Vec<DVec2> = section.to_vec();
+                if flip {
+                    idx.reverse();
+                    uv.reverse();
+                }
+                self.faces.push(idx);
+                self.tags.push(tag);
+                self.flip.push(inward);
+                self.uvs.extend(uv);
+            }
+        }
+    }
+
+    /// Box centred at c with half extents along ax, ay and az = ax x ay; faces wind outward
+    /// (shapes.obox).
+    #[allow(clippy::too_many_arguments)]
+    pub fn obox(&mut self, c: DVec3, ax: DVec3, ay: DVec3, hx: f64, hy: f64, hz: f64, tag: i32) {
+        let az = ax.cross(ay);
+        let base = self.verts.len() as u32;
+        let mut loc = Vec::with_capacity(8);
+        for z in [-hz, hz] {
+            for y in [-hy, hy] {
+                for x in [-hx, hx] {
+                    loc.push(DVec3::new(x, y, z));
+                }
+            }
+        }
+        for l in &loc {
+            self.verts.push(c + ax * l.x + ay * l.y + az * l.z);
+        }
+        for f in BOX_FACES {
+            let q: Vec<DVec3> = f.iter().map(|&i| loc[i]).collect();
+            let n = (q[1] - q[0]).cross(q[2] - q[0]).abs();
+            let uv = q.iter().map(|v| if n.x >= n.y && n.x >= n.z { DVec2::new(v.y, v.z) } else if n.y >= n.z { DVec2::new(v.x, v.z) } else { DVec2::new(v.x, v.y) }).collect();
+            self.add_face(f.iter().map(|&i| base + i as u32).collect(), tag, Some(uv));
+        }
+    }
+
+    /// Axis-aligned box between two corners (shapes.zbox).
+    pub fn zbox(&mut self, lo: DVec3, hi: DVec3, tag: i32) {
+        let (c, h) = ((lo + hi) / 2.0, (hi - lo) / 2.0);
+        self.obox(c, DVec3::X, DVec3::Y, h.x, h.y, h.z, tag);
+    }
+}
+
 /// Independent prisms along segments (port of mesh.tubes): verts, quads.
 pub fn tubes(p0: &[DVec3], p1: &[DVec3], radius: f64, sides: usize, extend: Option<f64>) -> (Vec<DVec3>, Vec<[u32; 4]>) {
     let ext = extend.unwrap_or(radius);

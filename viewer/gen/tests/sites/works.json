@@ -1,0 +1,19 @@
+{"schema": "site-layout/1", "name": "Works", "template": "edge_of_town", "style": "mediterranean", "seed": 11,
+ "club": {"name": "WORKS FC", "primary": "#7a1d22", "secondary": "#f2f2f2"},
+ "boundary": {"type": "railings", "screening": "trees"}, "gate": {"tier": 3, "style": "ultra_modern"},
+ "plots": {
+  "P1": {"state": "construction", "facility": "pitch", "tier": 2}, "P2": {"state": "construction", "facility": "artificial_pitch", "tier": 1},
+  "P3": {"state": "construction", "facility": "indoor_hall", "tier": 1}, "P4": {"state": "built", "facility": "indoor_hall", "tier": 1},
+  "P5": {"state": "built", "facility": "indoor_hall", "tier": 2}, "P6": {"state": "built", "facility": "pitch", "tier": 4},
+  "P7": {"state": "built", "facility": "artificial_pitch", "tier": 1, "options": {"floodlights": true}},
+  "P8": {"state": "built", "facility": "pitch", "tier": 1, "options": {"mow": "checkerboard", "length": 90, "width": 60}},
+  "P9": {"state": "built", "facility": "pitch", "tier": 9},
+  "B1": {"state": "construction", "facility": "training_building", "tier": 3}, "B2": {"state": "built", "facility": "training_building", "tier": 1},
+  "B3": {"state": "built", "facility": "training_building", "tier": 2, "style": "classic", "options": {"modules": ["canteen"], "sign": false}},
+  "M1": {"state": "construction", "facility": "recovery", "tier": 2}, "M2": {"state": "built", "facility": "recovery", "tier": 1},
+  "M3": {"state": "construction", "facility": "maintenance", "tier": 3},
+  "C1": {"state": "construction", "facility": "car_park", "tier": 2}, "C2": {"state": "built", "facility": "car_park", "tier": 1},
+  "C3": {"state": "built", "facility": "car_park", "tier": 2},
+  "S1": {"state": "built", "facility": "recovery", "tier": 2, "style": "bogus"}, "S2": {"state": "built", "facility": "goalkeeper_area", "tier": 1},
+  "S3": {"state": "construction", "facility": "maintenance", "tier": 1}
+ }}

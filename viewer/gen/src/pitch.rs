@@ -22,7 +22,7 @@ pub fn defaults() -> Value {
         "crown": 0.06, "grass": "perennial_ryegrass", "height_mm": null,
         "mow": {"pattern": "stripes", "width": 5.25, "angle": 0.0, "offset": 0.0},
         "wear": 0.25, "wetness": 0.0, "line_color": "#f5f5f0", "hand_painted": 0.0,
-        "optional_marks": true, "seed": 1
+        "optional_marks": true, "markings": "full", "seed": 1
     })
 }
 
@@ -46,13 +46,59 @@ pub struct Pitch {
     pub line_color: String,
     pub hand_painted: f64,
     pub optional_marks: bool,
+    /// "full", "outline" (small-sided: touchlines, halfway, centre circle) or "none"
+    pub markings: String,
     pub seed: i64,
     /// the grass catalog entry
     pub grass_spec: Value,
     pub params: Value,
 }
 
+/// What the renderer's procedural grass needs for one grass surface: the turf (colours, blade
+/// height, mowing, wear, wetness) and where the pitch sits (origin and yaw in kit coordinates, so
+/// stripes, wear zones and lines are laid out in the pitch's own frame). `wear_zones` is false for
+/// plain lawns, which wear evenly instead of in goalmouths.
+#[derive(Clone, Debug, PartialEq)]
+pub struct GrassSpec {
+    pub pattern: String,
+    pub stripe_width: f64,
+    pub angle_deg: f64,
+    pub strength: f64,
+    pub natural: bool,
+    pub color: String,
+    pub dry: String,
+    pub wear: f64,
+    pub wetness: f64,
+    pub height_mm: f64,
+    pub half: DVec2,
+    pub origin: DVec2,
+    pub yaw: f64,
+    pub wear_zones: bool,
+}
+
 impl Pitch {
+    /// The grass surface of this pitch placed at `origin`, rotated by `yaw` (radians).
+    pub fn grass_spec(&self, origin: DVec2, yaw: f64) -> GrassSpec {
+        let g = &self.grass_spec;
+        let s = |k: &str, d: &str| g.get(k).and_then(|v| v.as_str()).unwrap_or(d).to_string();
+        GrassSpec {
+            pattern: self.mow_pattern.clone(),
+            stripe_width: self.mow_width,
+            angle_deg: self.mow_angle,
+            strength: g.get("stripe_strength").and_then(|v| v.as_f64()).unwrap_or(0.2) * (self.height_mm / 25.0).clamp(0.4, 1.6),
+            natural: self.natural(),
+            color: s("color", "#4a6d27"),
+            dry: s("color_dry", "#8a8247"),
+            wear: self.wear,
+            wetness: self.wetness,
+            height_mm: self.height_mm,
+            half: DVec2::new(self.length / 2.0, self.width / 2.0),
+            origin,
+            yaw,
+            wear_zones: true,
+        }
+    }
+
     pub fn resolve(params: &Value, cat: Option<&Catalog>) -> Pitch {
         let p = merge(&defaults(), if params.is_object() { params } else { &Value::Null });
         let p = if p.is_object() { p } else { defaults() };
@@ -81,6 +127,7 @@ impl Pitch {
             line_color: p["line_color"].as_str().unwrap_or("#f5f5f0").to_string(),
             hand_painted: n("hand_painted"),
             optional_marks: p["optional_marks"].as_bool().unwrap_or(true),
+            markings: p["markings"].as_str().unwrap_or("full").to_string(),
             seed: p["seed"].as_i64().unwrap_or(1),
             grass_spec: g,
             params: p,
@@ -143,6 +190,64 @@ pub fn smooth_noise_1d(t: &[f64], seed: u64, octaves: usize, base_freq: f64) -> 
 
 pub type Line = (Vec<DVec2>, bool);
 
+/// An FA youth format's markings (FA Rules: goalpost and pitch sizes; mini-soccer and 9v9
+/// guidance), metres: penalty area (depth, half width), goal area, penalty mark, centre circle;
+/// 5v5 has a curved area round the goal instead, 9v9 dashed retreat lines (see kit/assets/pitch.py).
+#[derive(Clone, Copy)]
+pub struct Youth {
+    pub curved_area: Option<f64>,
+    pub area: Option<(f64, f64)>,
+    pub goal_area: Option<(f64, f64)>,
+    pub mark: Option<f64>,
+    pub circle: f64,
+    pub retreat: bool,
+}
+
+pub fn youth(kind: &str) -> Option<Youth> {
+    let none = || Youth { curved_area: None, area: None, goal_area: None, mark: None, circle: 0.0, retreat: false };
+    match kind {
+        "5v5" => Some(Youth { curved_area: Some(5.94), circle: 2.75, ..none() }),
+        "7v7" => Some(Youth { area: Some((9.14, 8.23)), mark: Some(7.32), circle: 4.57, ..none() }),
+        "9v9" => Some(Youth { area: Some((11.89, 14.63)), goal_area: Some((3.66, 6.10)), mark: Some(8.23), circle: 6.4, retreat: true, ..none() }),
+        _ => None,
+    }
+}
+
+/// Penalty and goal areas, penalty marks, corner arcs and retreat lines of a youth format.
+fn youth_marks(y: &Youth, hl: f64, hw: f64, w: f64, lines: &mut Vec<Line>, discs: &mut Vec<(DVec2, f64)>) {
+    let v = DVec2::new;
+    for s in [1.0f64, -1.0] {
+        let gx = s * (hl - w / 2.0);
+        if let Some(r) = y.curved_area {
+            let a = if s > 0.0 { PI } else { 0.0 };
+            lines.push((arc(v(s * hl, 0.0), r - w / 2.0, a - PI / 2.0, a + PI / 2.0, 0.08), false));
+        }
+        for (depth, half) in [y.area, y.goal_area].into_iter().flatten() {
+            let fx = s * (hl - depth + w / 2.0);
+            let yy = half - w / 2.0;
+            lines.push((vec![v(gx, yy), v(fx, yy), v(fx, -yy), v(gx, -yy)], false));
+        }
+        if let Some(m) = y.mark {
+            discs.push((v(s * (hl - m), 0.0), SPOT_R));
+        }
+        for t in [1.0f64, -1.0] {
+            let a0 = 0.0f64.atan2(-s);
+            let a1 = (-t).atan2(0.0);
+            let d = (a1 - a0 + PI).rem_euclid(2.0 * PI) - PI;
+            lines.push((arc(v(s * hl, t * hw), CORNER_R - w / 2.0, a0, a0 + d, 0.05), false));
+        }
+        if y.retreat {
+            // dashed: a metre of paint, a metre gap, across the pitch
+            let x = s * (hl - y.area.map_or(0.0, |a| a.0)) / 2.0;
+            let mut yy = -hw + w;
+            while yy + 1.0 <= hw - w + 1e-9 {
+                lines.push((vec![v(x, yy), v(x, yy + 1.0)], false));
+                yy += 2.0;
+            }
+        }
+    }
+}
+
 /// Centre-lines of every marking and the spots.
 pub fn marking_paths(p: &Pitch) -> (Vec<Line>, Vec<(DVec2, f64)>) {
     let (l, w_, w) = (p.length, p.width, p.line_width);
@@ -150,12 +255,28 @@ pub fn marking_paths(p: &Pitch) -> (Vec<Line>, Vec<(DVec2, f64)>) {
     let v = DVec2::new;
     let mut lines: Vec<Line> = Vec::new();
     let mut discs = Vec::new();
+    if p.markings == "none" {
+        return (lines, discs);
+    }
     lines.push((vec![v(hl - w / 2.0, hw - w / 2.0), v(-hl + w / 2.0, hw - w / 2.0), v(-hl + w / 2.0, -hw + w / 2.0), v(hl - w / 2.0, -hw + w / 2.0)], true));
     lines.push((vec![v(0.0, -hw + w / 2.0), v(0.0, hw - w / 2.0)], false));
-    let mut circle = arc(DVec2::ZERO, CIRCLE_R - w / 2.0, 0.0, 2.0 * PI, 0.08);
+    let y = youth(&p.markings);
+    let r_c = match y {
+        Some(y) => y.circle,
+        None if p.markings == "full" => CIRCLE_R,
+        None => CIRCLE_R.min(w_ / 6.0),
+    };
+    let mut circle = arc(DVec2::ZERO, r_c - w / 2.0, 0.0, 2.0 * PI, 0.08);
     circle.pop();
     lines.push((circle, true));
     discs.push((DVec2::ZERO, SPOT_R));
+    if let Some(y) = y {
+        youth_marks(&y, hl, hw, w, &mut lines, &mut discs);
+        return (lines, discs);
+    }
+    if p.markings != "full" {
+        return (lines, discs);
+    }
     for s in [1.0, -1.0] {
         let gx = s * (hl - w / 2.0);
         for (depth, half) in [(PENALTY_AREA, GOAL_HALF + PENALTY_AREA), (GOAL_AREA, GOAL_HALF + GOAL_AREA)] {

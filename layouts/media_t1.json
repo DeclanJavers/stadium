@@ -1,0 +1,36 @@
+{
+ "schema": "site-layout/1",
+ "name": "Media room",
+ "template": "building_lot",
+ "style": "industrial",
+ "seed": 81,
+ "club": {
+  "name": "UNITED",
+  "primary": "#1d4f91",
+  "secondary": "#ffffff"
+ },
+ "boundary": {
+  "type": "railings"
+ },
+ "gate": {
+  "tier": 2
+ },
+ "plots": {
+  "B1": {
+   "state": "built",
+   "facility": "media_centre",
+   "tier": 1,
+   "options": {
+    "size": 1
+   }
+  },
+  "C1": {
+   "state": "built",
+   "facility": "car_park",
+   "tier": 2,
+   "options": {
+    "fill": 0.55
+   }
+  }
+ }
+}

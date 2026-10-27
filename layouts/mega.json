@@ -28,16 +28,12 @@
     "apron": "track",
     "fascia_color": "#0b3d2e",
     "colors": {
-      "pattern": "random",
+      "pattern": "tiers",
       "colors": [
         "#0b6e4f",
-        "#f2f2ee",
-        "#d4af37"
-      ],
-      "weights": [
-        6,
-        2,
-        1
+        "#0b6e4f",
+        "#09583f",
+        "#0b6e4f"
       ]
     },
     "sides": {

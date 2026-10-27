@@ -1,0 +1,132 @@
+[
+  {
+    "asset": "ball_cart",
+    "score": 50,
+    "pass": false,
+    "summary": "Believable mesh cage trolley with casters and push handle, but the balls are clean identical clones in a grid and the frame lacks construction detail.",
+    "critique": "Silhouette and proportions are right: roughly 0.8 x 0.6 footprint, about 1.1 m to the handle, square tube frame, welded mesh panels, four casters, a raised push handle. Main problems: (1) The balls are the weakest part and they fill most of the image. Every ball is the same flat truncated-icosahedron print in pure black and pure white, with no seams, no panel bulge, no logo, no dirt, and they sit in a regular stacked lattice with near-identical orientation. Real training balls in a cart are mixed (often 2-3 designs or colours), scuffed, grass-stained and tumbled randomly. (2) The mesh is a flat light-grey grid with uniform wire thickness, and the wires pass straight through the frame corners with no weld nodes or frame clips. The mesh pitch (~50 mm) is plausible. (3) The frame tube is a single dark charcoal value with no zinc or powder-coat variation, chips or rust at the feet. There are no corner gussets, no lid or hinged top (most ball carts have a hinged top or drop-down side), and no axle brackets for the casters. (4) The casters are simple discs with no swivel fork offset or brake tab.",
+    "suggestions": [
+      "Balls: randomise rotation per instance (full random quaternion), jitter positions so they settle as a pile rather than a lattice, and slightly overfill the cart so a few balls sit higher in the middle. Cost: free.",
+      "Balls: use 2-3 ball designs (e.g. white with a coloured graphic, hi-vis yellow, an orange winter ball), add a normal map with seam grooves and slight panel pillowing, a small logo decal, and a grime and grass-stain mask (albedo white ~0.75 not 1.0, black ~0.04). One shared 512px atlas.",
+      "Add a hinged mesh lid or a drop-down front panel with two hinge barrels and a latch hook; real carts almost always have one. About 200 tris.",
+      "Frame: add weld beads or small flat clip tabs where the mesh meets the tubes, corner gussets at the base, and swivel caster forks with an offset and a brake pedal on two wheels. About 300 tris total.",
+      "Materials: dark green or black powder coat with roughness ~0.5, edge chipping to bright steel on the handle and base rails, and rust bloom on the bottom rail and caster forks. Mesh wire galvanised mid-grey (albedo ~0.45) with slight roughness variation.",
+      "Render the mesh as an alpha-tested texture on a single quad per side with a parallax-free normal map, rather than geometry, to keep it cheap for instancing (2 tris per face plus a 256px mask)."
+    ],
+    "renderer_notes": "Lawn and lighting are fine; the mesh reads correctly through alpha. Ball speculars look a bit plastic, which may partly be the lack of IBL reflections."
+  },
+  {
+    "asset": "car_saloon",
+    "score": 28,
+    "pass": false,
+    "summary": "Generic lumpy saloon shell with floating box mirrors, broken-looking headlight decals and undersized wheels; reads as a low-poly toy.",
+    "critique": "The rough three-box saloon layout is present (bonnet, cabin, boot, four doors, number plates front and rear, tail-light strips), but almost everything else breaks realism. (1) Headlights are smeared, jagged grey/orange shards projected onto the bonnet corners, not light units; from the close view they look like torn stickers. (2) Mirrors are plain cubes floating off the A-pillar with no stalk or housing shape. (3) The wheels look small for the body: the wheel arches are much bigger than the tyres and there is very little sidewall/rim detail; a G20-class saloon runs ~650 mm tyres (225/45 R18) that nearly fill the arch. (4) The body is a single soft blob: no shoulder line, no crease along the doors, no sharp edge at the bonnet shut line, windscreen and glass are flat dark panels with no pillar trim, rubber seals or black A/B/C-pillar finishers. The front is rounded like a 1990s sports car and the rear corners are square blocks with a visible seam. (5) The roof-to-boot proportion is off: the cabin sits far back and the bonnet is very long relative to a 4.7 m saloon with 2.85 m wheelbase. (6) Paint is a flat saturated blue with no clearcoat reflection; no grille, no badges, no door handles beyond tiny grey slots, no window glass reflection, no underbody/exhaust.",
+    "suggestions": [
+      "Rebuild headlights as real geometry: a recessed lens unit (~600 x 180 mm) with a clear cover (roughness 0.05), chrome reflector and a DRL strip, inset into the front wing/bumper. Remove the projected decals. About 150 tris per side.",
+      "Fix wheel scale: tyre outer diameter ~650 mm, rim 18 in (457 mm), width ~225 mm, and shrink arch gaps to ~30-40 mm above the tyre. Add 5-spoke rim geometry with a normal-mapped tyre sidewall. About 600 tris per wheel; instance them.",
+      "Proportions to G20: L 4709, W 1827, H 1442, WB 2851, front overhang ~790, rear ~1070. Move the A-pillar base forward so the bonnet is ~1.4 m long, give the cabin a fast-sloping rear screen into a short boot deck.",
+      "Add character lines: a sharp shoulder crease running from headlight to tail-light at ~0.85 m height, a lower door sculpt line, defined panel gaps (normal map or a 5 mm groove) at doors, bonnet and boot.",
+      "Mirrors: model a teardrop housing on a stalk mounted at the A-pillar base (~250 x 150 mm), body-coloured cap, black base. About 80 tris each.",
+      "Glass and trim: black gloss pillar finishers, a chrome or black window surround, glass at albedo ~0.02, roughness 0.05, slight tint. Front grille (kidney-style or generic) in black, lower bumper intake, fog-light recesses.",
+      "Paint: clearcoat-style material (base albedo blue ~0.05-0.15, roughness 0.25, metallic flake via low metallic 0.3), plus light road grime on sills and lower doors.",
+      "Add an underbody plane in dark grey, an exhaust tip, door handles as raised bars, and a rear diffuser so side and low views do not show a floating shell."
+    ],
+    "renderer_notes": "Without SSR or reflection probes, any car paint will look flatter than real; a simple sky cubemap reflection on the clearcoat would help a lot. That does not explain the shape issues."
+  },
+  {
+    "asset": "fire_point",
+    "score": 25,
+    "pass": false,
+    "summary": "Blocky post with a floating sign and shelf and two capsule-shaped 'extinguishers'; placeholder quality.",
+    "critique": "The concept (a site fire point board with extinguishers on a stand) is recognisable but the construction is greybox. (1) The extinguishers are plain red capsules: no valve head, no squeeze handle, no pin, no hose or CO2 horn, no pressure gauge, no base ring. They are the defining feature of the object and do not read as extinguishers at all up close. The 'CO2' label is a black square stuck to the body, but a real UK extinguisher is all red with a black colour-coded band and a white instruction label. (2) The sign and the shelf are not attached: the sign floats off the side of a square post, the shelf (presumably a canopy or bracket) is a thin slab sticking out from the post at an odd angle with no brackets. From the side the sign is a blank flat red plane, and from the rear it is a blank pink square. (3) The post is a plain square bar on a flat grey plate with no fixings. (4) There is no extinguisher stand or bracket: the extinguishers just stand on the plate. (5) Materials are flat saturated red with no gloss, scuffs or dust. Real UK site fire points are usually a red steel or polymer stand with a curved hood/backboard, two extinguisher cradles, and a printed fire action notice, or a wall-hung board.",
+    "suggestions": [
+      "Model real extinguishers (~600 mm tall, Ø 150 for 9 L water/foam, CO2 ~Ø 140 with a horn): cylinder with domed top, valve head with a black squeeze handle and lever, a safety pin and tag, a short hose or a black CO2 horn clipped down the side, and a black plastic foot ring. About 400 tris each; instance them.",
+      "Label correctly: all-red body (albedo ~0.45, 0.04, 0.03, roughness 0.35) with a horizontal colour band (black for CO2, cream for foam, red for water) and a white instruction label decal with small text and pictograms. One shared 512px atlas.",
+      "Replace the floating sign and shelf with a real fire point stand: a red folded-steel or rotomoulded backboard ~1.6 m tall with a rain hood on top, a printed 'FIRE POINT' header and a fire action notice below, and two extinguisher cradles/hooks. Make sure every part touches its support; add bolts at the joints.",
+      "Give the backboard a back face (painted steel or plain moulded plastic) rather than a blank flat-coloured plane, and bevel all edges by ~5 mm.",
+      "Add an optional fire alarm call point (red box with white glass) or a triangle-and-striker for site realism; ~60 tris.",
+      "Add wear: dust on horizontals, slight fading of the red on the sun-facing side, scuffs at the extinguisher bases. Ground the base with a contact AO decal."
+    ],
+    "renderer_notes": "The flat pink look of the unlit side is partly the sky ambient, but the albedo red is also too light and unsaturated on the back face."
+  },
+  {
+    "asset": "hoarding_panel",
+    "score": 22,
+    "pass": false,
+    "summary": "A single flat pink sheet propped by two loose battens, with blocks that do not touch the braces; greybox.",
+    "critique": "Real site hoarding is a run of 2.4 m x 1.2 m plywood or composite sheets on timber posts or a steel frame, painted and printed with a developer graphic, braced on the back with raking struts that are bolted to ballast blocks. Here: (1) It is one big flat plane (looks ~2.2 x 2.4 m) with zero thickness detail, no sheet joints, no posts, no edge capping. (2) The front graphic is a washed-out salmon pink with a tiny single line of pixel text placed high and off-centre; there is no image, logo, contact panel or safety signage. (3) The rear shows three horizontal rails and two diagonal battens that end in mid-air; the two concrete blocks sit apart from the strut ends, so nothing is visibly braced. (4) The blocks are plain cubes with no lifting eye or strap. (5) The rear face is a flat dark red with no plywood grain or unpainted back. (6) No dirt, rain streaks, graffiti, fixings or bottom splash marks.",
+    "suggestions": [
+      "Build it as 1.2 m wide sheets (18 mm thick) with visible joint lines every 1.2 m, fixed to 75 x 75 mm timber posts at 2.4 m centres, with a top capping rail. Keep the module 2.4 m wide x 2.4 m tall so it tiles; about 150 tris per module.",
+      "Back bracing: raking struts from ~1.8 m down to the ground at 45-60 degrees, ending in a steel shoe bolted to a concrete ballast block (~600 x 400 x 400) with a lifting eye. Make sure strut ends actually meet the block. Add M10 bolt heads as small cylinders or a normal map.",
+      "Front: a proper printed graphic: dark brand colour (developer navy or green), large hero render image, a logo, 'Building the future' headline at readable size (cap height ~150 mm), a contact strip and a standard yellow/blue PPE safety sign. One 1024x512 atlas shared across modules, with 3-4 variants.",
+      "Back face material: unpainted plywood (albedo ~0.45, 0.35, 0.22, roughness 0.8) with grain normal map and stencilled sheet numbers; timber battens slightly darker and weathered.",
+      "Weathering: rain streaks running down from the capping, mud splash on the bottom 300 mm, faded print on the sun side, a few staple marks or fly-posters. Use a shared grime mask in a second UV set.",
+      "Make the front albedo less pastel: the current pink reads like an untextured debug colour; saturated reds should sit around sRGB (180, 30, 35)."
+    ],
+    "renderer_notes": "The front face looks overexposed pink because it faces the sun with no texture; the dark rear is correct given the light, but the colour mismatch suggests different albedos front and back, which is fine if intended."
+  },
+  {
+    "asset": "portaloo",
+    "score": 46,
+    "pass": false,
+    "summary": "Correct moulded-plastic portable toilet silhouette and colours, but missing the door hardware, vent detail and wear that make it read as a real unit.",
+    "critique": "Proportions and palette are right: a ~1.1 x 1.1 x 2.3 m blue polyethylene cabin, slightly tapered walls, a pale grey translucent-style roof with a vent stack, a base skid, horizontal moulded ribs on the side walls, a door with a louvre grille near the top, and a small red indicator. Weak points: (1) The door is barely defined: no hinge strip, no visible door frame, no handle, no proper 'VACANT/ENGAGED' latch window (the red square is tiny and flat), no self-closing spring. (2) The side ribs are thin raised strips; real units have deeper moulded vertical or horizontal stiffening channels and a rounded skid base with forklift slots. (3) The roof is a flat bevelled slab; real roofs are translucent (letting light in), slightly domed, with a moulded rim. (4) The plastic is uniformly clean and smooth with slightly glossy roughness; real hire units are scuffed, sun-faded, carry the hire company decal, a 'wash your hands' sign, and have grime on the base. (5) Side and rear faces lack the vent grilles and the rear moulding where the tank sits.",
+    "suggestions": [
+      "Door: recess the door 15 mm inside a frame moulding, add a full-height hinge strip on one side (continuous piano hinge or 3 hinges), a pull handle (~150 mm bar), and a latch indicator with a white/red 'VACANT/ENGAGED' slot. About 200 tris plus a 256px decal.",
+      "Base: rounded skid base ~150 mm high with two forklift pockets on the front and back faces; the tank bulge at the rear. About 100 tris.",
+      "Roof: translucent white plastic (albedo ~0.8, roughness 0.5, subtle transmission or emissive tint), slightly domed with a 30 mm overhanging rim. Vent pipe to ~150 mm above the roof with a cowl cap.",
+      "Wall mouldings: deeper (20-30 mm) vertical stiffening grooves and corner radii ~40 mm; put 2-3 vent louvres on the side walls near the top.",
+      "Materials: roughness ~0.6 matte HDPE, albedo blue ~(0.06, 0.18, 0.45), with UV fading on the sun-facing faces, grime on the bottom 300 mm, scuffs around the door handle. Add a hire-company decal, a unit number stencil and a small hygiene notice on the door.",
+      "Optional variant: a hand-wash station or wheelchair-accessible unit using the same material atlas."
+    ],
+    "renderer_notes": "The sunlit vs shadowed sides show a large brightness jump with almost no ambient fill; that is the renderer (no GI), not the asset."
+  },
+  {
+    "asset": "seat.rail_seat.post",
+    "score": 33,
+    "pass": false,
+    "summary": "Rail seat reads as a post with two flat red slabs and a mirror-chrome rail; right idea, no moulding or mechanism detail.",
+    "critique": "This appears to be a safe-standing rail seat: vertical post with a horizontal safety rail at the top, a seat back and a folded-up seat pan locked against the post. The basic idea is right, but: (1) The seat back and the folded seat pan are thick, flat, sharp-cornered slabs; real rail seats are moulded polypropylene shells with ergonomic curvature, rounded corners and ribbed undersides. (2) The pan has no visible hinge/pivot mechanism, just a bar poking out the side. There is no lock clip for the folded position. (3) The post and rail are mirror-chrome; real rail-seat frames are galvanised or polyester powder-coated (usually black or grey) with roughness ~0.4-0.6. (4) The top rail is a short stub with a rounded bend; in reality the rail is continuous along the row at ~1.1 m above the tread, and the asset should be designed so adjacent instances join cleanly, with a padded or rubberised top cap in some designs. (5) The base plate is tiny for a post that has to resist crowd loads; real posts sit on a ~200 x 150 mm plate with 4 anchor bolts, or are clamped to the riser. (6) No seat number plate, no row lettering, no wear on the pan where it is folded up.",
+    "suggestions": [
+      "Model the seat back and seat pan as moulded shells: ~450 mm wide, back ~380 mm tall with a 20-30 mm lumbar curve, 5 mm wall thickness with a lip, rounded corners r~40 mm, and a ribbed underside on the pan via a normal map. About 300 tris each.",
+      "Add a pivot assembly: two side brackets on the post, a horizontal axle, and a simple lock clip that holds the pan up. About 120 tris.",
+      "Materials: frame black or grey powder coat (albedo ~0.05-0.2, roughness 0.45, metallic 0); seat polypropylene (club red ~(0.45, 0.04, 0.05), roughness 0.55) with UV fading on top surfaces and scuffing on the pan front.",
+      "Make the top rail modular so it reads as a continuous rail along a row: a straight segment ending in a sleeve joint at each side, with a rail height of ~1.1 m above the tread.",
+      "Enlarge the base plate to ~200 x 150 x 10 mm with four bolt heads, or add a riser-clamp variant; a bolted plate is cheap (~60 tris).",
+      "Add a seat number decal (white digits on a small black plate on the back top edge) and row letter stencils on the riser; one shared atlas."
+    ],
+    "renderer_notes": "The chrome looks overly mirror-like partly because the sky reflection is the only environment; but the material choice itself is wrong for this object."
+  },
+  {
+    "asset": "stadium_desert:pitch_goals_nets",
+    "score": 48,
+    "pass": false,
+    "summary": "Correct pitch markings and a credible goal with net, but the concentric mowing rings look artificial and the goal net reads as a large hex pattern stamped on glass.",
+    "critique": "The 'desert' layout shows only a pitch in open farmland with no stands, roof, facade, floodlights, dugouts or boards, so only the pitch, goals and nets can be judged. Line markings are in the right places (halfway line, centre circle, penalty areas, 6-yard boxes, penalty arcs) with a sensible line width, and there are corner flags and goalmouth wear patches. Problems: (1) The mowing pattern is a set of wide concentric circles centred on the centre spot. Circles are occasionally mown but the pattern here looks like a radial gradient rather than lawnmower stripes: the band edges are soft and blurry with no grain direction difference, and it carries across the penalty areas. Straight stripes (5-6 m wide) with directional sheen are the norm in the UK. (2) The goalmouth wear is a faint scatter of light-brown dots; real wear is concentrated in the 6-yard box and penalty spot, with bare soil, divots and a worn strip along the goal line. (3) The goal frame is plain white tube with no net supports visible from front angles, no ground bar shading, and the net uses a big hexagonal mesh with heavy contrast; at mid range it reads like a pattern printed on a transparent sheet rather than cord. (4) The pitch surround is bare grass to farmland; there is no grass run-off margin texture, no technical-area markings, and no line of fencing/rail. (5) Lines are perfectly crisp and bright everywhere; real paint has slight bleed and fading.",
+    "suggestions": [
+      "Replace the radial bands with straight mowing stripes (alternating light/dark bands 5-6 m wide across the pitch length), driven by a view-dependent sheen (blade direction) rather than albedo only, so they flip brightness with viewing angle. Shader cost only.",
+      "Make wear physical: a darker, browner, rougher mask in the goalmouths (6-yard box), centre circle and along the touchline where linesmen run, with a few divot decals. One 1024 px wear mask for the whole pitch.",
+      "Net: reduce mesh contrast and size (real hex nets have ~120 mm openings with 4-5 mm cord), shade cords as thin cylinders or a feathered alpha with a normal so they catch light, and add sag between the supports. Add the net support bars or stanchions at the back and the ground bar.",
+      "Goal frame: 120 mm elliptical or 102 mm round posts with a subtle gloss white (roughness 0.3), and slight dirt at the base of the posts.",
+      "Lines: add slight edge noise and lower brightness (albedo ~0.8), plus faint fading in high-wear areas.",
+      "Add a run-off strip of plainer grass 3-5 m wide around the pitch, technical area lines, and a low perimeter rail or barrier so the pitch does not just stop at farmland."
+    ],
+    "renderer_notes": "The long dark bands across the surrounding farmland look like shadow-map cascades or hedgerow shadows at a grazing angle; that is the renderer/terrain, not the pitch. Other stadium parts (seating, roof, facade, floodlights, dugouts and tunnel, advertising boards and screens) do not appear in this sheet, so they are not scored."
+  },
+  {
+    "asset": "tractor",
+    "score": 44,
+    "pass": false,
+    "summary": "Recognisable John Deere-style utility tractor with lugged tyres, mudguards and a glazed cab, but simplified bonnet, cab and missing linkage/lighting detail keep it toy-like.",
+    "critique": "The silhouette is right: big rear wheels, smaller steerable front wheels, a green bonnet, yellow rims, a four-post glazed cab with a white roof, an exhaust stack at the A-pillar, mudguards front and rear. Against a JD 6120M (L ~4360, WB ~2400-2580, front tyres ~1.3 m, rear tyres ~1.75 m): (1) The cab is too small and too low relative to the rear wheels; on a 6120M the cab roof is ~2.8 m high and the cab is wider than the bonnet by a lot, with a curved front screen and doors with handrails. Here it is a box of thin posts with a flat slab roof. (2) The bonnet is short and blobby with a small grille; the real bonnet is long and tapers to a narrow nose with integrated headlights and a JD front-weight frame. (3) The rear has a few bars but no proper three-point linkage (lower arms, top link, lift arms), PTO shaft, drawbar or hitch. (4) No steps, handrails, mirrors on arms, work lights, beacon, fuel tank, number plate, decals or JD-style yellow stripe. (5) The front mudguards are large flat slabs that look stuck on. (6) The paint is clean saturated green with no mud on tyres and lower body, no dust on the bonnet. Tyre tread lugs are present and read reasonably.",
+    "suggestions": [
+      "Scale and proportions: rear tyre OD ~1.75 m (600/65R38), front ~1.3 m (540/65R24), WB ~2.4 m, overall L ~4.4 m, cab roof ~2.8 m. Widen the cab to ~1.6 m and raise its floor so the bottom of the glass sits above the rear tyre top.",
+      "Cab: 4 posts with a curved one-piece front screen, two doors with handles and handrails, a rounded roof with a moulded rim and integrated work lights, a rotating amber beacon, and mirrors on extended arms. About 1500 tris.",
+      "Bonnet: lengthen to ~1.9 m, taper to a narrow nose, add headlights in the grille sides, a front-weight bracket with 4-6 suitcase weights, and the yellow pinstripe/brand panel as a decal. About 800 tris.",
+      "Rear: model a three-point linkage (two lower arms, top link, lift arms and drop rods), a PTO stub with a guard, and a pick-up hitch drawbar. About 600 tris; these define the silhouette from the back.",
+      "Add steps (2-3 treads) under the cab door, a fuel tank on the left, a battery box, and a small number plate and indicators on the rear mudguards.",
+      "Materials and wear: green albedo ~(0.06, 0.24, 0.06), roughness 0.4 with a dust layer on horizontals; mud splatter on wheels, mudguard undersides and lower body; yellow rims with rust at the bolts; glass albedo ~0.02 with slight dirt and a wiper-arc clean area."
+    ],
+    "renderer_notes": "Interior cab detail (steering wheel, seat) reads through the glass, which is good; the flat cab glass reflections are limited by the lack of reflection probes."
+  }
+]

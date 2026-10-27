@@ -19,6 +19,8 @@ HALF_AISLE = 0.5
 AISLE_RISER_MAX = 0.19
 VOM_WIDTH = 2.2
 VOM_HEADROOM = 2.2
+VOM_WALL = 0.1          # vomitory side walls stand this thick beside the mouth
+AISLE_RAIL_RAKE = 0.33  # aisles get centre handrails where riser / tread exceeds this
 
 TAG_CONCRETE, TAG_FASCIA, TAG_SOFFIT, TAG_BLOCK = 0, 1, 2, 3
 
@@ -174,6 +176,16 @@ def vom_sections(tier, r0, k):
     return [_clean(lower, ltags), _clean(upper, utags)]
 
 
+def vom_wall(tier, r0, k):
+    """Side wall of a vomitory mouth: from the treads beside it up to under the side rail."""
+    s, h, tr = tier["s"], tier["h"], tier["tread"]
+    pts = []
+    for i in range(r0, r0 + k):
+        pts += [(s[i], h[i]), (s[i] + tr, h[i])]
+    pts += [(s[r0 + k], h[r0 + k]), (s[r0 + k] + 0.05, h[r0 + k] + 0.95), (s[r0], h[r0] + 0.95)]
+    return _clean(pts, [TAG_CONCRETE] * len(pts))
+
+
 def vom_rows(tier):
     """Row index where the vomitory opens and how many rows it removes (None if it cannot fit)."""
     if not tier["vomitories"] or tier["rows"] < 10:
@@ -286,6 +298,11 @@ def build_run(run, tiers, seat_pitch_default=0.5, vom_every=3):
                 acc.add_prism(run, tm + hv, tb - ha, full)
                 for sec in vom_sec:
                     acc.add_prism(run, tm - hv, tm + hv, sec)
+                # side walls standing up beside the mouth, under the rails
+                wall = vom_wall(tier, *vr)
+                d = VOM_WALL / run.metric(tier["s"][vr[0]])
+                acc.add_prism(run, tm - hv - d, tm - hv, wall)
+                acc.add_prism(run, tm + hv, tm + hv + d, wall)
                 rails += _vom_rails(run, tier, vr, tm, hv)
             else:
                 acc.add_prism(run, ta + ha, tb - ha, full)
@@ -301,11 +318,19 @@ def build_run(run, tiers, seat_pitch_default=0.5, vom_every=3):
             sockets.append(("fascia", f"{run.name}_T{tier['index']}_B{b}",
                             (*(p + n * (tier["s0"] - WALL)), tier["h"][0] + tier["parapet"]), n,
                             {"width": round((tb - ta) * run.metric(tier["s0"]), 3), "tier": tier["index"]}))
-        # aisle handrails on steep tiers, on every bay boundary
+        # aisle handrails on all but shallow tiers, on every bay boundary, on posts every third row
         risers = np.diff(tier["h"])
-        if len(risers) and risers.max() / tier["tread"] > 0.45:
+        if len(risers) and risers.max() / tier["tread"] > AISLE_RAIL_RAKE:
             for ta, _ in bay_list[1:]:
                 rails.append((_row_line(run, ta, tier, 0.9, range(1, tier["rows"])), 0.022))
+                for i in range(1, tier["rows"], 3):
+                    s_i, h_i = tier["s"][i] + 0.05, tier["h"][i]
+                    rails.append((np.array([_world(run, ta, s_i, h_i), _world(run, ta, s_i, h_i + 0.9)]), 0.02))
+        # a capping rail along the top of a tier-front balustrade
+        if tier.get("glass"):
+            s_r = tier["s0"] - WALL + 0.13
+            z_r = tier["h"][0] + tier["parapet"] + tier["glass"] + 0.03
+            rails.append((np.array([_world(run, t, s_r, z_r) for t in run.samples(run.t0, run.t1, s_r)]), 0.03))
         if tier is tiers[-1]:
             for b, (ta, tb) in enumerate(bay_list):
                 p, n = run.frame(0.5 * (ta + tb))

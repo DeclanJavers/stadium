@@ -1,0 +1,13 @@
+{"schema": "site-layout/1", "name": "Sunday league ground", "template": "edge_of_town", "style": "classic", "seed": 11,
+ "club": {"name": "ALBION ATHLETIC", "primary": "#1b5e20", "secondary": "#f5f5f0"},
+ "boundary": {"type": "hedge", "screening": "none"}, "gate": {"tier": 1},
+ "plots": {
+  "P1": {"state": "built", "facility": "pitch", "tier": 1},
+  "P2": {"state": "built", "facility": "pitch", "tier": 1},
+  "P3": {"state": "occupied", "occupant": "scrubland"},
+  "P4": {"state": "occupied", "occupant": "disused_courts"},
+  "C1": {"state": "built", "facility": "car_park", "tier": 1, "options": {"fill": 0.5}},
+  "M1": {"state": "built", "facility": "maintenance", "tier": 1},
+  "S1": {"state": "occupied", "occupant": "rubble_lot"},
+  "B1": {"state": "built", "facility": "training_building", "tier": 2, "options": {"modules": []}}
+ }}

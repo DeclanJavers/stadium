@@ -291,13 +291,20 @@ pub fn apply_mosaic(
 
 /// Per-seat variation and UV fade; returns linear RGBA.
 pub fn finish(colors: &[DVec3], fade: f64, seed: u64) -> Vec<DVec4> {
-    let variation = 0.025;
+    // manufacturing variation, and ~2% replacement seats: a few newer (deeper), more faded
+    let variation = 0.04;
     colors
         .iter()
         .enumerate()
         .map(|(i, c)| {
             let k = (uniform(seed + 1, i as u64) - 0.5) * 2.0 * 1.7320508 * variation;
             let mut c = *c * (1.0 + k);
+            let r = uniform(seed + 2, i as u64);
+            if r < 0.007 {
+                c *= 0.8;
+            } else if r < 0.02 {
+                c = c * 0.68 + DVec3::splat(0.2);
+            }
             if fade != 0.0 {
                 let grey = (c.x + c.y + c.z) / 3.0;
                 c = c * (1.0 - 0.45 * fade) + DVec3::splat((0.25 + 0.55 * grey) * 0.45 * fade + 0.08 * fade);

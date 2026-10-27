@@ -1,0 +1,19 @@
+{"schema": "site-layout/1", "name": "Category 3 academy", "template": "academy_campus", "style": "ultra_modern", "seed": 57,
+ "club": {"name": "UNITED", "primary": "#1d4f91", "secondary": "#ffffff"},
+ "boundary": {"type": "hedge"}, "gate": {"tier": 2},
+ "plots": {
+  "Y1": {"state": "built", "facility": "youth_pitches", "tier": 2, "options": {"format": "5v5"}},
+  "Y2": {"state": "built", "facility": "youth_pitches", "tier": 2, "options": {"format": "7v7", "lines": "fa_colours"}},
+  "Y3": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "9v9"}},
+  "Y4": {"state": "built", "facility": "pitch", "tier": 2, "options": {"shelters": true}},
+  "Y5": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "11v11_u13"}},
+  "Y6": {"state": "built", "facility": "youth_pitches", "tier": 2, "options": {"format": "9v9", "lines": "fa_colours"}},
+  "Y7": {"state": "built", "facility": "showpiece_pitch", "tier": 2},
+  "Y8": {"state": "built", "facility": "artificial_pitch", "tier": 1, "options": {"floodlights": true}},
+  "Y9": {"state": "built", "facility": "indoor_hall", "tier": 1},
+  "A1+A2": {"state": "built", "facility": "academy_building", "tier": 2, "options": {"modules": ["classrooms", "parents_lounge"]}},
+  "A3": {"state": "built", "facility": "cages", "tier": 2},
+  "C1": {"state": "built", "facility": "drop_off", "tier": 2},
+  "C2": {"state": "built", "facility": "car_park", "tier": 2, "options": {"fill": 0.6}},
+  "M3": {"state": "built", "facility": "maintenance", "tier": 2}
+ }}
