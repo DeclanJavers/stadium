@@ -1,0 +1,160 @@
+[
+  {
+    "asset": "seat.padded_vip.std",
+    "score": 52,
+    "pass": false,
+    "summary": "Right typology (padded tip-up with arms on a cast leg) but the upholstery reads as flat grey slabs and the arm/hinge assembly is crude from the side.",
+    "critique": "Silhouette is broadly right for a VIP padded seat: twin cast standards, armrests with row/seat number plaques, a padded back and a tip-up pan. The problems are in the soft parts and the joins. The seat cushion is a thin wedge with a uniform rounded edge and no visible thickness change front to back; real VIP cushions are 60-90 mm thick with a crowned top, a rolled front edge (waterfall) and a seam/piping line round the perimeter. The backrest has one engraved line near the top and nothing else; real ones have a sewn panel (lumbar bolster or vertical channel stitching) and a moulded plastic back shell that wraps round the edges, which here is only a dark rim. The fabric albedo is a single mid grey with faint mottling: no weave, no nap, no darker wear at the front edge or where the back meets the seat. From the side view the armrest looks like two stacked flat bars floating forward of the standard, the seat pan appears to hang off a single knob with no visible hinge bracket or counterweight spring housing, and the pan sits well forward of the back with an open gap. The cast standards are good in shape but have perfectly crisp box edges and a uniform satin black with no casting texture, scuffs at the foot plates or bolt heads on the floor fixings. Seat-number plaques are a nice touch but read as stickers; they should be inset into the arm cap.",
+    "suggestions": [
+      "Rebuild the cushion as a crowned pad 70 mm thick at the centre, 45 mm at the edges, with a 25 mm-radius waterfall front edge and a 3-4 mm proud piping loop round the top perimeter (a swept 6-sided tube, ~150 tris). Do the same for the back pad, adding two vertical channel seams as shallow 4 mm grooves (normal map only is fine).",
+      "Give the back a separate moulded plastic shell (2-3 mm wall, wraps 15 mm round the front edge) in a slightly different black from the frame, roughness 0.55, so the padded insert reads as sitting inside a shell.",
+      "Model the hinge: a 40 mm-diameter pivot boss on each standard with a visible bracket arm to the seat pan underside and a cylindrical spring housing; close the pan-to-back gap to ~40 mm in the down position. ~300 tris.",
+      "Fabric material: tiling 512px weave normal + albedo with 2-3% value noise, roughness 0.85-0.9; darken/smooth the front 60 mm of the cushion and the arm-pad contact by 10% for wear (vertex colour mask, no extra texture).",
+      "Armrest: make it a single moulded cap (soft-touch, roughness 0.7) over a steel arm, with the number plate recessed 2 mm into the end face; remove the doubled bar look from the side.",
+      "Standards: 3-5 mm bevels on all cast edges, two hex bolt heads per foot plate, slight scuffing/lighter edge wear on the foot plates via vertex AO/curvature mask."
+    ],
+    "renderer_notes": "Lawn backdrop is irrelevant; no GI makes the underside of the pan very dark but that is not an asset fault."
+  },
+  {
+    "asset": "goal.portable",
+    "score": 60,
+    "pass": false,
+    "summary": "Credible portable full-size goal with ground frame, wheels and weights; the drum-taut planar net and spotless frame keep it clearly CG.",
+    "critique": "Proportions look right (7.32 x 2.44 face, sloped back stanchions, ground frame) and the hexagonal net cord rendering is clean and anti-aliased. Crossbar and posts have net hook clips, there are rear wheels and black ballast weights, which all match real portable goals. What breaks it: the net is four perfectly flat planes with no sag, belly or slack at the bottom bar and no gathered excess at corners; real nets hang visibly in catenaries between the hooks along the top and sides and pool on the ground frame. The net also appears to meet the frame exactly along tube centrelines rather than wrapping round hooks. The white powder coat is uniform and pristine with no grass staining at the feet, no chipping or wheel-axle hardware detail. The ballast weights are plain black boxes with no handles or moulded detail, and the wheels are tiny and lack a lever/axle bracket. Joints between post and crossbar are plain cylinder intersections without the corner bracket or rounded elbow that real aluminium goals use. Back stanchion top-to-crossbar joints are missing the clamp collars.",
+    "suggestions": [
+      "Displace the net vertices: sag of 60-120 mm between each top hook (catenary per hook span), a 150-250 mm belly in the back panel, and let the bottom 200 mm of the back net lie on the ground frame. This is a one-off vertex deformation, no extra tris.",
+      "Add 120-150 mm moulded corner elbows at crossbar/post joins and 60 mm clamp collars where stanchions meet the crossbar and ground frame (~400 tris total).",
+      "Ballast: replace boxes with moulded rubber/PE counterweights ~600 x 200 x 150 mm with a recessed carry handle and chamfered edges; roughness 0.8, albedo ~0.04.",
+      "Wheels: 200 mm diameter with a visible axle bracket and tyre tread groove; the current wheels are undersized for a 7.32 m portable.",
+      "Material: off-white albedo ~0.75 (not pure white), roughness 0.4, plus a vertex-colour mask for green/brown grass staining on the bottom 150 mm of posts and ground frame, and a few small chip decals at the posts' leading edge."
+    ],
+    "renderer_notes": "Net cords look correct at distance; the far-view moire is a sampling issue, not the asset."
+  },
+  {
+    "asset": "weeds",
+    "score": 44,
+    "pass": false,
+    "summary": "Identifiable dock, nettle and dandelion clump, but leaves are flat single-colour cards and stems are bare sticks, so it reads stylised rather than real.",
+    "critique": "The species choice is right for a UK field margin and the dock seed spike in rusty red is the best part. Everything else is too simple. Leaves are flat planar polygons with a single green albedo, a hard straight midrib line and no translucency, vein normal, curl or droop; dock leaves should be long (250-350 mm), wavy-edged and lying low in a rosette, but here they stand up like paper. The nettle stems are long bare vertical sticks with tiny tufts at the top and a mass of leaves at the base, which is the opposite of real nettles (opposite pairs of serrated heart-shaped leaves all the way up a 0.6-1.2 m square stem, drooping catkin-like flower strands). The dandelion has a believable rosette but only one flower and one clock on very short stalks and the yellow-brown dead leaves look like orange cards. There is no ground contact: no debris, dead leaf litter or darkening at the base, so the clump sits on the lawn rather than in it. Leaf edges are aliased polygon silhouettes rather than alpha-cut serrations.",
+    "suggestions": [
+      "Switch leaves to alpha-cut cards from a small 1024px atlas (dock, nettle, dandelion, dead leaf) with serrated/wavy outlines, vein normal map, two-tone albedo (lighter underside) and subsurface/translucency approximation (wrap lighting or a back-light term). Keeps cost ~8-12 tris per leaf.",
+      "Nettle: rebuild as 4-8 stems 0.6-1.0 m, each with 6-10 opposite leaf pairs that shrink toward the tip and droop 20-40 degrees, plus thin hanging green flower strands at leaf axils.",
+      "Dock: basal rosette of 6-9 broad leaves lying at 10-30 degrees from the ground with wavy edges and red-tinted midribs; 1-2 flower spikes with seed whorls spaced along the upper 40% of the stalk, not only at the tip.",
+      "Dandelion: 3-5 flower heads on 150-300 mm hollow stalks, 1-2 seed clocks, rosette leaves with deep backward-pointing lobes.",
+      "Add a ground decal (darker soil, dead leaves, flattened grass) under the clump, and per-instance hue/scale jitter so repeats are not obvious."
+    ],
+    "renderer_notes": "No translucency in the forward renderer makes all foliage look like card; a cheap wrap/back-light term would help every plant asset."
+  },
+  {
+    "asset": "portaloo",
+    "score": 57,
+    "pass": false,
+    "summary": "Correct proportions and branding for a UK hire toilet, but the plastic reads as clean CG, the roof is opaque and solid, and door hardware is thin.",
+    "critique": "Footprint and height look right (~1.1 x 1.2 x 2.3 m), the ribbed blue polyethylene walls, darker skid base with forklift slots, roof vent stack, hire company decal with phone number, and occupied indicator are all the right ingredients. Weaknesses: the white roof is a flat opaque slab with a slightly pillowy top; real units have a translucent white roof (glows from inside, lets light through) with a raised moulded rim, corner lifting points and a ridged/domed profile. The wall ribs are evenly spaced simple raised strips with the same depth everywhere, and the moulded panel seams/corner posts are missing, so the cabin looks like one extruded box. The door has a handle line and a decal but no visible hinge leaves, latch box with the red/green indicator housing, spring closer or door gap shadow; from the far side there is a strange flat lighter-blue box near the base whose purpose is unclear (it reads like a placeholder). Material is uniform saturated blue with no UV fading, scuffing, dirt splash at the base or stained roof. The vent pipe is clean black with a toy-like arrow-shaped cap.",
+    "suggestions": [
+      "Roof: translucent white material (albedo 0.8, roughness 0.5, cheap emissive/transmission fake of 0.05 on the underside), with a 40 mm raised perimeter lip and four moulded corner lifting lugs; slight dome (60 mm) rather than pillow.",
+      "Walls: separate corner posts (80 mm square, slightly darker blue) and a horizontal moulded belt at ~1.0 m; vary rib depth 10-15 mm and add a 20 mm chamfer where ribs meet top and bottom. ~400 tris.",
+      "Door: 6-8 mm gap shadow all round, three hinge leaves on the hinge side, a moulded latch box with a red/green 'VACANT/ENGAGED' slider, and a spring closer arm at the top.",
+      "Replace or explain the light-blue box on the side (if it is a hand-wash/urinal bulge, give it proper moulded curvature and blend into the wall; otherwise remove).",
+      "Wear: vertex-colour or mask for mud splash on the bottom 300 mm, faded/lighter blue (5-8% value lift) on the sun-facing faces, grey streaking below the roof lip, dirt in the roof rim. Vent cap: a proper mushroom/cowl, not an arrow."
+    ]
+  },
+  {
+    "asset": "floodlight_fixture.halide",
+    "score": 58,
+    "pass": false,
+    "summary": "Recognisable rectangular metal-halide floodlight with visor, yoke, finned back and faceted reflector, but the reflector and glass are too flat and the casting too clean.",
+    "critique": "The overall shape is good: rectangular die-cast housing with a top visor, a side yoke with aiming boss and degree scale, finned rear heatsink/ballast box and a double-ended linear lamp. It is clearly a halide flood rather than an LED module, which is the intent. What keeps it at CG level: the reflector is a flat 6x4 grid of rectangular facets sitting in one plane; real asymmetric flood reflectors are a deep curved trough of hammered or specular-faceted aluminium that converges toward the lamp, giving strong bright/dark banding. The front glass has no visible presence (no reflection, edge thickness or gasket), so the reflector looks exposed. The lamp is a small plain tube with black caps hovering in front with no lamp holders/sockets attached to the reflector. The housing is mid grey with crisp edges, no casting bevels, no fastener heads round the front frame other than a few blocks, no cable gland or label plate texture worth the name, and no weathering (dust in fins, streaks under the visor). Side view shows the yoke is a flat plate; real yokes are U-section steel with a thickness and bolt.",
+    "suggestions": [
+      "Reflector: model a curved trough (parabolic section, ~120-150 mm deep) split into 6-8 strips of 4-6 facets each, very low roughness (0.1-0.2) with slight per-facet normal jitter; ~300 tris. This is the single biggest read.",
+      "Front glass: separate pane with a 6 mm visible edge, a black rubber gasket line, roughness 0.05 and a faint reflection/fresnel; add 8-10 hex screw heads or toggle clamps round the front frame.",
+      "Lamp: add two ceramic lamp holders mounted on the reflector at each tube end, and make the arc tube visible inside a slightly frosted outer envelope.",
+      "Yoke: U-section steel strap 8 mm thick, 60 mm wide, galvanised (albedo 0.55, roughness 0.45), with a large aiming bolt and a protractor plate.",
+      "Weathering: bevel all housing edges 3-5 mm, darken fin roots (AO), streak grime below the visor and add a riveted rating plate decal on the back."
+    ]
+  },
+  {
+    "asset": "bike_rack",
+    "score": 54,
+    "pass": false,
+    "summary": "Correct Sheffield-stand typology with reflective bands and base plates, but the paving pad is too narrow to park a bike and the stands look tall/narrow and too clean.",
+    "critique": "Five inverted-U Sheffield stands on a block-paved pad with a kerb edge is the right UK kit-of-parts, and the white reflective bands and bolted base plates are good touches. Proportions are off: the hoops appear taller than they are wide (spec is 750 W x 750 H, 48 mm tube), and the stands are set across the short dimension of a pad that is only ~1 m deep, so a 1.8 m bicycle parked against a stand would overhang well onto the grass on both sides. Real cycle parking pads are 2.0-2.5 m deep with stands at 1.0 m centres. The tube is flat black with uniform roughness, no galvanising showing through scuffs on the top bend where locks rub, and the bend radius looks generic. The block paving is a regular stretcher bond with two flat colours and no joint sand, edge restraint detail, moss or oil staining; the pad sits on top of the lawn with a hard edge instead of having a mown-edge transition.",
+    "suggestions": [
+      "Set the hoop to 750 x 750 mm (ground fixed) with a 48 mm tube and a 150-180 mm bend radius; check tube diameter at close range.",
+      "Make the pad 2.2 m deep with stands centred on it at 1.0 m spacing (a 5-stand run = ~5.0 m long); add 50 mm concrete edging kerbs.",
+      "Tube material: either galvanised (albedo 0.55, roughness 0.4) or black powder coat with scuffed-through lighter metal on the top 200 mm (curvature/height mask), roughness 0.45. Keep 12-16 radial segments.",
+      "Paving: herringbone or 45-degree stretcher with 3 mm darker joints in the normal map, subtle per-block value variation (+-6%), a few oil/tyre marks and moss in joints near the edges (single 1024 tiling set).",
+      "Optional: a 'cycle parking' sign or ground marking to sell scale."
+    ]
+  },
+  {
+    "asset": "sign_post",
+    "score": 58,
+    "pass": false,
+    "summary": "Convincing club entrance sign with good graphics and rear channel rails, let down by toy-like posts, no panel thickness and a spotless finish.",
+    "critique": "The graphic layout (crest, 'Welcome to the Training Ground', directional strip with arrows) is clear and appropriate, and the rear view has proper horizontal channel rails clamped to the posts, which is how real aluminium composite signs are mounted. The concrete collars at the post bases sell ground contact. Weaknesses: posts are glossy black with rounded tops and look like plastic rods; UK sign posts are 76 or 89 mm galvanised steel (or painted with a cap) and here they look ~60 mm and too tall above the panel. The panel has no visible edge thickness or return, no rounded corners, and the face material is too uniform: real signs have a retroreflective or vinyl sheen, slight waviness, fixing bolts/clip heads showing on the face, and dirt/green algae at the bottom edge. The panel back is plain grey with no brushed aluminium character or manufacturer label. The text font is fine but the arrow glyphs are small for a directional strip.",
+    "suggestions": [
+      "Posts: 76 mm galvanised tube (albedo 0.55, roughness 0.45, slight mottled spangle in the normal/roughness), flat black plastic end caps, top ~100 mm above the panel, not 300+.",
+      "Panel: 3 mm composite with a visible white/aluminium edge, 30 mm corner radius, and 4-6 visible clip/bolt heads on the face aligned with the rear rails.",
+      "Face material: roughness 0.35 with very low-frequency waviness normal, faint UV fading of the red (desaturate 5-10%) and a 50-100 mm grime/algae gradient along the bottom edge.",
+      "Rear: brushed aluminium (anisotropic look via a stretched noise normal), a small manufacturer/spec sticker, and slightly lighter rail extrusions with end caps.",
+      "Enlarge the directional arrows to cap-height size and add a thin divider between left and right destinations."
+    ]
+  },
+  {
+    "asset": "training_non_league:buildings",
+    "score": 50,
+    "pass": false,
+    "summary": "Stacked welfare cabins and a brick hall are a believable non-league mix, but the two-storey cabin access is impossible and the weathering reads as red speckles.",
+    "critique": "Using hire cabins for a non-league training ground is exactly right, and they have good ingredients: window shutters, steel door frames, signage, cabling snaking across the hardstanding, support pads. The construction logic fails on the upper floor: the top-tier doors have stepped stair units that go down onto a thin cantilevered walkway, and there is no staircase from the ground to that walkway, so the upper floor cannot be reached. A real stacked cabin block uses a steel gantry walkway at door-sill level (no steps needed) served by an external stair tower at one end, with continuous handrails and kick plates. The lower-level step units also visually collide with the upper walkway slab. Weathering is a random scatter of red-brown dots that read as blood spatter rather than rust; real cabin wear is rust bleeding from corner castings and fixings, streaks below windows and roof edge, and dirt splash at the base. The corrugated walls are uniform off-white with very little panel seam detail. The brick hall in the background is a flat brick texture box with no visible doors or eaves detail in this view.",
+    "suggestions": [
+      "Replace the upper-floor step units with a 1.2 m-deep steel grid gantry at upper door-sill level, galvanised handrail (1.1 m) with mid-rail and kick plate, and a dog-leg stair tower at one or both ends. Reuse the existing stair mesh; ~1.5k tris for the whole block.",
+      "Weathering: remove the random red dots; drive rust from a mask concentrated at corner castings, door frames and window bottoms with vertical streaks (UV-down gradient), plus a 300 mm dirt band at the base.",
+      "Add visible panel seams every ~1.2 m and corner posts in a slightly darker grey; vary cabin albedo per unit (+-5%) so the block does not look cloned.",
+      "Brick hall: add roller doors, a fascia/gutter line with downpipes, and a soffit; break the brick texture with a plinth course and lintels."
+    ],
+    "renderer_notes": "Flat ambient makes the cabins' undersides and gantry lack contact shadow; the floating look is partly renderer."
+  },
+  {
+    "asset": "training_non_league:car park & vehicles",
+    "score": 55,
+    "pass": false,
+    "summary": "Varied, well-proportioned car models in a plausible layout, but the tarmac and marking are bare and many cars share the same bodies and pristine finish.",
+    "critique": "The cars are the strength: recognisable modern hatches, saloons and SUVs with wheels, light clusters and UK number plates, parked nose-in with sensible spacing, and lamp columns along the aisle. Problems: body paint is uniform and very clean (whites especially are flat and chalky with weak clearcoat reflection), window glass is opaque grey with no interior hint, and several identical models in similar colours repeat side by side. The tarmac is a flat grey with no aggregate texture, patching, oil stains or tyre polish down the bay centres; bay lines are thin and stop short with no end T-marks; there are no kerbs, wheel stops, drainage gullies, pedestrian walkway, disabled bays or signage. The overflow area on the right is a featureless pale slab. The lamp columns are thin with small heads but plausibly scaled.",
+    "suggestions": [
+      "Tarmac: 2048 tiling asphalt set with aggregate normal, darker polished strips in each bay where cars sit, a few oil drips decals and overbanding repair seams; roughness 0.75-0.9.",
+      "Markings: 100 mm white lines with worn/broken edges, T-ends at the aisle, 2-3 disabled bays with blue/yellow paint and a hatched area; add 125 mm kerbs round the island edges and a few drainage gullies.",
+      "Cars: per-instance paint roughness 0.25-0.4 with a clearcoat/fresnel lift, light dirt on lower sills and wheel arches, tinted glass with a dark interior silhouette card (seat backs, headrests); avoid same model + same colour adjacent.",
+      "Overflow area: gravel/grasscrete texture with tyre ruts, and a few cars parked on it slightly askew."
+    ]
+  },
+  {
+    "asset": "training_non_league:pitches & training kit",
+    "score": 55,
+    "pass": false,
+    "summary": "Pitch with mowing stripes, worn centre circle and scattered training kit reads correctly, but the turf is a smooth gradient and the kit is too sparse and tidy.",
+    "critique": "Layout is credible: full-size pitch with correct markings, mowing stripes, a worn bald patch in the centre circle, slalom poles, mannequin wall, cones, a portable goal and dugout shelter in the distance, floodlight columns and a perimeter mesh fence. That is a good inventory for a non-league site. Up close the grass is a smooth stripe gradient with no blade texture, clumping or divots, and line paint is crisp vector-white with no grass showing through; real line paint is broken by blades and fades. Wear is limited to one patch in the centre circle: goalmouths, the penalty spots and the touchline where coaches stand should be the most worn. Training kit is very sparse for the area and laid out geometrically; real sessions have cones in grids, bibs on the ground, ball bags, water bottles. Floodlight columns are thin poles with small heads and look underscaled for pitch lighting (non-league training floods are typically 12-15 m with 2-4 lanterns).",
+    "suggestions": [
+      "Turf shader: add a high-frequency blade normal/albedo detail (1024 tiling, +-8% value) blended over the stripe gradient, and alpha-noise in the line paint so 20-30% of the white is broken by green near the edges.",
+      "Wear masks: goalmouth 6-yard boxes, penalty spots, both centre-circle halves and the technical-area strip along one touchline; mix to brown/sandy albedo with flatter normal.",
+      "Kit: cluster training props into 2-3 session grids (e.g. 4x4 cone box 20 m, passing gates), add bib piles, ball bag with balls, water bottle carriers; all instanced, near-zero cost.",
+      "Floodlights: 12-15 m columns with 2-4 lanterns on a headframe, galvanised, with a small base cabinet."
+    ],
+    "renderer_notes": "Lack of grazing-light self-shadowing on the turf flattens it; partly renderer."
+  },
+  {
+    "asset": "training_non_league:landscape & site layout",
+    "score": 45,
+    "pass": false,
+    "summary": "Sensible site plan in an English field-pattern setting, but the countryside is flat colour patches with lollipop trees and line-like hedges, reading like a board game from the air.",
+    "critique": "The site plan is logical (access road, car park, cabins and hall, multiple pitches, compound with containers), and the surrounding patchwork of arable, pasture and ploughed fields is the right idea for a rural non-league ground. But the fields are flat-shaded quads with uniform colour, no tramlines, crop rows, field-edge headlands or gateways; hedgerows are thin dark lines with no height or width (UK hedges are 1-2 m wide, 1.5-2.5 m tall, ragged), and trees are evenly spaced identical round blobs along them. Field boundaries are perfectly straight and rectangular, which reads as a grid rather than English enclosure landscape. There is no terrain relief at all, no water (ditch, pond), no roads beyond the site access, no farm buildings. Near the site, tree species mix (spruce, birch, broadleaf) in the close views is better, but tall spruce dotted in a line along a training-ground fence is not typical of England, where boundary planting is mainly hawthorn hedge with oak, ash and poplar shelterbelts.",
+    "suggestions": [
+      "Fields: irregular polygon boundaries from a jittered Voronoi or subdivided-quad with 5-15 degree skew; per-field textures with tramlines and directional crop rows, ploughed furrows, and pale headland strips.",
+      "Hedgerows: extruded ragged volumes 1.5 m wide x 2 m tall with an alpha-cut leaf card shell, with a hedgerow oak every 40-120 m (irregular), and field gateways as gaps.",
+      "Add low-frequency terrain undulation (+-3-8 m over 500 m) outside the flat site platform, plus a few drainage ditches, a farm cluster and a lane network.",
+      "Site boundary planting: replace lone spruces with a poplar or leylandii shelterbelt on one side and hawthorn hedge plus mesh fence elsewhere; vary tree scale +-25%.",
+      "Distance: fade field colours toward a blue-grey haze and add cloud shadows to break up the uniform lighting."
+    ],
+    "renderer_notes": "Uniform sky and lack of aerial perspective beyond the fog band exaggerate the flatness of the aerial view."
+  }
+]

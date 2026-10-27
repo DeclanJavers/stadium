@@ -283,6 +283,10 @@ fn facades() {
             assert_eq!(o.tubes.len() as u64, x["tubes"].as_u64().unwrap(), "{w} tubes");
             assert_eq!(o.tubes.iter().map(|t| t.0.len()).sum::<usize>() as u64, x["tube_points"].as_u64().unwrap(), "{w} tube pts");
             assert_eq!(o.sockets.len() as u64, x["sockets"].as_u64().unwrap());
+            let keys: Vec<&str> = x["props"]["keys"].as_array().unwrap().iter().map(|k| k.as_str().unwrap()).collect();
+            assert_eq!(o.props.iter().map(|p| p.0).collect::<Vec<_>>(), keys, "{w} plaza props");
+            close_v(&v3(o.props.iter().fold(DVec3::ZERO, |a, p| a + p.1)), &x["props"]["psum"], 1e-9, &format!("{w} props psum"));
+            close(o.props.iter().map(|p| p.2).sum(), &x["props"]["yawsum"], 1e-9, &format!("{w} props yaw"));
         }
     }
 }
@@ -312,6 +316,49 @@ fn floodlight_layouts() {
     close_v(&pts3(&rib), &Value::Array(flat(&r["ribbon"]).into_iter().map(|v| json!(v)).collect()), 1e-12, "ribbon");
     close(floodlights::spot_angle(160, l * w, 60.0), &r["spot_angle"], 1e-12, "spot angle");
     close(floodlights::lamp_power(160, 40.0, 2000.0, l * w), &r["lamp_power"], 1e-12, "lamp power");
+}
+
+#[track_caller]
+fn check_lines(lines: &[stadium_gen::stands::Polyline], r: &Value, what: &str) {
+    assert_eq!(lines.len() as u64, r["count"].as_u64().unwrap(), "{what} count");
+    assert_eq!(lines.iter().map(|l| l.0.len()).sum::<usize>() as u64, r["points"].as_u64().unwrap(), "{what} points");
+    let ps = lines.iter().flat_map(|l| l.0.iter()).fold(DVec3::ZERO, |a, q| a + *q);
+    close_v(&v3(ps), &r["psum"], 1e-8, &format!("{what} psum"));
+    close(lines.iter().map(|l| l.1).sum(), &r["rsum"], 1e-9, &format!("{what} rsum"));
+}
+
+#[test]
+fn floodlight_details() {
+    let r = reference("floodlights");
+    let x = &r["details"];
+    let (l, w) = (105.0, 68.0);
+    let edge = vec![
+        vec![DVec3::new(-50.0, -42.0, 30.0), DVec3::new(0.0, -42.0, 30.0), DVec3::new(50.0, -42.0, 30.0)],
+        stadium_gen::py::linspace(0.0, std::f64::consts::FRAC_PI_2, 9).iter().map(|a| DVec3::new(50.0 + 14.0 * a.sin(), -28.0 - 14.0 * a.cos(), 30.0)).collect(),
+    ];
+    let (st, acc, cl) = floodlights::roof_gantry(&edge, 2.4);
+    check_lines(&st, &x["gantry"]["steel"], "gantry steel");
+    check_mesh(&acc, &x["gantry"]["mesh"], "gantry mesh");
+    assert_eq!(cl.len() as u64, x["gantry"]["clusters"].as_u64().unwrap());
+    close_v(&v3(cl.iter().fold(DVec3::ZERO, |a, c| a + c.0)), &x["gantry"]["csum"], 1e-9, "cluster sum");
+    close_v(&v3(cl.iter().flat_map(|c| c.1.iter()).fold(DVec3::ZERO, |a, q| a + *q)), &x["gantry"]["lsum"], 1e-9, "lamp sum");
+    let lamps: Vec<(DVec3, DVec3)> = cl.iter().flat_map(|c| c.1.iter().map(|q| (*q, DVec3::new(5.0, 3.0, 0.0)))).collect();
+    check_mesh(&floodlights::lens_panels(&lamps, 1.7), &x["lens"], "lens panels");
+    let masts = floodlights::pylons(l, w, 65.5, 43.0, 10.0, 25.0, None);
+    for (k, lattice) in [(0usize, true), (1, false)] {
+        let (pts, _, _) = floodlights::head_layout(&masts[k], 5, 7);
+        let (st, acc) = floodlights::mast_parts(&masts[k], &pts, 7, lattice);
+        check_lines(&st, &x[format!("mast{k}")]["steel"], &format!("mast{k} steel"));
+        check_mesh(&acc, &x[format!("mast{k}")]["mesh"], &format!("mast{k} mesh"));
+    }
+    let pole = floodlights::poles(l, w, 3, 20.0, 7.2)[0];
+    let (tubes, acc) = floodlights::pole_parts(&pole, 4);
+    let rt = x["pole"]["tubes"].as_array().unwrap();
+    assert_eq!(tubes.len(), rt.len());
+    for (t, q) in tubes.iter().zip(rt) {
+        close_v(&[t.0.x, t.0.y, t.0.z, t.1.x, t.1.y, t.1.z, t.2], q, 1e-12, "pole tube");
+    }
+    check_mesh(&acc, &x["pole"]["mesh"], "pole mesh");
 }
 
 #[test]
@@ -380,6 +427,9 @@ fn pitch_markings() {
     for (label, params) in [
         ("default", json!({})),
         ("sunday", json!({"length": 98, "width": 62, "optional_marks": false, "hand_painted": 1.0, "crown": 0.12})),
+        ("5v5", json!({"length": 36.6, "width": 27.4, "markings": "5v5", "line_width": 0.1})),
+        ("7v7", json!({"length": 54.9, "width": 36.6, "markings": "7v7", "line_width": 0.1, "hand_painted": 0.6})),
+        ("9v9", json!({"length": 73.2, "width": 45.7, "markings": "9v9", "line_width": 0.1})),
     ] {
         let p = pitch::Pitch::resolve(&params, Some(&c));
         let (lines, discs) = pitch::marking_paths(&p);

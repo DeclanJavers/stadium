@@ -1,0 +1,263 @@
+{
+  "_doc": "What the club can build on a cleared plot (kit/site/facilities.py, buildings.py). tiers: upgrades in order (tier 1 = first); each lists the plot kinds it fits. options: per-plot customisation with defaults; 'min_tier' gates an option. Styles (catalog/styles.json) apply to the buildings.",
+  "pitch": {
+    "label": "Training pitch",
+    "tiers": [
+      {"label": "Rough grass", "fits": ["pitch"], "grass": "perennial_ryegrass", "height_mm": 42, "wear": 0.7, "wetness": 0.15, "mow": "none", "hand_painted": 0.9, "crown": 0.1, "goals": "portable", "flags": "grassroots", "floodlights": false, "ball_stop": false},
+      {"label": "Drained grass", "fits": ["pitch"], "grass": "perennial_ryegrass", "height_mm": 30, "wear": 0.4, "wetness": 0.0, "mow": "stripes", "hand_painted": 0.4, "crown": 0.12, "goals": "classic", "flags": "striped", "floodlights": false, "ball_stop": true},
+      {"label": "Hybrid, undersoil heating", "fits": ["pitch"], "grass": "hybrid_rye", "height_mm": 26, "wear": 0.18, "wetness": 0.0, "mow": "stripes", "hand_painted": 0.0, "crown": 0.15, "goals": "box", "flags": "pro_spring", "floodlights": true, "ball_stop": true},
+      {"label": "Match replica", "fits": ["pitch"], "grass": "hybrid_rye", "height_mm": 25, "wear": 0.08, "wetness": 0.0, "mow": "stripes", "hand_painted": 0.0, "crown": 0.2, "goals": "box", "flags": "pro_spring", "floodlights": true, "ball_stop": true, "filming_tower": true, "viewing_deck": true}
+    ],
+    "options": {
+      "length": {"default": 105, "range": [90, 110]},
+      "width": {"default": 68, "range": [55, 72]},
+      "mow": {"default": null, "choices": ["none", "stripes", "stripes_long", "checkerboard", "diagonal", "diamond", "circles"]},
+      "floodlights": {"default": null},
+      "ball_stop": {"default": null},
+      "filming_tower": {"default": null, "min_tier": 3},
+      "viewing_deck": {"default": null, "min_tier": 3},
+      "shelters": {"default": true},
+      "equipment": {"default": true}
+    }
+  },
+  "artificial_pitch": {
+    "label": "Artificial pitch",
+    "tiers": [
+      {"label": "3G cage", "fits": ["pitch", "large"], "length": 60, "width": 40, "fence": 4.5, "goals": "portable", "floodlights": true},
+      {"label": "Full-size floodlit 3G", "fits": ["pitch"], "length": 105, "width": 68, "fence": 6.0, "goals": "classic", "floodlights": true}
+    ],
+    "options": {"floodlights": {"default": null}, "equipment": {"default": true}}
+  },
+  "youth_pitches": {
+    "label": "Youth pitches",
+    "tiers": [
+      {"label": "Grassroots", "fits": ["pitch", "large", "xlarge"], "grass": "perennial_ryegrass", "height_mm": 38, "wear": 0.55, "wetness": 0.1, "mow": "none", "hand_painted": 0.8, "crown": 0.08, "flags": "grassroots", "rails": false, "shelters": false},
+      {"label": "Club", "fits": ["pitch", "large", "xlarge"], "grass": "perennial_ryegrass", "height_mm": 30, "wear": 0.35, "wetness": 0.0, "mow": "stripes", "hand_painted": 0.25, "crown": 0.1, "flags": "striped", "rails": true, "shelters": true},
+      {"label": "Academy", "fits": ["pitch", "large", "xlarge"], "grass": "perennial_ryegrass", "height_mm": 26, "wear": 0.15, "wetness": 0.0, "mow": "stripes", "hand_painted": 0.0, "crown": 0.12, "flags": "pro_spring", "rails": true, "shelters": true, "floodlights": true, "ball_stop": true}
+    ],
+    "options": {
+      "format": {"default": "9v9", "choices": ["5v5", "7v7", "9v9", "11v11_u13"]},
+      "count": {"default": null, "range": [1, 8]},
+      "lines": {"default": "white", "choices": ["white", "fa_colours"]},
+      "mow": {"default": null, "choices": ["none", "stripes", "stripes_long", "checkerboard", "diagonal", "diamond", "circles"]},
+      "floodlights": {"default": null, "min_tier": 2}, "rails": {"default": null}, "shelters": {"default": null},
+      "ball_stop": {"default": null}, "equipment": {"default": true}
+    }
+  },
+  "academy_building": {
+    "label": "Academy building",
+    "tiers": [
+      {"label": "Portacabins", "fits": ["small", "medium", "large", "xlarge"], "cabins": 4},
+      {"label": "Academy block", "fits": ["medium", "large", "xlarge"], "size": [36, 16], "storeys": 1},
+      {"label": "Academy centre", "fits": ["large", "xlarge"], "size": [50, 20], "storeys": 2},
+      {"label": "Category One centre", "fits": ["xlarge"], "size": [64, 26], "storeys": 2, "wings": true}
+    ],
+    "options": {
+      "modules": {"default": ["classrooms"], "choices": ["classrooms", "sports_science", "parents_lounge", "boarding", "media"]},
+      "sign": {"default": true}
+    }
+  },
+  "medical_centre": {
+    "label": "Medical centre",
+    "_doc": "Tiers are quality (the rooms and their kit: a programme per band and floor in priority order, each room built if it still fits); the size option is expansion (sizes, below). Views: closed, dollhouse (roof off), cutaway (walls cut at 1.3 m); floor: the storey shown in the open views (0 = ground; default the top).",
+    "sizes": [
+      {"label": "Unit", "w": 14.4, "d": 9.0, "storeys": 1},
+      {"label": "Block", "w": 28.8, "d": 15.6, "storeys": 1},
+      {"label": "Centre", "w": 36.0, "d": 18.0, "storeys": 2},
+      {"label": "Campus", "w": 50.4, "d": 21.6, "storeys": 2}
+    ],
+    "tiers": [
+      {"label": "Physio room", "fits": ["medium", "large", "xlarge"], "sign": "MEDICAL",
+       "front": ["first_aid", "treatment_basic", "treatment_basic", "office", "store"], "back": ["wc", "store", "store", "office", "store"],
+       "upper_front": ["office", "office", "store"], "upper_back": ["store", "office"]},
+      {"label": "Medical suite", "fits": ["medium", "large", "xlarge"], "sign": "MEDICAL", "ambulance_bay": true,
+       "front": ["entrance", "treatment", "consult", "treatment", "consult", "office", "store"], "back": ["rehab_gym", "changing", "wc", "store", "office", "treatment", "store"],
+       "upper_front": ["office", "staff", "office", "office"], "upper_back": ["meeting", "wc", "office", "store"]},
+      {"label": "Medical and rehab centre", "fits": ["medium", "large", "xlarge"], "sign": "MEDICAL & PERFORMANCE", "ambulance_bay": true,
+       "front": ["entrance", "treatment", "consult", "imaging", "xray", "treatment", "wc", "consult", "store"], "back": ["rehab_gym", "recovery", "hydro", "changing", "wc", "lab", "store"],
+       "upper_front": ["lab", "office", "staff", "consult", "office"], "upper_back": ["sleep", "wc", "meeting", "office", "store"]},
+      {"label": "Performance medicine", "fits": ["medium", "large", "xlarge"], "sign": "MEDICAL & PERFORMANCE", "ambulance_bay": true,
+       "front": ["entrance", "treatment", "consult", "imaging", "xray", "dexa", "consult", "treatment"], "back": ["rehab_gym", "hydro", "recovery", "changing", "cryo", "wc", "lab", "store"],
+       "upper_front": ["lab", "consult", "staff", "office", "meeting"], "upper_back": ["sleep", "wc", "sleep", "meeting", "office"]}
+    ],
+    "options": {
+      "size": {"default": 2, "range": [1, 4]},
+      "view": {"default": "closed", "choices": ["closed", "dollhouse", "cutaway"]},
+      "floor": {"default": null, "range": [0, 1]}
+    }
+  },
+  "scouting_centre": {
+    "label": "Scouting and recruitment",
+    "_doc": "Built like the medical centre (kit/site/interior.py): tiers are quality, from a scouts' office with a desk, a TV and a filing cabinet to a recruitment and data hub with a match centre, a recruitment room, a data lab and analysis suites; the size option is expansion. Views: closed, dollhouse, cutaway; floor: the storey shown.",
+    "sizes": [
+      {"label": "Office", "w": 12.0, "d": 8.4, "storeys": 1},
+      {"label": "Block", "w": 21.6, "d": 12.0, "storeys": 1},
+      {"label": "Centre", "w": 28.8, "d": 15.6, "storeys": 2},
+      {"label": "Hub", "w": 36.0, "d": 18.0, "storeys": 2}
+    ],
+    "tiers": [
+      {"label": "Scouts' office", "fits": ["medium", "large", "xlarge"], "sign": "SCOUTING",
+       "front": ["scout_room", "video_room", "archive", "scout_room"], "back": ["wc", "kitchen", "store", "archive"],
+       "upper_front": ["scout_office", "meeting", "archive"], "upper_back": ["store", "wc", "archive"]},
+      {"label": "Scouting department", "fits": ["medium", "large", "xlarge"], "sign": "SCOUTING",
+       "front": ["lobby", "open_office", "head_office", "video_room", "meeting", "scout_office"], "back": ["kitchen", "wc", "archive", "scout_office", "store"],
+       "upper_front": ["scout_office", "meeting", "open_office"], "upper_back": ["archive", "wc", "kitchen", "store"]},
+      {"label": "Recruitment centre", "fits": ["medium", "large", "xlarge"], "sign": "RECRUITMENT",
+       "front": ["lobby", "war_room", "analysis_suite", "head_office", "agent_room", "video_room", "meeting"], "back": ["open_office", "kitchen", "wc", "server", "archive", "store"],
+       "upper_front": ["data_lab", "scout_office", "meeting", "analysis_suite"], "upper_back": ["open_office", "wc", "pods", "kitchen", "store"]},
+      {"label": "Recruitment and data hub", "fits": ["medium", "large", "xlarge"], "sign": "RECRUITMENT & DATA", "statue": "genprop.bronze_football_plinth",
+       "front": ["lobby", "war_room", "agent_room", "analysis_suite", "head_office", "video_room", "meeting"], "back": ["match_centre", "open_office", "pods", "kitchen", "wc", "server"],
+       "upper_front": ["data_lab", "analysis_suite", "meeting", "scout_office", "head_office"], "upper_back": ["data_lab", "wc", "pods", "kitchen", "archive"]}
+    ],
+    "options": {
+      "size": {"default": 2, "range": [1, 4]},
+      "view": {"default": "closed", "choices": ["closed", "dollhouse", "cutaway"]},
+      "floor": {"default": null, "range": [0, 1]}
+    }
+  },
+  "commercial_centre": {
+    "label": "Commercial and hospitality",
+    "_doc": "Built like the medical centre (kit/site/interior.py): tiers are quality, from a club shop with a ticket window to a store, restaurant, sports bar, trophy room, lounges, private dining and a function suite; the size option is expansion. Views: closed, dollhouse, cutaway; floor: the storey shown.",
+    "sizes": [
+      {"label": "Kiosk", "w": 12.0, "d": 8.4, "storeys": 1},
+      {"label": "Store", "w": 21.6, "d": 12.0, "storeys": 1},
+      {"label": "Hub", "w": 28.8, "d": 15.6, "storeys": 2},
+      {"label": "Centre", "w": 36.0, "d": 18.0, "storeys": 2}
+    ],
+    "tiers": [
+      {"label": "Club shop", "fits": ["medium", "large", "xlarge"], "sign": "CLUB STORE",
+       "front": ["shop", "ticket_office", "stock_room"], "back": ["stock_room", "wc", "sales_office", "stock_room"],
+       "upper_front": ["sales_office", "meeting", "stock_room"], "upper_back": ["stock_room", "wc", "store"]},
+      {"label": "Store and café", "fits": ["medium", "large", "xlarge"], "sign": "STORE & CAFE",
+       "front": ["shop", "cafe", "ticket_office", "stock_room"], "back": ["pro_kitchen", "toilets", "stock_room", "sales_office", "wc"],
+       "upper_front": ["sales_office", "meeting", "private_dining"], "upper_back": ["stock_room", "toilets", "store"]},
+      {"label": "Fan hub", "fits": ["medium", "large", "xlarge"], "sign": "FAN HUB", "statue": "genprop.statue_mascot_lion",
+       "front": ["shop", "cafe", "ticket_office", "museum"], "back": ["bar", "pro_kitchen", "toilets", "stock_room", "wc"],
+       "upper_front": ["lounge", "private_dining", "sales_office", "meeting"], "upper_back": ["function_room", "toilets", "pro_kitchen", "store"]},
+      {"label": "Hospitality and retail centre", "fits": ["medium", "large", "xlarge"], "sign": "STORE & HOSPITALITY", "statue": "genprop.statue_legend",
+       "front": ["shop", "restaurant", "ticket_office", "museum", "cafe"], "back": ["bar", "pro_kitchen", "toilets", "stock_room", "wc", "stock_room"],
+       "upper_front": ["lounge", "private_dining", "private_dining", "sales_office", "meeting"], "upper_back": ["function_room", "pro_kitchen", "toilets", "wc", "store"]}
+    ],
+    "options": {
+      "size": {"default": 2, "range": [1, 4]},
+      "view": {"default": "closed", "choices": ["closed", "dollhouse", "cutaway"]},
+      "floor": {"default": null, "range": [0, 1]}
+    }
+  },
+  "media_centre": {
+    "label": "Media and content",
+    "_doc": "Built like the medical centre (kit/site/interior.py): tiers are quality, from a press room with roller banners and an edit desk to a broadcast and content hub with TV studios, a gallery, podcast and content studios; the size option is expansion. Views: closed, dollhouse, cutaway; floor: the storey shown.",
+    "sizes": [
+      {"label": "Unit", "w": 12.0, "d": 8.4, "storeys": 1},
+      {"label": "Suite", "w": 21.6, "d": 12.0, "storeys": 1},
+      {"label": "Centre", "w": 28.8, "d": 15.6, "storeys": 2},
+      {"label": "Hub", "w": 36.0, "d": 18.0, "storeys": 2}
+    ],
+    "tiers": [
+      {"label": "Media room", "fits": ["medium", "large", "xlarge"], "sign": "MEDIA",
+       "front": ["press_room", "edit_suite", "kit_room"], "back": ["kit_room", "wc", "kitchen", "store"],
+       "upper_front": ["edit_suite", "meeting", "kit_room"], "upper_back": ["store", "wc", "kit_room"]},
+      {"label": "Media suite", "fits": ["medium", "large", "xlarge"], "sign": "MEDIA",
+       "front": ["lobby", "press_room", "interview_room", "edit_suite", "podcast"], "back": ["podcast", "kit_room", "kitchen", "wc", "edit_suite"],
+       "upper_front": ["press_work", "edit_suite", "meeting"], "upper_back": ["kit_room", "wc", "store"]},
+      {"label": "Club media centre", "fits": ["medium", "large", "xlarge"], "sign": "MEDIA CENTRE",
+       "front": ["lobby", "press_room", "interview_room", "gallery", "edit_suite", "edit_suite"], "back": ["studio", "kit_room", "podcast", "wc", "kitchen"],
+       "upper_front": ["press_work", "content_studio", "makeup", "edit_suite", "meeting"], "upper_back": ["content_studio", "toilets", "kit_room", "store"]},
+      {"label": "Broadcast and content hub", "fits": ["medium", "large", "xlarge"], "sign": "MEDIA & CONTENT",
+       "front": ["lobby", "press_room", "interview_room", "gallery", "edit_suite", "edit_suite", "podcast"], "back": ["studio", "podcast", "kit_room", "makeup", "toilets", "wc"],
+       "upper_front": ["press_work", "content_studio", "edit_suite", "edit_suite", "meeting", "kitchen"], "upper_back": ["studio", "content_studio", "kit_room", "toilets", "kitchen"]}
+    ],
+    "options": {
+      "size": {"default": 2, "range": [1, 4]},
+      "view": {"default": "closed", "choices": ["closed", "dollhouse", "cutaway"]},
+      "floor": {"default": null, "range": [0, 1]}
+    }
+  },
+  "showpiece_pitch": {
+    "label": "Showpiece pitch",
+    "tiers": [
+      {"label": "Railed match pitch", "fits": ["pitch"], "length": 100, "width": 64, "grass": "perennial_ryegrass", "height_mm": 26, "wear": 0.25, "crown": 0.15, "goals": "classic", "flags": "striped", "stand_rows": 0, "floodlights": true, "poles": 3, "pole_h": 15, "lamps": 2, "lux": 200},
+      {"label": "Covered stand", "fits": ["pitch"], "length": 100, "width": 64, "grass": "hybrid_rye", "height_mm": 25, "wear": 0.12, "crown": 0.15, "goals": "box", "flags": "pro_spring", "stand_rows": 6, "stand_length": 40, "floodlights": true, "poles": 4, "pole_h": 18, "lamps": 3, "lux": 350, "sign": true},
+      {"label": "Academy match venue", "fits": ["pitch"], "length": 100, "width": 64, "grass": "hybrid_rye", "height_mm": 24, "wear": 0.08, "crown": 0.18, "goals": "box", "flags": "pro_spring", "stand_rows": 8, "stand_length": 60, "floodlights": true, "poles": 4, "pole_h": 20, "lamps": 4, "lux": 500, "sign": true, "filming_tower": true}
+    ],
+    "options": {
+      "seat": {"default": "tipup_classic", "choices": ["tipup_classic", "bucket_fixed", "wooden_tipup"]},
+      "seat_color": {"default": null}, "floodlights": {"default": null}, "sign": {"default": null}, "filming_tower": {"default": null, "min_tier": 2}
+    }
+  },
+  "cages": {
+    "label": "Small-sided cages",
+    "tiers": [
+      {"label": "Single cage", "fits": ["medium", "large", "pitch"], "length": 30, "width": 20, "fence": 4.0, "max": 1, "floodlights": true},
+      {"label": "Cage cluster", "fits": ["large", "pitch", "xlarge"], "length": 30, "width": 20, "fence": 4.0, "max": 8, "floodlights": true}
+    ],
+    "options": {"floodlights": {"default": null}}
+  },
+  "drop_off": {
+    "label": "Arrival and drop-off",
+    "tiers": [
+      {"label": "Lay-by", "fits": ["strip", "large"], "cars": 0.5},
+      {"label": "Drop-off loop", "fits": ["strip", "large"], "cars": 0.4},
+      {"label": "Secure arrival", "fits": ["strip", "large"], "cars": 0.4}
+    ],
+    "options": {}
+  },
+  "goalkeeper_area": {
+    "label": "Goalkeeper area",
+    "tiers": [
+      {"label": "Grass box", "fits": ["medium", "large"], "length": 34, "width": 26},
+      {"label": "Dedicated area", "fits": ["medium", "large"], "length": 40, "width": 30, "rebound_walls": true, "nets": true}
+    ],
+    "options": {}
+  },
+  "training_building": {
+    "label": "Training building",
+    "tiers": [
+      {"label": "Portacabins", "fits": ["small", "medium", "large", "xlarge"], "cabins": 4},
+      {"label": "Single storey", "fits": ["medium", "large", "xlarge"], "size": [40, 18], "storeys": 1},
+      {"label": "Two storey", "fits": ["large", "xlarge"], "size": [56, 22], "storeys": 2},
+      {"label": "Flagship", "fits": ["xlarge"], "size": [70, 32], "storeys": 3, "wings": true}
+    ],
+    "options": {
+      "modules": {"default": ["physio", "canteen"], "choices": ["gym", "physio", "canteen", "media", "rehab"]},
+      "sign": {"default": true}
+    }
+  },
+  "indoor_hall": {
+    "label": "Indoor hall",
+    "tiers": [
+      {"label": "Air dome", "fits": ["pitch", "xlarge"], "size": [64, 44], "height": 13},
+      {"label": "Steel shed", "fits": ["pitch"], "size": [110, 72], "height": 13},
+      {"label": "Full-size hall", "fits": ["pitch"], "size": [118, 80], "height": 17}
+    ],
+    "options": {"sign": {"default": true}}
+  },
+  "recovery": {
+    "label": "Recovery and rehab",
+    "tiers": [
+      {"label": "Cryo cabins", "fits": ["small", "medium", "large"]},
+      {"label": "Hydrotherapy block", "fits": ["small", "medium", "large"], "size": [24, 14], "storeys": 1},
+      {"label": "Rehab pool block", "fits": ["medium", "large"], "size": [40, 22], "storeys": 1}
+    ],
+    "options": {}
+  },
+  "car_park": {
+    "label": "Car park",
+    "tiers": [
+      {"label": "Gravel", "fits": ["strip", "medium", "large", "small", "xlarge"], "surface": "Site_Gravel"},
+      {"label": "Tarmac", "fits": ["strip", "medium", "large", "small", "xlarge"], "surface": "Site_Asphalt", "lamps": true},
+      {"label": "Landscaped, EV charging", "fits": ["strip", "medium", "large", "xlarge"], "surface": "Site_Asphalt", "lamps": true, "islands": true, "ev": true},
+      {"label": "Solar canopy", "fits": ["strip", "medium", "large", "xlarge"], "surface": "Site_Asphalt", "lamps": true, "islands": true, "ev": true, "canopy": true}
+    ],
+    "options": {"fill": {"default": 0.6, "range": [0.0, 1.0]}}
+  },
+  "maintenance": {
+    "label": "Grounds maintenance",
+    "tiers": [
+      {"label": "Containers", "fits": ["small", "medium", "large", "strip"]},
+      {"label": "Grounds shed", "fits": ["small", "medium", "large", "strip"], "size": [20, 12]},
+      {"label": "Grounds depot", "fits": ["medium", "large"], "size": [32, 16]}
+    ],
+    "options": {}
+  }
+}

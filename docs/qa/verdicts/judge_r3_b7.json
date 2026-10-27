@@ -1,0 +1,111 @@
+[
+  {
+    "asset": "ticket_machine",
+    "score": 60,
+    "pass": false,
+    "summary": "Believable UK pay-and-display pillar with good, legible signage, let down by box-flat construction, a stuck-on ticket hopper and uniform painted edge wear.",
+    "critique": "Proportions are right for a Flowbird Strada-class unit (tall slim pillar, ~1.65 m, ~0.48 x 0.38 m footprint, sloped rain hood, plinth). The signage is the strongest part: PAY & DISPLAY header, tariff card, keypad, coin/card slots, contactless pad, NO CHANGE GIVEN and PAY BY PHONE stickers, rear service door with plate, side louvres. Weaknesses: (1) The body is a sharp-edged box with no bevels or folded sheet-metal returns, so it reads as a cube with a texture on it; real units are pressed or cast with radiused vertical corners (r ~10-20 mm) and a visible door shut line all round the front fascia. (2) The ticket hopper is a dark box glued on the front at a slight angle; real ones are a recessed cup with a hooded lip that sits flush with or set into the fascia. (3) The wear is a thin white line traced down every edge at the same width and brightness, which looks procedural. Real wear concentrates at hand height around the slots and keypad, at the plinth (kick marks, grime, rust bloom at bolts) and on the hood's leading edge, and it shows as dull grey primer or bare metal, not white. (4) The blue is very saturated and evenly glossy, with no UV fade on the hood or top surfaces and no dirt gradient up from the base. (5) The screen and keypad are flat decals with no depth: the display needs a recessed glazed window and the keys need slight relief. (6) The hood has almost no overhang at the back and sides and is a flat slab; real hoods have a folded drip edge. (7) The rear door is just an outline with a single lock dot; it needs hinge pins on one side and a cylinder lock boss.",
+    "suggestions": [
+      "Bevel or chamfer all vertical body corners (r ~12 mm, 2-3 segments) and give the hood a 15-20 mm turned-down drip edge with 25-40 mm overhang on all sides. About +150 tris, and it removes the box look.",
+      "Replace the stuck-on ticket hopper with a recessed cup: cut a ~180 x 90 mm opening, inset it 40 mm, and add a small hood lip above it. Do the same for the coin slot (5 mm recess) and card reader (angled bezel). About +100 tris.",
+      "Move wear from the uniform edge line to a mask: a grime gradient over the bottom 250 mm (darken albedo ~25%, roughness to 0.8), scuffs and kick marks on the plinth, finger-polish (lower roughness) around the keypad and hopper, and a few chips showing dark grey primer, not white, on the hood front edge. One 512^2 mask on a shared atlas will do.",
+      "Desaturate the blue slightly (sRGB around 30,55,140 rather than pure royal blue), fade the hood top and upper sides 10-15% lighter, and set roughness to ~0.45 with variation. Clearcoat-like sheen is fine but the body should not read as uniform plastic.",
+      "Give the display a 6-8 mm recessed glazed window (separate glass quad, roughness 0.05, slight reflection) and add 1-2 mm relief to the keypad keys or use a normal map. Add a door shut-line groove around the front fascia (normal map is enough).",
+      "Rear door: add 3 hinge knuckles down one edge and a cylinder lock boss. Side louvres: give them depth (angled slats in a recess) instead of black stripes.",
+      "Add 4 visible anchor bolts with nuts at the plinth corners and a thin mortar or tarmac bed line where the plinth meets the ground."
+    ],
+    "renderer_notes": "The lawn ground plane is unrelated to the asset; a machine like this normally stands on tarmac or paving."
+  },
+  {
+    "asset": "path_light",
+    "score": 62,
+    "pass": false,
+    "summary": "Convincing louvred LED bollard with a good diffuser, access hatch and rating label; the oversized raw concrete collar and the uniform clean finish keep it in clearly-CG territory.",
+    "critique": "The design reads correctly as a commercial bollard path light: domed cap, four louvre rings on three vertical straps, a ribbed opal diffuser behind, a tall dark-grey column, an access hatch with screws, a small IP/LED rating label, and a bolted base flange. Height-to-diameter looks plausible (~0.9-1.0 m x ~0.15-0.2 m, a little tall against the 450-600 mm reference for low bollards, though 900 mm path bollards exist). Problems: (1) The concrete collar is very large (~3x the column diameter) and thick, with chipped edges but no ground blending. It reads as a separate puck sat on the grass, not a footing set flush into the ground. Most installs bolt the flange to a buried footing that sits flush with paving, or show only a small concrete ring at ground level. (2) The column is a perfect cylinder with no seam, weld or end detail, and its powder coat is uniform with a fine speckle that reads as noise, not texture. There is no dirt splash band at the bottom, no water streaking from the louvres, and no cobweb or grime in the louvre gaps. (3) The louvre rings are thick flat discs with square edges. Real louvres are thin pressed aluminium (~3 mm) with a slight downward cone so that they shed water. (4) The cap is a plain shallow dome with no lip detail. (5) The flange is a brown-bronze colour that does not match the column, and the bolts are dots.",
+    "suggestions": [
+      "Shrink the concrete collar to ~1.4-1.6x the column diameter and drop it so that its top sits 0-20 mm above ground, or make it an optional variant. Give it a rough, slightly irregular edge and blend it with a darker damp ring where it meets the soil or grass.",
+      "Thin the louvre rings to ~4 mm, slope them 8-10 degrees downward, and bevel the outer edge. Reuse the same ring mesh. Cost is roughly neutral.",
+      "Add a dirt and splash gradient over the bottom 150 mm of the column (darker, rougher), faint vertical drip streaks below the louvres, and darker grime in the louvre gaps (a vertex colour or a small shared grime mask; no unique texture needed).",
+      "Match the flange colour to the column, or make it a slightly darker galvanised grey. Model the bolt heads as small hex prisms (6 sides, ~8 tris each) so that they catch light.",
+      "Add a 2-3 mm lip and a small drip-skirt rim under the cap. Optionally make the diffuser emissive (warm 3000K) for night use with a slight inner glow gradient.",
+      "Optional variety: a second height variant (600 mm) to match the common low-bollard spec."
+    ],
+    "renderer_notes": "The diffuser reads well in daylight; there is no emissive on in these shots, which is fine for day."
+  },
+  {
+    "asset": "agility_pole",
+    "score": 52,
+    "pass": false,
+    "summary": "Correct basic idea (yellow slalom pole on a spring spike base with a black cap) but it is essentially a clean tube; the spring and spike detail is too small and smooth to read, and there is no wear.",
+    "critique": "Proportions are plausible: about 1.6-1.7 m tall, ~25-30 mm diameter, black end cap, black spring base. At any normal viewing distance it reads as a uniform yellow cylinder, though. (1) The pole surface is perfectly uniform saturated yellow with a faint vertical shading line and no sheen variation; real PVC or fibreglass slalom poles have a gloss to them, scuffs and grass and mud stains near the bottom, and often a printed brand band or a second colour stripe. (2) The spring base is a dark sleeve with a barely visible coil inside. Real spring bases have a clearly visible open steel coil (~40-50 mm diameter, shiny or zinc plated) between a socket that grips the pole and a metal ground spike that disappears into the turf. Here the base ends bluntly on top of the grass with no spike entering the ground, so it looks like it is standing unsupported. (3) The top cap is a small rounded plug. That is fine, but it needs a slight flare. (4) There is no bend or lean. Poles in use often sit a few degrees off vertical, which adds realism when they are instanced.",
+    "suggestions": [
+      "Make the spring legible: model an open helix (6-8 turns, wire ~4 mm, coil OD ~40 mm, about 300-500 tris) or use an alpha-tested coil card on 2 crossed quads, metallic 1.0, roughness 0.35. Put a black rubber socket above it and a 150 mm tapered steel spike below that sinks under the ground plane.",
+      "Set the pivot at ground level and sink the base so that the spike and the lower 20-30 mm are hidden in the ground. Add a small dark soil ring decal or tuft of displaced grass at the entry point.",
+      "Add surface variation to the pole: roughness ~0.3 glossy plastic, a soiled band on the bottom 200 mm (brown-green tint, rougher), a few scuff marks, and optionally a printed logo band or a contrasting colour stripe near the top. A shared 64 x 512 strip texture across all poles will do.",
+      "Expose a per-instance tilt (0-6 degrees) and a colour palette (yellow, red, blue, orange, white) so that instanced rows do not look cloned.",
+      "Taper the top cap slightly and give it a small rim. Use 12-16 radial segments on the tube so that the silhouette stays round in close-ups."
+    ],
+    "renderer_notes": "The detail view was framed too far from the base to show the spring; a closer crop of the base would help future reviews."
+  },
+  {
+    "asset": "seat.rail_seat.post",
+    "score": 55,
+    "pass": false,
+    "summary": "Recognisable safe-standing rail-seat unit with a nicely ribbed flip-up shell, but the post-and-T-bar construction is simplified and the hinge bracket is crude; everything is factory-clean.",
+    "critique": "The concept is right: a vertical steel post with a top barrier rail, a flip-up plastic seat locked up for standing, a seat number plate, and a base plate. The seat shell's underside ribbing and fixing holes are good detail. Issues: (1) The top rail is a short T-bar stub about one seat wide and capped at both ends. Real rail seating uses a continuous horizontal barrier rail (often ~1.1 m above the tread, sometimes with a padded cover) running the whole row and clamped to posts every 2-3 seats. As a kit piece the rail ends should be open or joined so that they tile seamlessly, not capped like a coat hook. (2) The seat hangs well in front of the post on a crude rod-and-washer hinge skewer with exposed spacer discs. Real rail seats (e.g. Ferco or Hy-Guard style) clip the seat into a compact moulded hinge housing so that when it is folded it sits nearly flush within the post depth, out of standing space. The side view shows the folded seat ~150-200 mm proud of the post, which defeats the safe-standing intent. (3) The post is a plain box section with a gusseted base plate on a concrete puck. In stadiums the posts are bolted to the step riser or tread face, not onto a separate pad block. (4) The seat number plate is up on the post near the rail. That is acceptable but usually it sits on the seat or the rail itself. (5) Materials: the post is a single flat dark grey, while the close-up shows a lighter grey, so the colour is inconsistent between the top and bottom of the post (it looks like two materials). The red plastic has no UV fade, scuffs or sheen variation.",
+    "suggestions": [
+      "Make the top rail a tileable segment: open-ended round tube (~48-60 mm diameter) exactly one bay long, joined to the post with a proper clamp collar (a short cylinder plus 2 bolt heads) instead of a T-junction. Remove the end caps except on an 'end of row' variant.",
+      "Rebuild the hinge as a compact moulded housing (two side cheeks ~60 x 80 mm plus a hidden spindle) mounted so that the folded seat sits within ~60-80 mm of the post face. Delete the exposed skewer rod and spacer discs. About -50 tris.",
+      "Mount the base plate to a step-riser or tread module (or leave it as a bare plate with 4 anchor bolts) and remove the concrete puck. If the puck is just a preview ground, exclude it from the asset.",
+      "Unify the post finish: one galvanised or powder-coated grey (roughness ~0.5) with light rust or grime at the base plate and bolt heads and polish where hands grip the rail (lower roughness on the top 50% of the rail circumference).",
+      "Seat shell: give the red plastic slight UV fade on the exposed face (lighter, less saturated by ~10%), roughness ~0.45 with subtle variation, a few scuffs, and a moulded seat number disc on the shell. Add a small fixing-bolt boss on the back.",
+      "Optionally provide a seat-down variant so that rows can be shown in seated (all-seater) mode."
+    ],
+    "renderer_notes": "The concrete pad and lawn are presumably preview staging; if the pad is part of the export, remove it."
+  },
+  {
+    "asset": "mannequin",
+    "score": 50,
+    "pass": false,
+    "summary": "Correct free-kick wall dummy silhouette with a nice embossed number panel, but it reads as a flat yellow cut-out slab with a single stick spring and no moulding volume or wear.",
+    "critique": "The height (~1.8 m) and figure outline are right, the number '7' recess on the chest is a good touch, and the spring and spike mount is present. Issues: (1) The side view shows a slab of uniform thickness (~40-50 mm) with near-vertical edges. Real blow-moulded mannequins are hollow, with rounded pillowy edges, a fuller chest and shoulders (~120-180 mm deep at the torso) and a thinner neck. This one has almost no relief, so it reads as plywood. (2) The arms are only a faint shading line, and the legs are two flat paddles fused at the crotch with a long rectangular gap; real ones have defined arms held to the sides and shaped legs or a single leg block. (3) Mounting: there is one off-centre spring and spike under the crotch, and the legs float above the ground. Real dummies are mounted on 2 ground spikes (one per leg) or on a central spring with a weighted base or tripod, and the feet are near ground level so that a ball cannot pass under them. (4) Material: a single saturated yellow (close to pure 255,220,40) with plastic roughness and only slight smudging. No mould seam line, no scuffs from ball strikes, no mud splash on the lower legs, no faded top surfaces. (5) The head is a rounded rectangle with no neck taper or shoulder slope variation.",
+    "suggestions": [
+      "Give the body volume: inflate the cross-section so that it is ~150 mm deep at the chest, tapering to ~60 mm at the edges, with rounded edge profiles (5-6 segment round-over) and a moulding seam ridge running around the silhouette edge. Keep it around 1.5-2.5k tris.",
+      "Model distinct arms as raised relief (10-20 mm proud of the torso, separated by a groove) and give the legs a slight thigh/calf shaping. Bring the feet to ~30-50 mm above ground.",
+      "Mount it on two steel spikes, one under each foot (spring at the base of each), or on a central spring plus a visible ground spike. The spikes should disappear into the ground plane.",
+      "Material: drop saturation to a slightly warmer, slightly dirtier yellow (sRGB ~235,200,40), roughness 0.4-0.5 with variation, ball-impact scuffs (circular grey-brown smudges) on the chest and thighs, mud splash on the lower 300 mm, sun fade on the head and shoulder tops. Use a shared 512^2 grime mask.",
+      "Add variants: red, blue and orange colour swaps and a 'jumping' tall variant (~2.0 m) commonly used for walls. Add a small brand or warning sticker on the back."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "cone_tall",
+    "score": 58,
+    "pass": false,
+    "summary": "Solid, correctly proportioned 45 cm pole-cone with through slots and a stacking base; it looks freshly moulded and slightly too much like a road traffic cone.",
+    "critique": "Height and shape fit the 450 mm pole-cone reference: a square base flange, a hollow top opening, three rows of slots on two sides for poles or hurdle bars, and a '45CM' print. The hollow open top and the slots that go all the way through are convincing. Issues: (1) The shell surface has slightly wobbly faceting and stretched UV streaks, but otherwise the material is a single uniform matte orange with no sheen. Training cones are glossy-ish PE (roughness ~0.35-0.45) with some translucency at thin edges. (2) The base flange is a thin double plate that looks layered (two outlines) rather than one moulded skirt. Real cones have a thick (~8-10 mm) square base, sometimes with corner feet, and a fillet where the cone meets the base. The close view shows the cone body sitting on the base without a smooth radius. (3) The slots are sharp rectangles with no wall thickness visible from outside. Real slot holes show the ~3 mm wall thickness and are often round or oval for poles. (4) There is no wear: no grass staining on the base, no scuffing from stacking, no faded top, no stack ring ridges near the top. (5) The '45CM' text is a crisp decal. Real cones more often carry a brand logo, and printing is slightly worn.",
+    "suggestions": [
+      "Make the base one moulded square skirt (~380 mm square, 8 mm thick) with rounded corners, and add a ~15 mm fillet ring where the cone joins the base. Remove the double-outline look.",
+      "Show wall thickness at the slots (inset the slot faces 3 mm inward and add the side faces) and consider round 32 mm holes for slalom poles plus horizontal slots for hurdle bars. About +200 tris.",
+      "Material: roughness 0.4 with subtle variation, slight subsurface or translucency tint on thin edges if the renderer supports it (otherwise brighten the albedo near the top rim), grass and mud staining on the base and lower 60 mm, light scuffs from stacking around the mid-body.",
+      "Add 2-3 small stacking ridges near the top opening and a slight lip at the top. Swap the '45CM' decal for a faded brand or logo print at about 60% opacity.",
+      "Provide colour variants (orange, yellow, blue, red, green) by per-instance tint so that rows do not look cloned."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "tree_oak",
+    "score": 46,
+    "pass": false,
+    "summary": "A pleasant generic broadleaf with a nice dappled shadow, but it does not read as a mature English oak: wrong trunk mass, wrong branching habit, small scale, and flat repetitive leaf cards in close-up.",
+    "critique": "The crown silhouette is reasonably lumpy and the cast shadow has believable dappling. Against the reference for a mature Quercus robur (H 20-35 m, crown spread 15-25 m, trunk 0.8-1.5 m at 1.3 m, first branch 3-6 m), it fails on character. (1) The trunk is thin and short. The trunk diameter is about 1/25 of the crown width, but an oak should be closer to 1/12-1/18, with a buttressed, flared root base and furrowed bark. (2) The branching is a neat fan of 5-6 slim limbs radiating upward from one point like a young street tree. Oaks have a few massive, sinuous, near-horizontal primary limbs that zig-zag and twist, giving a broad, irregular, often asymmetric crown with gaps that show the dark limb structure. (3) The crown is a dense, uniformly filled ball with no internal holes and no sky gaps, and the lower crown edge is smooth. (4) In the close-up the leaf cards are large flat quads with saw-toothed leaves that look more like elm, nettle or hornbeam than the rounded, deeply lobed oak leaf. The card edges and repetition are obvious, and there is no backlit translucency or variation in leaf orientation. (5) The overall scale reads as a 6-8 m ornamental tree rather than a 20 m+ landmark oak. (6) The bark is a thin brown stretched texture with no ridges.",
+    "suggestions": [
+      "Rescale and restructure: target H ~18-22 m, crown spread ~18-20 m, trunk diameter 1.0-1.2 m at 1.3 m with a 1.5x root flare. Clear trunk to 3-4 m, then 3-4 heavy primary limbs leaving at 30-60 degrees from vertical with gnarled zig-zag (random 15-25 degree kinks every 1-2 m). Branch geometry about 3-6k tris.",
+      "Clump the foliage into 6-10 distinct masses on the ends of the primary limbs, with visible gaps between them that show dark limb silhouettes and sky. Let the lower crown edge droop unevenly.",
+      "Replace the leaf atlas with proper oak leaves: rounded lobes, short petiole, darker glossy upper side (sRGB ~55,85,35) and lighter underside. Use clusters of 8-15 leaves per card instead of single large leaves, randomise card rotation and scale, and add translucency/backlight tint. A 1024^2 shared atlas with 4-6 cluster variants will do.",
+      "Bark: deeply furrowed vertical ridges via a tiling normal map (512^2) with grey-brown albedo (~85,75,65), plus moss on the north side of the lower trunk and in limb crotches.",
+      "Keep it instancing-cheap with 3 LODs (hero ~25k tris, mid ~8k, far billboard or imposter), wind vertex animation in the shader, and per-instance hue and scale jitter (+-10%)."
+    ],
+    "renderer_notes": "The flat lawn and the hard tiled field patterns in the background are terrain issues, not the tree's."
+  }
+]

@@ -39,7 +39,7 @@
   "artificial_3g": {
     "label": "Artificial 3G (rubber infill)", "natural": false, "climate": "any",
     "height_mm": {"min": 40, "max": 60, "default": 50},
-    "color": "#3d7a34", "color_dry": "#3d7a34", "stripe_strength": 0.07, "blade_width_mm": 1.2,
+    "color": "#46742c", "color_dry": "#5d7031", "stripe_strength": 0.15, "blade_width_mm": 1.2,
     "gameplay": {"ball_roll": 0.82, "bounce": 1.15, "traction": 1.10, "wear_rate": 0.05, "water_need": 0.0, "temp_c": [-10, 45]}
   }
 }

@@ -9,6 +9,8 @@ use stadium_gen::stadium::Report;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+mod site_ui;
+
 pub const SIDES: [&str; 4] = ["south", "north", "east", "west"];
 const MOW: [&str; 7] = ["none", "stripes", "stripes_long", "checkerboard", "diagonal", "diamond", "circles"];
 const SEAT_PATTERNS: [&str; 6] = ["solid", "tiers", "rows", "bays", "gradient", "random"];
@@ -21,6 +23,8 @@ pub struct Editor {
     pub revision: u64,
     pub saved_revision: u64,
     pub report: Option<Report>,
+    /// a training ground's report (site-layout/1)
+    pub site_report: Option<stadium_gen::site::SiteReport>,
     pub status: String,
     pub error: Option<String>,
     pub build_ms: (f32, f32, f32),
@@ -53,6 +57,10 @@ pub enum Section {
     Lights,
     Ads,
     Furniture,
+    /// a training-ground plot (Focus.side holds its id)
+    Plot,
+    /// a training ground's site-wide parts (gate, boundary)
+    Site,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -65,8 +73,16 @@ pub struct Focus {
 
 const UNDO_DEPTH: usize = 200;
 
-/// What a generated part or prop belongs to, by its name (see build.rs / stadium.rs).
+/// What a generated part or prop belongs to, by its name (see build.rs / stadium.rs; a training
+/// ground's parts are named "<plot>:<what>").
 pub fn focus_for(name: &str) -> Option<Focus> {
+    if let Some((head, _)) = name.split_once(':') {
+        return match head {
+            "Site" | "World" | "PROP" => None,
+            "Gate" => Some(Focus { section: Section::Site, side: Some("gate".into()), label: "gate".into() }),
+            id => Some(Focus { section: Section::Plot, side: Some(id.to_string()), label: format!("plot {id}") }),
+        };
+    }
     let side_of = |prefix: &str| name.strip_prefix(prefix).map(|s| s.to_string());
     let corner = |s: &str| s.len() == 2;
     let f = |section, side: Option<String>, label: String| Some(Focus { section, side, label });
@@ -206,7 +222,7 @@ fn cat_opts(entries: &serde_json::Map<String, Value>) -> Vec<(String, String)> {
 
 impl Editor {
     pub fn new(layout: Value, cat: Arc<Catalog>, path: Option<PathBuf>, layouts_dir: PathBuf) -> Self {
-        Editor {
+        let mut ed = Editor {
             committed: layout.clone(),
             layout,
             cat,
@@ -215,6 +231,7 @@ impl Editor {
             revision: 1,
             saved_revision: 1,
             report: None,
+            site_report: None,
             status: String::new(),
             error: None,
             build_ms: (0.0, 0.0, 0.0),
@@ -229,7 +246,12 @@ impl Editor {
             focus: None,
             reveal: false,
             previews: Default::default(),
+        };
+        if ed.is_site() {
+            ed.normalize_site();
+            ed.committed = ed.layout.clone();
         }
+        ed
     }
 
     /// Record undo steps: call once per frame after the UI ran. A gesture (consecutive changes
@@ -448,7 +470,22 @@ impl Editor {
 
     // -- left panel: the layout -----------------------------------------------------------------
 
+    pub fn is_site(&self) -> bool {
+        crate::is_site(&self.layout)
+    }
+
+    /// Take a finished build's report.
+    pub fn set_built(&mut self, built: crate::Built) {
+        match built {
+            crate::Built::Stadium(r) => self.report = Some(r),
+            crate::Built::Site(r) => self.site_report = Some(r),
+        }
+    }
+
     pub fn controls(&mut self, ui: &mut Ui) {
+        if self.is_site() {
+            return self.site_controls(ui);
+        }
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
             ui.spacing_mut().slider_width = 150.0;
             let all = self.expand_all;
@@ -1072,6 +1109,9 @@ impl Editor {
     // -- right panel: readouts ---------------------------------------------------------------------
 
     pub fn readouts(&mut self, ui: &mut Ui) {
+        if self.is_site() {
+            return self.site_readouts(ui);
+        }
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
             if let Some(e) = &self.error {
                 ui.colored_label(Color32::from_rgb(255, 120, 100), format!("⚠ {e}"));

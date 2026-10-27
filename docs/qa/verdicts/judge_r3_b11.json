@@ -1,0 +1,205 @@
+[
+  {
+    "asset": "ev_charger",
+    "score": 58,
+    "pass": false,
+    "summary": "Convincing pedestal charger body with legible UI and decals, let down by connectors that stick out sideways like arms and cables that loop loosely onto the grass.",
+    "critique": "The pedestal reads well. It is about 1.4 m tall on a concrete plinth with anchor bolts, with a white powder-coat body, a green cap, a legible touchscreen ('Tap card or scan to start charging'), a 22 kW AC badge, an RFID pad, a QR code, a lightning-bolt hazard label, louvres and a keyed access door. The decal work is the strongest part. The connectors are the problem. Both Type 2 plugs are holstered on the side faces pointing horizontally outward at about shoulder height, so the silhouette from the front three-quarter view looks like a figure with raised arms. Real pedestals (Pod Point Twin, Andersen, Alfen) holster the plug in a recessed socket on the front or side face with the plug pointing down or angled about 45 degrees down, flush to the body. The tethered cables leave from a second gland lower on each side and hang in big loose loops that lie on the plinth and the grass, with no cable hook or wrap. Real tethered posts hang the cable on a hook or wrap it round a holder so it does not touch the ground. The cables are also uniform round tubes with no plug strain relief. The cap is a plain bevelled green box with no overhang lip, drip edge or LED status light strip, which is the most recognisable feature of modern posts. The body has almost no wear: no scuffs at kick height, no grime at the plinth joint, no fingerprint smudging on the screen bezel. The plinth is very clean, light concrete with no edge chips or staining.",
+    "suggestions": [
+      "Re-holster the plugs. Put a recessed holster socket (about 120 x 90 mm, 60 mm deep, dark grey plastic) on each side face at about 1.0-1.1 m, and seat the plug in it pointing down at 30-45 degrees, with the plug body tucked within about 50 mm of the panel. This alone fixes the 'arms' silhouette.",
+      "Add a cable hook or wrap (a curved bracket, about 200 mm, under each holster) and drape the cable as one or two hanging loops that stop about 150 mm above the plinth. No cable should touch the grass. Use a 3-4 segment spline with a small sag, about 12 sides, around 400 tris per cable.",
+      "Add a strain-relief boot (a tapered sleeve about 80 mm long) where the cable meets the plug and where it enters the body gland.",
+      "Give the cap a 15 mm overhang lip and a thin emissive status ring or bar under it (green, emissive about 3-5). Add a slightly translucent light-guide strip to the front green bar so it reads as a lit indicator, not paint.",
+      "Add wear in a shared 512 grime mask: kick scuffs and grey streaking on the bottom 300 mm of the body, a darker damp band where the body meets the plinth, a fingerprint haze on the screen (roughness 0.15 to 0.35 variation), and chipped edges and rust-stained bolt heads on the plinth.",
+      "Slightly bevel or round the vertical body corners (r about 8 mm, 2 segments) so the white panels catch a highlight. At present the edges are hard and read as CG."
+    ],
+    "renderer_notes": "The screen and status bar would benefit from emissive bloom, which the viewer does not show. That is not the asset's fault."
+  },
+  {
+    "asset": "tyre_stack",
+    "score": 57,
+    "pass": false,
+    "summary": "A believable stack of worn car tyres with a sidewall brand and size marking, but the tread is shallow and painted on, the profiles are too square and the rubber is too uniform.",
+    "critique": "The proportions are about right for a 205/55 R16 (about 630 mm OD, 205 mm wide), and four stacked tyres with a fifth leaning against them is a natural arrangement. The 'MERIDIAN' and '205/55 R16' sidewall text is a good touch, and the dusty grey grime on the shoulders helps. Up close, though, the tread is mostly a normal or albedo pattern with only shallow geometric grooves. A real tyre has 4 deep circumferential grooves and sharp sipes, and the silhouette edge of the tread should be visibly notched where the shoulder blocks are. Here the tread outline is perfectly smooth. The cross-section is too boxy: the shoulders are nearly square, and the sidewall has no bulge, rim protector rib or bead seat. The inner bead edge is a plain, thin, rounded lip with no bead toe, so the hole looks like a cut rather than a moulded rubber bead. The rubber is one flat dark grey of near-uniform roughness everywhere. Real rubber has a darker, slightly satin tread surface, a duller grey bloom on old sidewalls, and grime pooled in the grooves. The stack is too neat, with near-perfect concentric alignment except for a small offset, and the tyres are identical, with the same text in the same rotation on each.",
+    "suggestions": [
+      "Rebuild the cross-section as a 10-12 point profile: bead toe and heel, a slight sidewall bulge (about 8 mm outboard of the rim line), a rim protector rib, a rounded shoulder of r 15-20 mm, and a slightly crowned tread. Use about 48 radial segments, around 1.2k tris per tyre.",
+      "Cut the 4 main circumferential grooves into the geometry (about 8 mm deep, 10 mm wide), and notch the shoulder blocks into the silhouette with alternating 32-40 shoulder lugs. Keep the sipes in the normal map.",
+      "Randomise each instance: rotate 0-360 degrees about its axis so the text does not line up, offset each tyre 10-30 mm laterally, and tilt each by 1-2 degrees. Use 2-3 tread wear levels by scaling the groove depth.",
+      "Split the materials: tread with albedo about 0.03-0.04 and roughness 0.75; sidewall with albedo about 0.05 and a greyish UV bloom blotch mask (roughness 0.85); raised lettering slightly lighter where it has been scrubbed. Add dirt in the grooves with an AO-driven mask.",
+      "Add moulding details to the sidewall normal map: the wear indicator triangles, a DOT code block, and radial mould vent lines."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "picnic_table",
+    "score": 58,
+    "pass": false,
+    "summary": "A correct A-frame pub-garden picnic table with weathered timber and nice staggered board ends, but missing all the bolts and has too uniform a wood surface.",
+    "critique": "The silhouette and proportions match a standard 1.8 m UK picnic bench: the top is about 740 mm high, the benches about 440 mm, with A-frame legs, bench bearers through the legs, and diagonal braces from the bench bearer to the top centre. The top boards have small gaps and slightly staggered ends, and the close-up shows grain, cracks and knot marks. The construction detail stops there. There are no carriage bolts, coach screws or nuts at any joint. On a real pressure-treated table, the 4-6 galvanised carriage bolt heads at each leg, bearer and brace junction are the most legible detail. The benches look like a single wide plank in the far views and only show a faint seam close up. Real ones are almost always two 145 x 32 mm boards with a gap. The leg feet are cut square with no angled sole cut, so the legs appear to pierce the grass. The wood is a single silver-tan tone with no variation between boards. Real tanalised timber varies from green-grey to honey to silver between boards, and the end grain is darker. There is no wear pattern: no darker, smoother patches where people sit and eat, no lichen or green algae on the shaded lower faces, and no splitting at the board ends. The edges are sharp-cornered boxes with no arris round-over.",
+    "suggestions": [
+      "Add bolts as an instanced 24-tri mesh, a domed head about 22 mm across, with 2 per joint at every leg, bearer and brace junction and 1 per top board end into the cleats. That is about 40 heads, under 1k tris. Use galvanised grey with rust streak decals running down from a few of them.",
+      "Make each bench two boards (145 mm wide, 8 mm gap), and the top 4-5 boards with 6-8 mm gaps. Give each board a random tint offset of plus or minus 8% in hue and value, with a slight random length offset of up to 15 mm, as you already do on the top.",
+      "Cut the feet at the leg angle so they sit flat on the ground. Add a darker damp band and a soil splash on the bottom 80 mm of each leg.",
+      "Add a 3 mm arris round-over (one bevel segment) to every board edge so the edges catch a highlight.",
+      "Material: base albedo around 0.35-0.40 in grey-tan, darker end grain (about 0.6x), green algae on the underside and shaded faces of the benches and legs through a world-up-inverted AO mask, and a smoother, slightly darker 'use' patch along the bench centrelines and table edges. Use the existing 1k atlas, no extra textures."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "car_saloon",
+    "score": 38,
+    "pass": false,
+    "summary": "Reads as a generic blue saloon from a distance, but the body is slab-sided and flat-shaded, the windscreen has artefacts, and the BMW kidney grille and roundel are an obvious real-brand imitation.",
+    "critique": "The rough package is right: a three-box saloon about 4.7 m long, with alloy wheels that fill the arches reasonably, UK plates and red LED tail lamps. Beyond that it falls into toy territory. The body sides are near-vertical flat slabs with no shoulder line, no tumblehome, no sill and no wheel-arch flare, so the side view looks like an extruded profile. The boot deck is high and long, and the rear overhang looks excessive relative to the wheelbase. A G20-class car has a short, rising boot and a long bonnet with the cabin set back. The greenhouse is small and sits on the body like a separate box. The windscreen has a dark band across its top edge, and there are triangular faceting artefacts at the A-pillar bases in the overhead close-up. A small black spike sticks up from the front bumper corner in the side view. The paint is a flat, saturated mid-blue with almost no reflection, no clearcoat specular, and no environment response. A real car's paint is defined almost entirely by its reflections, so this one looks like plastic. Panel shut lines are barely visible. There is no visible interior beyond a dark blob and no tyre sidewall detail. The front end copies the BMW twin-kidney grille and has a round badge on the bonnet. For an engine-neutral commercial kit that is a trademark problem as well as a realism one.",
+    "suggestions": [
+      "Replace the brand cues. Use a generic single-frame or hex-mesh grille and a non-circular, invented badge. Do not use twin kidneys or a roundel.",
+      "Rework the body section. Add tumblehome (the side glass inclined about 20 degrees inward), a crisp shoulder crease about 80 mm below the window line, a sill rocker that steps in by 30 mm, and wheel arches flared 15-20 mm with a lip. Loft from 6-8 cross-sections along the length instead of extruding a side profile. A target of 6-10k tris for LOD0 is fine for parked cars.",
+      "Fix the proportions to G20 figures: L 4709, WB 2851, H 1442, W 1827. Shorten the rear overhang so the boot lid ends about 950 mm behind the rear axle, and lower the boot deck so it sits about 100 mm below the base of the rear window.",
+      "Clean the glass. Make the windscreen a single quad strip with a dark ceramic frit band only on its outer 60 mm. Remove the A-pillar triangle artefacts and the bumper spike.",
+      "Car paint material: metallic around 0.0 for the base with a clearcoat approximation (roughness 0.25-0.3), darker blue albedo (sRGB about 20,45,110), and a cheap fake reflection using a sky/ground horizon gradient in the shader by Fresnel. Without reflections, no car will read as real.",
+      "Add shut lines (a 3 mm dark line in a shared 1k trim atlas) around the doors, bonnet, boot and fuel flap; door handles; a black B-pillar; a simple dashboard, seats and steering wheel block-out behind tinted glass; and tyre sidewall lettering."
+    ],
+    "renderer_notes": "The lack of screen-space reflections or a reflection probe hurts car paint more than any other asset. Even so, the base material should be darker and glossier than it is now."
+  },
+  {
+    "asset": "traffic_cone",
+    "score": 62,
+    "pass": false,
+    "summary": "A good-looking 750 mm road cone with a recycled-rubber base and believable grime, held back by matte paint-like reflective sleeves and a visible sleeve seam glitch.",
+    "critique": "The shape is right for a UK 750 mm cone: a tapered body with a neck collar at the top, two white sleeves, and a heavy square black rubber base with rounded corners. The dusty grime gathered at the bottom of the cone and on the base is nicely done. The base has a speckled rubber texture. The main flaw is that the white sleeves read as matte white paint. Real cone sleeves are retroreflective micro-prismatic film, which looks slightly grey-silver and faintly patterned in daylight, with a visible edge and a slight raised thickness where it overlaps. In the opposite three-quarter and side views there is a small orange triangular notch cut into the top-left edge of the upper sleeve. This looks like a UV or geometry seam error, not a real sleeve overlap. The cone body is very smooth and uniformly orange. Real PVC cones show a slightly glossier, mottled surface, scuffs and black tyre marks, and fading on the upper section. The base lacks the moulded square recess and corner lugs, and it sits on the ground like a thin tray with no thickness variation.",
+    "suggestions": [
+      "Fix the sleeve seam. Wrap each sleeve as a closed ring with consistent UVs, and model the overlap as a 15 mm slightly raised tab (one extra quad strip), not an orange notch.",
+      "Sleeve material: albedo about 0.75 grey-white (not 0.9), roughness 0.35, a subtle micro-prism normal (a tiny diamond grid, tiling), and a faint brand or 'BS EN 13422' text strip near one edge.",
+      "Cone body: orange PVC with roughness 0.4-0.5, a slight gloss variation mask, and 2-3 black scuff streaks and abrasion on the windward side. Fade the top 150 mm towards a paler orange from UV.",
+      "Base: model it as about 40 mm thick with a raised square boss around the cone foot and 4 small corner lugs. Add a darker worn edge and tyre-track scuffs. This adds about 200 tris."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "ride_mower",
+    "score": 42,
+    "pass": false,
+    "summary": "Recognisable green garden tractor, but blocky, under-detailed and toy-like: flat bodywork, oversized flat rear fender plate, no engine or deck detail.",
+    "critique": "The layout is broadly right: a front bonnet with grille and headlights, a steering wheel on a column, a seat over the rear fender, a mid-mounted deck between the axles, larger rear wheels, yellow rims, and the green-and-yellow livery. The execution is greybox-plus. The bonnet is a big bevelled box with a hard flat top and a stuck-on vent rectangle. A real lawn tractor's bonnet is a curved, moulded tilting shroud that tapers to a rounded nose with an integrated grille. The rear fender is a large flat tray that is much wider and squarer than reality, and the seat sits on its top like a separate chair. On a real X350-type tractor, the fender wraps tightly around the rear tyres, with a high-back seat on a spring pan and an adjust slider. There is no dash pod with ignition key, throttle or deck-height lever quadrant, no fuel cap, no deck lift lever housing, and no foot pedals: the floor is a flat grey grid. The mower deck is a flat black disc with no discharge chute, deck wheels, belt guard or spindle caps. The tyres are smooth with no turf-tread chevrons, and the rims are flat yellow discs. The body paint is a single saturated green (it looks almost emissive) with no gloss and no grass stains, mud or chipping. The steering column is a thin rod with no shroud. Wheel sizes: the rear wheels should be noticeably larger (about 20 inch) than the fronts (about 15 inch). Here the difference is too small. The 'AGRIMAX X42' decal is good, but it floats on a featureless panel.",
+    "suggestions": [
+      "Reshape the bonnet. Loft it from 5-6 cross-sections that taper and round towards the nose (nose about 60% of the rear width), give it a recessed black grille insert with horizontal slats, and add a shut line where it tilts. About 1.5k tris.",
+      "Rebuild the rear: shrink the fender to a wrap-around shape about 120 mm outboard of each tyre, add a contoured high-back seat on a visible pan and spring bracket, and add a dash pod in front of the seat with an ignition key, a throttle lever and a notched deck-lift quadrant.",
+      "Add turf-tread to the tyres (chevron lugs in the normal map, plus a notched silhouette on the rear tyres), and give the rims dished centres with 4-5 lug nuts and a valve stem. Make the rear tyres about 510 mm in diameter and the fronts about 380 mm.",
+      "Mower deck: add a side discharge chute (a flared box, 300 x 200 mm), two anti-scalp wheels, spindle caps and a belt cover. Put cut-grass clippings and mud on the underside edge.",
+      "Material: change the green to a deeper, more realistic Deere-type paint (sRGB about 54,124,43) with gloss roughness 0.3. Add grass-stain green-brown streaks on the deck, the lower fender and the tyres, chips on the nose and dust in the footwell. Make the footplate a black rubber mat with ribs, not a grey grid.",
+      "Add pedals (brake and forward/reverse), a fuel cap on the bonnet or fender, and a steering column shroud (a tapered cylinder, 60-80 mm)."
+    ],
+    "renderer_notes": "The bright green looks extra flat under the sky ambient with no GI, but the albedo itself is too saturated."
+  },
+  {
+    "asset": "gate_farm",
+    "score": 48,
+    "pass": false,
+    "summary": "Correct galvanised 5-bar field gate on timber posts, but a floating diagonal brace, thin, too-clean steel and blotchy decal soil patches undermine it.",
+    "critique": "The basic type is right for a UK field: a galvanised tubular gate about 3.6 m wide with a heavier top rail, 4 lower rails, a hanging stile, a mid vertical, a main diagonal brace from the bottom hinge corner, timber hanging and slamming posts, and a spring latch on the slamming post. However, a second short diagonal runs from about the 4th rail near the middle up towards the right, and it ends in mid-air without meeting a stile or rail junction. This reads as a broken or floating piece of geometry, the most obvious error on the sheet. The posts are too slender and too short. A hanging post for a 12 ft gate is typically 200-250 mm square (or a 150-180 mm round) and stands about 1.5-1.8 m out of the ground, with the top bevelled or weathered. Here the posts are about 150 mm and the tops are cut flat. The hinge hardware is minimal: there are no visible hook-and-band hinges or eye bolts through the post. The galvanised steel is one clean, uniform light grey with no spangle, dulling, white-rust bloom or rust at the welds. The rails are uniform thin rods with no visible welded joints or flattened rail ends. The ground under the gate is a run of square, blotchy brown patches that look like tiled decals, not a worn path or tyre-rutted mud. The timber posts are plain with no cracks, checking or lichen.",
+    "suggestions": [
+      "Remove the floating short diagonal, or make it a proper second brace that runs from the mid vertical down to the bottom rail at the slamming end, as on a standard 'Yorkshire' or 'Galvanised field gate' pattern.",
+      "Posts: hanging post 200 x 200 mm, 1.6 m above ground, with a 30-degree weathering bevel on top. Slamming post 150 x 150 mm. Add end-grain checking and cracks (normal map) and a green algae band at the base.",
+      "Hardware: add hook-and-band hinges (a top hinge with an adjustable eye bolt through the post with a nut on the back face, and a bottom cup hinge), plus a proper spring latch box and a keeper bracket. About 300 tris total.",
+      "Steel: rails as 33.7 mm tube (top rail 42 mm), with a slight oval flattening at the stile welds, and a weld bead ring at each junction (4-6 segment torus). Use galvanised albedo about 0.55 with a mottled spangle normal, roughness varying 0.35-0.6, white zinc bloom near the ground and orange rust specks at the welds.",
+      "Replace the square soil patches with one soft-edged elongated mud decal along the gate swing arc and gateway (tyre ruts, puddle tint), blended with alpha falloff rather than tiled squares."
+    ],
+    "renderer_notes": "The patchy soil may be a terrain-decal blending issue in the viewer. If so, fix the decal edge falloff there."
+  },
+  {
+    "asset": "stadium_premier:seating & stands",
+    "score": 60,
+    "pass": false,
+    "summary": "A convincing two-tier bowl with individual seats, aisles, vomitories, a seat-mosaic club name and an executive box level. Strong at a distance, uniform and sterile up close.",
+    "critique": "This is the strongest part of the stadium. The rake, row pitch, aisle stairs with yellow nosings, vomitory openings with side walls, a hospitality box tier with dark glazing, front balustrades and the 'KIT FC' seat-colour mosaic all read correctly, and the scale feels like a 50-60k Premier League ground. The weaknesses show up when you look closer. Every seat is the same saturated red, with no variation of fading between sun-exposed and covered rows, and no mix of tip-up seats folded up and down. In reality most empty tip-ups are folded up, which changes the look completely. The concrete terrace risers and vomitory walls are a flat, clean light grey with no staining, expansion joints or drainage marks. The vomitory side walls look like plain grey wedges with no handrail caps or signage (block and row letters). The exec-box tier reads as a dark band with no glazing mullions, no balcony seats and no fascia detail except the LED ribbon. There is no camera gantry, no stewards' positions, and no row or seat numbering on the riser faces. The corners of the lower tier stop abruptly with grey walls rather than wrapping around.",
+    "suggestions": [
+      "Instance seats with a per-instance random: 85-90% folded up (back and pan together, a different mesh pose), plus a slight hue and value jitter (plus or minus 4%). Fade the colour by row towards the front where the sun hits it (lighter, less saturated).",
+      "Add riser-face detail through a shared trim atlas: white row letters every row, and block numbers on the vomitory faces (e.g. 'BLOCK 112'). Add dark rain-streak staining under each riser and a darker band of dirt on the treads.",
+      "Exec tier: glazing mullions every 1.5 m, a reflective glass material (roughness 0.1, dark albedo), and a 2-row balcony seat strip in a different seat type (padded, dark).",
+      "Add a TV camera gantry on the main-stand upper tier and steel handrails with yellow caps down the aisles of the upper tier. These are cheap cylinders that add a lot of realism."
+    ],
+    "renderer_notes": "The deep shadow on the lower bowl comes from the low sun with no GI bounce, which makes the far stand look much brighter than the near one. That is not an asset fault."
+  },
+  {
+    "asset": "stadium_premier:roof",
+    "score": 50,
+    "pass": false,
+    "summary": "A continuous bowl roof with radial rafters and a translucent-panel underside. The structure reads, but the panels are flat grey, the top is plain, and hanging struts stop in mid-air.",
+    "critique": "The roof form, a continuous oval with radial primary members, purlins and a front catwalk edge, is a credible modern Premier-League type, and from the pitch it encloses the bowl correctly. The underside, though, is a flat, uniform grey-olive with even lines and almost no depth. Real roof soffits show deep steel trusses (top and bottom chords plus web members), secondary purlins, cladding profile ribbing, cable trays, PA speakers and lights. Here the members are thin flat bars. In the detail views, vertical posts hang down from the roof at the back of the upper tier and end in mid-air above the seats, with no visible connection to the stand's rear wall or a tie-down. They look like broken geometry. The exterior top surface is bright white radial segments with plain seams and small boxy caps at the column heads. There is no standing-seam profile, no gutters, no rooflight strips, and no walkway or fall-arrest rail detail. The leading-edge fascia is a thin dark band with no depth. If the panels are meant to be polycarbonate, they should glow and transmit light, not be opaque grey.",
+    "suggestions": [
+      "Turn the radial members into shallow trusses: two chords plus zigzag webs in a single instanced mesh (about 300 tris per bay), with a deeper (1.5-2.5 m) leading-edge truss holding the catwalk, lights and speakers.",
+      "Fix the hanging posts so that each meets either the back of the stand's rear wall or a ring beam. If they are meant to be hangers, extend them to a visible horizontal tie beam.",
+      "Soffit material: a profiled-sheet normal (trapezoidal ribs at 200 mm spacing), albedo about 0.55 light grey. If translucent, add a translucent panel band near the leading edge with emissive/transmission and a bright tint so the sky shows through.",
+      "Top surface: a standing-seam normal running radially, gutters at the outer edge, and 2-3 rooflight strips. Replace the boxy column caps with tapered mast heads or raking support arms."
+    ],
+    "renderer_notes": "Without GI the roof underside gets only flat sky ambient, so it reads darker and greyer than real white steelwork. Some of the dullness is the renderer."
+  },
+  {
+    "asset": "stadium_premier:exterior/facade",
+    "score": 52,
+    "pass": false,
+    "summary": "A modern bowl with diamond-patterned cladding, concrete pylons with slot windows and a glazed concourse band. A good massing idea, but flat, uniform and lacking street-level life.",
+    "critique": "The massing reads as a modern purpose-built ground: a curved oval drum, regular vertical pilaster cores with slit windows, a glazed lower concourse, and a large plaza with trees. The diamond-panel cladding gives some texture. The panels are a single light grey with very little relief, so the big curved drum looks like a smooth render with a faint pattern rather than metal or GRC cassettes with shadow gaps. The pilasters are plain boxes with no rustication, joints or louvres. The glazed band has repetitive mullions but no visible interior (no concourse lighting, kiosks or stairs) and no reflections. At street level there are almost no entrances: no turnstile blocks with numbered gates, canopies, ticket office, club shop, crest or large club name lettering. A real Premier League ground is covered in signage and wayfinding. The only branding is a small sponsor sign high on one pylon. The plaza is a uniform, flat, light-grey slab with no paving pattern, bollards, barriers, lighting columns or kerbs, and it ends in a hard, rounded rectangle against the grass. The roof edge meets the facade with no fascia or visible gutter.",
+    "suggestions": [
+      "Add instanced turnstile blocks every 30-40 m around the perimeter, each with a numbered gate sign (A1-A12…), a canopy, roller shutters and 4-8 turnstile openings. Put a large club name and crest on the main stand.",
+      "Give the cladding depth: 40-60 mm shadow gaps between diamond panels (normal plus AO in a 1k trim), alternating panel tint (two tones, plus or minus 5%), and a slight metallic response (metallic 0.3, roughness 0.4).",
+      "Concourse glazing: an interior-mapping or parallax 'fake room' shader with warm lights and silhouettes of kiosks, or at least an emissive warm band behind the glass, plus reflection tint.",
+      "Plaza: a paving grid texture (600 x 600 mm), drainage channels, anti-terror bollards along the approach, lighting columns, and a kerb with tarmac road at the plaza edge in place of the straight cut to grass."
+    ],
+    "renderer_notes": "The lack of reflections makes the glass bands read as flat dark strips. This is partly the renderer."
+  },
+  {
+    "asset": "stadium_premier:floodlights",
+    "score": 40,
+    "pass": false,
+    "summary": "Floodlighting is only implied by a row of tiny fittings along the roof leading edge, almost invisible at every camera distance.",
+    "critique": "A Premier League bowl like this would have a continuous ring of LED floodlight banks mounted on the roof leading-edge truss, with a catwalk, typically hundreds of large rectangular fixtures (about 0.6 x 0.5 m each) in 2-3 rows angled down at the pitch. These are a prominent feature from the pitch and from the stands. Here the edge carries a fine line of small grey dots that only resolves as 'lights' in the widest top-left view. From the pitch-level detail shots it is indistinguishable from the roof members. There is no catwalk, no cable tray, no aiming-angle variation between fixtures, no visible lens faces (dark glass with a lit diode array), and no glow or emissive. Nothing tells the viewer that this is how the pitch is lit, and there are no secondary corner masts or gantry lights.",
+    "suggestions": [
+      "Build a leading-edge lighting gantry: a 1.2 m-wide catwalk with handrails along the inner roof edge, and 2 rows of instanced LED floodlight heads (box 600 x 500 x 150 mm, finned back, about 120 tris each) every 1.2 m. Aim each head down at the pitch centre with plus or minus 10 degrees of jitter.",
+      "Give the fixture faces a dark glass lens with an emissive diode-grid texture (emissive 0 by day, high at night) so they read as lights even when off.",
+      "Add cable trays and junction boxes along the gantry, and make the fixtures large enough (they are typically about 30-40% of the fascia depth) to read from the far stand."
+    ],
+    "renderer_notes": "This is a daylight render, so the lights being off is correct. The problem is the geometry and scale."
+  },
+  {
+    "asset": "stadium_premier:pitch & goals & nets",
+    "score": 60,
+    "pass": false,
+    "summary": "A clean, correctly marked pitch with good mowing stripes and a believable box goal with a hex net. Close to realistic, but the grass is too perfect and the nets hang without tension or sag.",
+    "critique": "The pitch markings are correct (halfway line, centre circle, penalty and goal areas, corner arcs), the mowing stripes are well judged, and the grass close-up has blade texture. The goal is a proper 7.32 x 2.44 m frame with white round posts, rear stanchions and a hexagonal net, which reads well against the stand. The weaknesses: the pitch is perfectly uniform, with no worn goalmouth (Premier League goalmouths and the linesmen's channels show wear even late in the season), no divots and no subtle colour variation from hybrid-grass fibres. The lines look painted perfectly flat with no slight blur or grass texture showing through. The net is a perfectly tensioned flat surface with straight edges. Real nets sag between pegs, bulge at the back, and show elastic ties at the posts and stanchions with pegs at the ground line. There are no net support pegs visible, no ball-stopper netting and no surrounding running track or synthetic run-off strip behind the boards. The goal posts have no slight shadow-line where they meet the turf (ground sockets).",
+    "suggestions": [
+      "Add a goalmouth wear decal (a lighter, sparser brown-green patch, 6 x 3 m) and faint linesman channels along both touchlines. Keep it blended with a noise mask so it does not tile.",
+      "Net: add 50-100 mm of sag between the top bar and stanchions, and a slight bulge on the back panel. Add net pegs (small 12-tri spikes) every 500 mm along the ground line, and elastic ties at the crossbar.",
+      "Lines: modulate line albedo by the grass blade normal and give it 10-20% grass show-through, so they read as painted on turf rather than stickers.",
+      "Add a 3-5 m synthetic or darker run-off band and a drainage channel between the pitch edge and the advertising boards."
+    ],
+    "renderer_notes": "The strong sun/shade split on the pitch is shadow-map lighting with no bounce, not an asset problem."
+  },
+  {
+    "asset": "stadium_premier:dugouts & tunnel",
+    "score": 55,
+    "pass": false,
+    "summary": "Modern curved-perspex dugouts with black bucket seats and a red extendable tunnel. The type is right, but the parts look assembled from primitives and the tunnel mouth block is crude.",
+    "critique": "The dugouts are the right modern type: curved clear-polycarbonate shells on red frames, rows of black padded bucket seats, and a red concertina tunnel extension, flanking the tunnel on the halfway line. The seats are individual and well proportioned. The tunnel mouth is a plain flat grey box with a dark rectangular opening, sitting in front of the stand like a placeholder block. Real tunnels open through a clad or tiled portal in the stand's front wall, with signage, a crest, a 'This is…' sign or sponsor panel, and steps or a ramp. From the high main view, the red inflatable sits on top of a grey cube, which looks odd. The polycarbonate has almost no reflection or tint and reads as wireframe outlines plus faint grey. The dugout floors are flat with no artificial-turf mat, and there are no technical-area markings (the dashed white box is present on one side but faint), no fourth-official board stand, no water bottles, kit bags or coolers, and no cable runs.",
+    "suggestions": [
+      "Replace the tunnel box with a portal set into the stand front wall: a tiled or clad frame, with a crest or sponsor panel above the opening, a 1:12 ramp down, and double doors visible inside. Reuse the stand's material atlas.",
+      "Give the polycarbonate shells a real glass material: roughness 0.05, a slight blue-grey tint, Fresnel opacity rising at grazing angles, and fine scratches. Add a darker frit band along the top edge.",
+      "Add clutter as instanced props: water bottle crates, a kit bag, a tactics board, a 4th-official electronic board stand, and green artificial grass mats in the dugout floors.",
+      "Paint technical-area dashed lines in full brightness, 1 m out from each dugout and 1 m either side."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "stadium_premier:advertising boards & screens",
+    "score": 62,
+    "pass": false,
+    "summary": "Legible, varied invented sponsor boards and two ribbon LED bands, plus corner screens showing a scoreline. The best-detailed graphics in the set, but the boards read as printed panels, not LED units.",
+    "critique": "The invented sponsor set (Kestrel Bank, Summit Cola, Volta, Halcyon, Orbit Mobile and others) is varied and well laid out, the text is crisp, and the boards follow the pitch perimeter, with 3D carpets behind the goal and two continuous LED ribbon fascias on the tier fronts. The roof-hung corner screens show a club scoreline and match clock. All of this reads as a modern Premier League ground. The pitch-side boards look like thick printed panels with a white face and solid colour block. Real LED boards are black-housed cabinets about 0.9-1.0 m high, angled back about 10-15 degrees, with visible module seams every 0.96 m or so, rear support legs and a black face where the image does not cover. Their faces are emissive with a slight pixel-grid moiré up close. The ribbon boards have the same issue: they are perfectly flat colour with no emissive glow, no black housing lip and no module seams. The big screens have plain housings with no maintenance walkway, support truss or speaker clusters, and the image is a flat graphic with no emissive response. The 3D carpets behind the goal are fine.",
+    "suggestions": [
+      "Make the pitch-side boards cabinets: a black housing frame (30 mm border), a 12-degree backward lean, rear A-frame legs, module seams every 960 mm (dark 2 mm lines in the shader), and an emissive face (strength 1.5-2 by day) with a subtle pixel-grid normal or texture at close range.",
+      "Ribbon boards: add a 50 mm black aluminium lip above and below, module seams, and the same emissive pixel-grid treatment.",
+      "Screens: add a support truss or hanging steel above each screen, a rear service walkway box, and side speaker cabinets. Make the image emissive with a slight black-level grey so it reads as a lit display."
+    ],
+    "renderer_notes": "No bloom or HDR glow is visible on emissives in this renderer, which flattens the screens. Some of this is the renderer."
+  }
+]

@@ -1,0 +1,154 @@
+[
+ {"asset": "bollard", "score": 38, "pass": false,
+  "summary": "Correct size and the reflective bands read, but it is a plain extruded cylinder with a flat black albedo, no base detail and no wear.",
+  "critique": "Height (~1.0 m) and diameter (~120-140 mm) are in the 900-1000 / 100-140 mm range in the reference. The silhouette is a single cylinder with a rounded cap, which matches a recycled-plastic or sleeve bollard, but nothing else is modelled. There is no ground interface: no base flange, no root collar, no paving cut or bedding ring, so it looks pushed into the lawn. The albedo is uniform near-black with a soft plastic sheen and no variation. Real street bollards have scuffs at bumper height (300-600 mm), dust and splash at the base, dulled and chipped reflective tape with visible tape edges or overlaps, and often a cast-in manufacturer mark or a cap seam. The two white bands are pure flat white and don't look retroreflective (real tape is slightly grey with a faint prismatic or microbead pattern and a raised edge). The close detail view only shows a flat grey shaft. Nothing there rewards a close look.",
+  "suggestions": [
+   "Add ground interaction: a 6-8 mm proud bedding collar or square base plate (180x180x8 mm with 4 bolt heads) or a 20 mm ring of darker concrete or dirt at the root. About 40-80 tris.",
+   "Give the cap a real profile: a 10-15 mm step or seam ring where the cap meets the shaft, and a slightly domed top with a small cast-in logo disc. Under 60 tris extra.",
+   "Wear mask (shared 256-512 px tileable, using vertex-colour AO or a height gradient): dust and soil on the lowest 150 mm, scuffs and tyre rubs at 300-600 mm, lower roughness where hands touch the top. Albedo should be dark charcoal ~0.04-0.06 linear, not black.",
+   "Reflective bands: make them 0.55-0.65 albedo, add a 1-2 mm raised edge and one visible vertical overlap seam per band, and use a slightly lower roughness plus a faint grain normal. Dirty the lower band more.",
+   "Add variants for kit use: galvanised steel (bare zinc, 0.55 metallic grey with white-rust patches), black cast-iron heritage with a ribbed collar, and yellow-sleeved. Per-instance colour and wear seed."
+  ],
+  "renderer_notes": "The lawn is not the asset's fault. Without GI the shaft goes almost pure black on the shaded side, which flattens it further."},
+
+ {"asset": "dumper", "score": 32, "pass": false,
+  "summary": "Recognisable front-tip site dumper, but toy-like: no seat, no controls, no hydraulics or articulation, flat yellow everywhere, and the skip and chassis proportions are off.",
+  "critique": "The basic layout is right: skip at the front, engine at the rear, ROPS hoop, four lugged tyres. Everything else reads as a toy. (1) There is no operator station: no seat, steering wheel, footwell or dash. A single thin stick is the only control, so the vehicle looks unmanned and unscaled. (2) No articulation joint between the front and rear frames, which is the defining feature of a modern Thwaites/JCB dumper. The chassis is a plain black box. (3) No skip rams. The skip floats on the frame with no pivot or hydraulic cylinders, and it is a thin-walled tray without the rolled lip, side ribs or reinforced front tip edge of a real 6 t skip. (4) Proportions: the reference Thwaites 6 t is about 4475 L x 2240 W x ~3400 H to the ROPS top. This model looks much shorter and lower. The ROPS is a thin single-tube hoop when it should be a heavy 100 mm box-section frame, and the wheels look small relative to the skip (a real dumper runs 1.2-1.4 m diameter tyres). (5) Materials: one uniform cream-yellow with no paint variation, no mud, no worn steel on the skip lip or floor, no decals (makers mark, load rating, hazard chevrons, beacon). Wheel centres are flat yellow discs with no nuts. (6) There are dark smeared artefacts on the skip floor in the close view that look like a broken decal or z-fighting.",
+  "suggestions": [
+   "Add the operator station: a moulded seat (~0.5 x 0.5 m, black vinyl, 150-250 tris), a steering wheel on a column, a dash pod and a floor plate. This fixes the sense of scale more than anything else.",
+   "Model the articulation: split the chassis at the midpoint with a visible pin joint and steering rams. Raise the frame and use 1.2-1.3 m tyres with deep chevron tread (normal-mapped on a ~24-segment cylinder).",
+   "Rebuild the skip: a 4-5 mm plate look with a rolled 60 mm top lip, 3-4 external vertical ribs per side, a front lip strip, two tip rams under the front from the chassis to the skip, and a pivot tube. About 600-900 tris.",
+   "Replace the ROPS with a fold-down box-section frame (80-100 mm square) with a beacon on top and a 2-post fold hinge. Add mudguards over the rear wheels and front and rear lights and grilles.",
+   "Materials: break up the yellow (base ~0.55/0.40/0.05 linear, roughness 0.45-0.6) with an AO-driven dirt mask. Use a mud gradient on the lower 0.6 m and in the wheel arches, bare scratched steel inside the skip and on the lip, black grey frame, wheel rims with 8-10 nut bosses. Add decals: brand panel, SWL text, yellow/black chevrons on the rear, and a registration-style plate.",
+   "Fix or remove the black smear decals on the skip floor."
+  ],
+  "renderer_notes": "The flat sky ambient and missing GI make the inside of the skip uniformly bright cream. Some contact shadowing would help, but the asset still needs its own AO or dirt baked in."},
+
+ {"asset": "grass_tuft", "score": 54, "pass": false,
+  "summary": "The best of this batch: a believable tussock silhouette with seed heads and arching blades, but all one straw colour and too sparse at the base.",
+  "critique": "The silhouette works: fine arching blades, upright culms with feathery panicles, a roughly cone-shaped clump. It reads as a tufted hair-grass or cock's-foot tussock at gameplay distance. Problems: (1) Colour is a single pale straw tone over nearly all blades, which reads as fully dead. A real UK summer tussock is mostly green with a straw skirt of old dead blades at the base and some cured flower stems. Here it is the opposite, and it contrasts too strongly with the lawn. (2) The base is sparse and see-through. Real tussocks are dense and dark at the crown, with a thatch of dead leaves splaying onto the ground. Here the blades just stop at the lawn surface. (3) Blades are uniform in width and length. Real tussocks mix long outer blades that flop over with shorter stiff inner ones. (4) The seed heads are good but all at the same height and stage. (5) The dark green blades visible only in shadow (bottom-left view) look disconnected from the straw blades, as if they are different materials.",
+  "suggestions": [
+   "Colour gradient per blade: green (~0.10/0.18/0.04 linear) at the base going to a straw tip on only 20-30% of blades, plus 15% of fully dead blades in the outer skirt. Use vertex colour so no extra texture is needed.",
+   "Densify the crown: add a short (50-80 mm) dense ring of 30-50 blade cards or a cone-shaped 'thatch' mesh with alpha at the base, plus 6-10 dead blades lying flat on the ground radiating out. About 200-400 extra tris.",
+   "Vary blade length 0.3-1.0x and width 2-6 mm, make outer blades arch and droop over to touch the ground, and add a slight twist along each blade.",
+   "Stagger the seed heads: 3 heights, some green or purple-tinged fresh, some bleached. Add a few bent or broken culms.",
+   "Use transmission or a backlit term on the blades (if the renderer supports a cheap wrap or translucency) so they glow against the sun. Without it, foliage looks plastic."
+  ],
+  "renderer_notes": "Some of the clash comes from the very saturated and uniform lawn shader. Against a more varied rough-grass ground, the tuft would sit better."},
+
+ {"asset": "picnic_table", "score": 44, "pass": false,
+  "summary": "The A-frame picnic table construction and proportions are right, but it is untextured flat-brown boxes with no grain, fixings, weathering or edge softening.",
+  "critique": "The geometry follows a real 1.8 m pub/park picnic bench: A-frame splayed legs, bench bearers through the legs, a 5-plank top, 2-plank seats and diagonal braces. Heights look close to the reference (~740 top, ~440 seat). It looks CG because: (1) materials are one flat salmon or tan brown on every piece with no wood grain, end grain, knots or plank-to-plank tone variation. Real tanalised softwood has a grey-green tinge when new and goes silver-grey with dark water staining when old. (2) All edges are razor sharp. Real planed timber has a 3-5 mm arris round-over that catches a highlight. (3) No fixings: no coach bolts or carriage-bolt heads where bearers meet legs, and no screws in the planks. (4) The plank gaps are only dark lines and should be real 5-8 mm gaps you can see through. (5) Plank ends are perfectly aligned with no slight overhang variation, cupping or warp. (6) There is no ground interaction such as worn bare earth under the seats, which a placement decal could add.",
+  "suggestions": [
+   "Wood material: a 512-1024 px tileable grain albedo/normal/roughness set mapped along each board's length with a random UV offset per board. Use a separate end-grain tile on the cut faces. Albedo is about 0.25-0.35 linear brown for treated pine, with a weathered variant at 0.35-0.45 grey.",
+   "Chamfer every board edge 4 mm (one bevel segment, roughly doubles tris to ~1-1.5k total, still cheap) so the silhouette and highlights read as timber.",
+   "Make the plank gaps real (6 mm) and give each board a ±1-2 mm height or rotation jitter and ±10 mm end offset.",
+   "Add carriage bolts: domed heads on the seat side and nut plus washer on the inside at each leg/bearer joint (8-12 of them, ~20 tris each), and dark weeping rust streaks under each one in the albedo.",
+   "Weathering mask: darker water staining at the board ends and the bottoms of the legs, lichen or green algae on the upper faces in a damp variant, and a worn lighter patch at the seat centres. Add a separate optional worn-earth ground decal under the benches."
+  ]},
+
+ {"asset": "seat.bucket_fixed.std", "score": 33, "pass": false,
+  "summary": "A pedestal stool with a single-surface shell rather than a stadium seat: no thickness, glossy pink plastic, and the mounting plate sits on top of the seat pan.",
+  "critique": "(1) Construction is wrong for a UK stadium fixed bucket seat. Those bolt to the riser face or the tread via a short steel bracket or a low pedestal at ~400-450 mm, with a moulded seat back up to ~850-900 mm. Here a long pole and floor plate make it look like a bar stool, and the seat looks too high relative to its own pole. (2) The grey mounting plate sits on top of the seat pan, visible in the close view and side view, where a fixing bracket would be under the shell. This looks like a bug. (3) The shell is a zero-thickness surface. The edge has no rolled lip and no thickness (real shells are 4-6 mm wall with a 15-25 mm rolled or flanged rim), so the side view reads as paper. (4) No moulding detail: no drainage holes in the pan (always there on outdoor seats), no seat number plate or recess, no ribbing on the back, no raised lumbar contour or textured anti-slip pan. (5) Material: saturated pinkish red with very low roughness. Real polypropylene seats are a deeper red (~0.35/0.03/0.03 linear), roughness 0.5-0.6, and UV-faded and grimy outdoors. The rear of the shell shows a much darker red, suggesting inconsistent normals or a backface material mismatch.",
+  "suggestions": [
+   "Fix the bracket: move the plate underneath the pan, or drop the pedestal and model the real riser-mount bracket (a folded steel L-bracket, 2 bolts to the riser face, ~60 tris). Set seat-pan height to 430-450 mm above the tread and back top to ~800-850 mm.",
+   "Give the shell thickness: extrude 5 mm and add a 20 mm rolled rim around the perimeter. About 300-500 tris per seat is affordable at stadium scale with LODs (LOD1 ~80 tris, LOD2 an impostor card for the whole row).",
+   "Add moulding detail via normal map: 2-3 drainage holes in the pan (real geometry at LOD0), a small recessed seat-number plaque on the back top, vertical ribs on the back's rear face, and a fine stipple texture.",
+   "Material: deeper red, roughness ~0.55, per-instance random fade toward a pinker, chalkier red (UV fade) and dirt in the pan crease. Fix the darker backface shading so both sides use the same albedo.",
+   "Offer colour and team-crest variants via per-instance tint, since rows of seats are where the kit will be judged most."
+  ]},
+
+ {"asset": "stadium_classic:seating_stands", "score": 55, "pass": false,
+  "summary": "Convincing at a distance: tiered blue seating with aisles, vomitories, a standing terrace with barriers, and a pillar-supported main stand. Up close it is repetitive and clean, with no colour variation or people.",
+  "critique": "Strong points: correct rake, aisles with steps, vomitories cut into the lower tier, a seated stand next to a terrace with crush barriers, and pattern breaks in the seat colours. Weaknesses: every seat is identical and uniformly saturated blue, so large blocks look like a texture rather than thousands of objects. There is no UV fading, mixed replacement seats, lettering or club crest in the seats (one hint is visible but faint), dirt or water staining on the concrete treads, or handrails at the vomitory edges. The riser faces and stairs are flat light grey with no concrete texture. The terrace barriers look thin and evenly spaced. Seat rows look slightly too tall relative to their spacing in places.",
+  "suggestions": [
+   "Per-instance seat tint jitter (±5% value, slight hue shift) plus 1-2% odd-coloured or faded replacement seats, and a crest or club-name pattern in contrasting seats.",
+   "Concrete material for treads and risers: a tileable 512 px stain texture, darker wet streaks below each riser lip, chewing-gum and dirt specks, and yellow nosing paint on stair steps.",
+   "Add tubular handrails along vomitory openings and aisle edges (cheap instanced tubes), and make the terrace crush barriers proper 60 mm tube with posts every ~3 m in a staggered pattern.",
+   "Optional instanced crowd impostors for match-day presets. Empty stands are fine, but this is where scenes will be judged."
+  ]},
+
+ {"asset": "stadium_classic:roof", "score": 50, "pass": false,
+  "summary": "Cantilever trusses on the end stands and a column-supported main stand roof read correctly, but the sheeting is plain and the underside looks like flat grey paint.",
+  "critique": "The end-stand roof has visible lattice cantilever trusses, purlins and a light fascia, which is a good classic-ground look. The main stand roof has front columns and a hung gantry, also period-correct. The underside is a flat dark grey plane with thin white lines and no profiled-sheet corrugation, purlins, rafters, lighting or PA. The roof edge or fascia is a thin flat band with no gutter, downpipes or sponsor fascia. The roof on the end stands is pale grey and evenly lit with no weathering or rust streaks.",
+  "suggestions": [
+   "Profiled steel sheeting: a corrugation normal map (trapezoidal, ~200 mm pitch) on the underside and top, with visible purlins every ~1.5 m as real geometry (cheap boxes).",
+   "Fascia: a deeper (0.6-1 m) fascia board with a gutter lip and downpipes at each column, club name or sponsor text option, and staining under the gutter.",
+   "Add underside clutter: strip lights, PA horns, CCTV domes and cable trays along purlins. A few hundred tris total adds a lot of life.",
+   "Weathering: rust bleeding at bolt lines and a darker dirt gradient toward the back wall."
+  ]},
+
+ {"asset": "stadium_classic:exterior_facade", "score": 32, "pass": false,
+  "summary": "Barely visible in these views. What shows is flat brick-red and dark walls with no openings, signage or structure.",
+  "critique": "The detail sheet hardly shows the outside of the ground. The only facade is a flat red-brown wall behind the main stand (bottom-left) and dark masses in the night view. There are no turnstile blocks, gates, windows, signage, steel cladding, stair cores or ground-level detail. A classic UK ground's exterior is a mix of brick, corrugated cladding, turnstiles with a painted ticket-window sign, and exposed stand backs with raking steel. None of that is present here. Scored low partly for lack of evidence.",
+  "suggestions": [
+   "Turnstile block modules (brick with painted numbered doors, a blue 'TURNSTILES' sign and a grilled kiosk window) placed every 15-25 m.",
+   "Rear of stands: expose the raking steel frame with cladding panels (profiled sheet normal map) and stair or ramp cores at the ends.",
+   "Brick material with a 1-2 px mortar normal, a soot gradient and posters or signage decals at the entrance level.",
+   "Render an exterior-specific view in the review sheet so this part can be judged fairly."
+  ],
+  "renderer_notes": "Most of this score reflects the lack of exterior views in the sheet, not necessarily missing work."},
+
+ {"asset": "stadium_classic:floodlights", "score": 55, "pass": false,
+  "summary": "A classic four-corner lattice pylon with a lamp head is the right archetype and reads well against the sky, but the head is a simple flat grid and the lattice lacks member depth.",
+  "critique": "The tapering lattice tower with a rectangular lamp frame on top is right for a classic British ground. The lamp array is a uniform grid of identical discs with no visible frame, walkway, ladder or cable. The lattice looks like thin lines with no angle-section profile and no splayed base on a concrete plinth. In the night view the pitch lighting is reasonable, but the lamp heads themselves don't glow or bloom.",
+  "suggestions": [
+   "Lamp head: a back frame with a maintenance walkway and handrail, lamps in staggered rows with individual aiming angles (rotate each ±5-10°), and housings with visors.",
+   "Lattice: use angle-section members (L profile, 2-3 faces per member). Add a caged ladder up one leg, cable runs and a concrete plinth with base plates at the foot.",
+   "Night: emissive lamp faces with a bloom-friendly intensity, so the pylons read as light sources in night presets.",
+   "Grey galvanised material with a mottled zinc pattern and rust at bolted joints."
+  ]},
+
+ {"asset": "stadium_classic:pitch_goals_nets", "score": 55, "pass": false,
+  "summary": "Pitch reads well: mowing stripes, crisp lines, a halfway line and arcs. Goals are barely visible here, and the night-view wear patches look like random blotches.",
+  "critique": "The surface has good mowing stripes and line markings. The touchline looks a little thick in close view. The grass is very uniform up close (bottom-left), with no per-blade sheen variation or line-paint bleed. In the night view, brown wear patches appear scattered across the middle of the pitch rather than concentrated in goalmouths, along the linesman's run and at the centre spot. Goals are only visible as a small frame in the night shot, so nets can't be judged here.",
+  "suggestions": [
+   "Place wear masks where wear really happens: goalmouth (6-yard box), centre circle, the strips where linesmen run (1-2 m inside each touchline on opposite halves) and the warm-up areas in front of the dugouts.",
+   "Line paint: slightly translucent white (0.75-0.8 albedo) with edges softened by a grass-blade breakup mask. Lines are 120 mm wide.",
+   "Add a detail normal or micro-variation for grass blades at near distances, and darker damp tones near the stands where the pitch gets less sun.",
+   "Include a goal close-up in the stadium detail sheet."
+  ]},
+
+ {"asset": "stadium_classic:dugouts_tunnel", "score": 36, "pass": false,
+  "summary": "Dugouts are plain brick-red boxes with a bench of seats inside, and the tunnel is a flat black block.",
+  "critique": "The dugouts are open-front rectangular boxes in a single flat red-brown, with no roof edge, perspex front or sides, seat detail, steps down or club branding. Classic grounds often have sunken brick dugouts with a pitched or flat roof and a perspex canopy. The tunnel is a black rectangle with no telescopic tunnel, no surround, signage or doors, and it reads as a hole.",
+  "suggestions": [
+   "Build the dugout from parts: a brick or block side material with a mortar normal, a flat roof with a 50 mm fascia and drip edge, polycarbonate side windows, a 300-400 mm sunken floor with a front step, and 2 rows of padded or bucket seats.",
+   "Tunnel: a framed opening with a painted surround, an extendable PVC tunnel option (a ribbed tube, white or club colour), signage over the top ('HOME' and 'AWAY' or the club crest) and lit interior walls.",
+   "Add a technical area marking (a dashed white box 1 m from each side and 1 m in front), which is already partly visible."
+  ]},
+
+ {"asset": "stadium_classic:advertising_boards_screens", "score": 56, "pass": false,
+  "summary": "Perimeter boards have clean, readable fictional brands and the scoreboard shows a live score, but boards are flat colour cards with no structure, and the screen frame is plain.",
+  "critique": "Board graphics are credible: varied brand colours, taglines and logos. Boards have some depth but the faces are perfectly flat and uniformly lit, with no frame, rubber top padding, legs, sagging seams or LED pixel structure. Board spacing is fine. The scoreboard on two legs with a team strip, score, clock and a sponsor line reads as a real lower-league screen, but the housing is a plain black box with no service door, vents, mounting structure detail or pixel grid.",
+  "suggestions": [
+   "Static boards: an aluminium frame edge (25-40 mm), a top foam pad strip, A-frame legs behind, and joints between panels with slight misalignment. Under 100 tris per board.",
+   "LED boards: a subtle pixel-grid normal or emissive mask (8-10 mm pitch), viewing-angle falloff and emissive animation.",
+   "Scoreboard: a visible pixel grid at close range, vent louvres and a service hatch on the housing, a steel support frame with cross-bracing, and a maintenance ladder.",
+   "Mild dirt on board bottoms where grass and rain splash."
+  ]},
+
+ {"asset": "team_shelter", "score": 47, "pass": false,
+  "summary": "The aluminium-hoop, clear-polycarbonate shelter is the right archetype and reads well, but the seats are flat plates, there's no base or back structure, and the canopy has no edging.",
+  "critique": "The curved aluminium bows with a clear polycarbonate skin match the common Harrod/Mitre style 6 m shelter, and length and height look plausible (~6 m x ~2.4 m). Weaknesses: (1) Seats are flat rectangular red plates (pan and back) on a box beam. Real shelters use moulded bucket seats or padded 'Recaro-style' seats on a twin-tube rail. (2) There is no base frame or ground rail. The hoops go straight into grass and the seat beam sits on small posts. Real units have a box-section base frame or ground anchors and often a back kick-plate panel along the bottom. (3) The polycarbonate has no edge, frame channel or end caps and no visible thickness. Real panels have an aluminium H-channel at each joint and a U-channel along edges, and show scratches and dust streaks. (4) The bow profiles are perfect round tubes with no oval section, fixings or feet. (5) No branding, no club-colour panel and no rear perspex reflections.",
+  "suggestions": [
+   "Replace seat plates with moulded bucket seats (reuse the stadium seat mesh at ~300 tris) or padded seats with a stitched headrest. Mount them on a twin 50 mm tube rail with brackets.",
+   "Add a base: a rectangular 80x40 mm box-section ground frame joining the hoop feet, with bolt-down plates or ground-spike sleeves.",
+   "Frame the polycarbonate: U-channel edge trims on the front and bottom edges, H-joints at each bow, end caps on tube ends, and a 6-10 mm thickness on the panel edges so it catches light.",
+   "Polycarbonate material: a slight blue-grey tint, roughness 0.05-0.1 with a dust or scratch roughness map, and an optional opaque lower kick panel (club colour) on the back and ends at 0.6-0.8 m high.",
+   "Optional sponsor or club-name vinyl across the top of the back panel."
+  ],
+  "renderer_notes": "Transparency without screen-space reflection makes the canopy almost invisible, and the shadows of the hoops and roof dominate. That's partly a renderer limit."},
+
+ {"asset": "weeds", "score": 28, "pass": false,
+  "summary": "Low-poly cartoon foliage: oversized broad leaves like a lettuce, and a nettle-like stalk of identical serrated cards. Flat albedo, no veins, no believable growth form.",
+  "critique": "This reads as stylised or low-poly, not photoreal. (1) The broad-leaf clump has a few huge flat opaque leaf planes (~200-300 mm) standing upright in a cup shape, which doesn't match any UK weed. Dock leaves splay outwards near the ground and are long and lanceolate with a red midrib. Plantain forms a flat rosette. (2) The nettle stalk is a rigid ladder of identical leaf cards with no stem taper, no droop and leaves that don't come in opposite pairs at nodes, so it reads like a fern prop. (3) Leaves are flat single quads or a few polygons with saturated uniform green, no vein normal, no translucency and no alpha texture, so the serrations are geometric zig-zags. (4) The yellow 'flowers' are single small dots on tall stems, with no dandelion head structure or rosette at ground level. (5) The scale and arrangement look random rather than like one plant growing.",
+  "suggestions": [
+   "Split into named weed species assets: dandelion (flat rosette of 8-12 deeply toothed leaves 100-250 mm, hollow stems with a yellow composite head or a seed clock), broadleaf dock (rosette of 6-10 lanceolate leaves 200-400 mm angled 20-45° from the ground, reddish midrib, rust-brown seed spike), nettle (square stem 0.4-1 m with opposite pairs of heart-shaped serrated leaves decreasing in size up the stem, drooping tips) and ribwort plantain.",
+   "Use alpha-tested leaf textures (one 1024 px atlas for all weeds) with vein normal maps and albedo variation (yellowing and holes on older lower leaves) instead of geometric serrations. Each leaf is a 4-8 tri bent card. Target 300-800 tris per plant.",
+   "Bend every leaf: a midrib fold (V cross-section) plus a curve along its length, so silhouettes aren't flat planes.",
+   "Albedo around 0.06-0.12 linear green with yellow-brown edges on lower leaves. Add cheap wrap or translucency lighting.",
+   "Ground the plant: a small dark soil disc or dead-leaf litter under the rosette."
+  ],
+  "renderer_notes": "The very bright, saturated lawn makes any foliage asset blend in. Judge weeds against bare soil or gravel too."}
+]

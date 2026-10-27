@@ -1,0 +1,22 @@
+{"schema": "site-layout/1", "name": "Category 1 academy", "template": "academy_campus", "style": "ultra_modern", "seed": 89,
+ "club": {"name": "UNITED", "primary": "#1d4f91", "secondary": "#ffffff"},
+ "boundary": {"type": "hedge"}, "gate": {"tier": 3},
+ "plots": {
+  "Y1": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "5v5", "lines": "fa_colours"}},
+  "Y2": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "7v7", "lines": "fa_colours"}},
+  "Y3": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "9v9", "lines": "fa_colours"}},
+  "Y4": {"state": "built", "facility": "youth_pitches", "tier": 3, "options": {"format": "11v11_u13"}},
+  "Y5": {"state": "built", "facility": "pitch", "tier": 3, "options": {"floodlights": true, "shelters": true, "ball_stop": true, "equipment": true}},
+  "Y6": {"state": "built", "facility": "artificial_pitch", "tier": 2, "options": {"floodlights": true, "equipment": true}},
+  "Y7": {"state": "built", "facility": "showpiece_pitch", "tier": 3},
+  "Y8": {"state": "built", "facility": "indoor_hall", "tier": 3},
+  "Y9": {"state": "built", "facility": "pitch", "tier": 4, "options": {"floodlights": true, "shelters": true, "ball_stop": true}},
+  "A1+A2": {"state": "built", "facility": "academy_building", "tier": 4, "options": {"modules": ["classrooms", "sports_science", "parents_lounge", "boarding", "media"]}},
+  "A3": {"state": "built", "facility": "cages", "tier": 2},
+  "C1": {"state": "built", "facility": "drop_off", "tier": 3},
+  "C2": {"state": "built", "facility": "car_park", "tier": 3, "options": {"fill": 0.75}},
+  "C3": {"state": "built", "facility": "car_park", "tier": 2, "options": {"fill": 0.5}},
+  "M1": {"state": "built", "facility": "recovery", "tier": 3},
+  "M2": {"state": "built", "facility": "goalkeeper_area", "tier": 2},
+  "M3": {"state": "built", "facility": "maintenance", "tier": 3}
+ }}

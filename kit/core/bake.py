@@ -25,9 +25,12 @@ def _scene():
     return sc
 
 
-def _plane(name, size, z=2.0, origin=(0.0, 0.0)):
+def _plane(name, size, z=2.0, origin=(0.0, 0.0), vertical=False):
     x0, y0 = origin
     V = [(x0, y0, z), (x0 + size[0], y0, z), (x0 + size[0], y0 + size[1], z), (x0, y0 + size[1], z)]
+    if vertical:
+        # a wall facing -y (u along it, v up it): weathering sees a wall, not a floor
+        V = [(x0, -z, y0 + z), (x0 + size[0], -z, y0 + z), (x0 + size[0], -z, y0 + z + size[1]), (x0, -z, y0 + z + size[1])]
     o = mesh_object(name, V, [(0, 1, 2, 3)], col=_scene().collection, uvs=[(0, 0), (1, 0), (1, 1), (0, 1)])
     return o
 
@@ -68,12 +71,19 @@ def _bake(obj, mat, kind, px, colorspace):
             sc.render.bake.use_pass_direct = False
             sc.render.bake.use_pass_indirect = False
             sc.render.bake.use_pass_color = True
-            bpy.ops.object.bake(type="DIFFUSE")
+            # the diffuse colour pass of a metal is black: bake its base colour as a dielectric
+            metals = [(p, p.inputs["Metallic"].default_value) for p in nt.nodes
+                      if p.bl_idname == "ShaderNodeBsdfPrincipled" and not p.inputs["Metallic"].is_linked]
+            for p, _ in metals:
+                p.inputs["Metallic"].default_value = 0.0
+            bpy.ops.object.bake(type="DIFFUSE", target="IMAGE_TEXTURES")
+            for p, v in metals:
+                p.inputs["Metallic"].default_value = v
         elif kind == "roughness":
-            bpy.ops.object.bake(type="ROUGHNESS")
+            bpy.ops.object.bake(type="ROUGHNESS", target="IMAGE_TEXTURES")
         elif kind == "normal":
             sc.render.bake.normal_space = "TANGENT"
-            bpy.ops.object.bake(type="NORMAL")
+            bpy.ops.object.bake(type="NORMAL", target="IMAGE_TEXTURES")
     arr = np.array(img.pixels[:], dtype=np.float32).reshape(px[1], px[0], 4)
     nt.nodes.remove(node)
     bpy.data.images.remove(img)
@@ -81,16 +91,18 @@ def _bake(obj, mat, kind, px, colorspace):
 
 
 def seamless(arr, feather=0.22):
-    """Make an image tile by cross-fading with a half-offset copy near its edges."""
+    """Make an image tile: cross-fade near the left and right edges with a copy offset half a tile
+    across, then near the top and bottom with a copy offset half a tile down. (Both at once would
+    let the offset copy's own centre lines show through near the edges as straight seams.)"""
     h, w = arr.shape[:2]
-    rolled = np.roll(np.roll(arr, h // 2, 0), w // 2, 1)
-    yy = np.minimum(np.arange(h), np.arange(h)[::-1]) / (h * feather)
-    xx = np.minimum(np.arange(w), np.arange(w)[::-1]) / (w * feather)
-    wy = np.clip(yy, 0, 1)[:, None]
-    wx = np.clip(xx, 0, 1)[None, :]
-    wgt = (wy * wx)[..., None]
-    wgt = wgt * wgt * (3 - 2 * wgt)
-    return arr * wgt + rolled * (1 - wgt)
+
+    def ramp(n):
+        t = np.clip(np.minimum(np.arange(n), np.arange(n)[::-1]) / (n * feather), 0, 1)
+        return t * t * (3 - 2 * t)
+    wx = ramp(w)[None, :, None]
+    a = arr * wx + np.roll(arr, w // 2, 1) * (1 - wx)
+    wy = ramp(h)[:, None, None]
+    return a * wy + np.roll(a, h // 2, 0) * (1 - wy)
 
 
 def _save(arr, path, srgb):
@@ -111,10 +123,11 @@ def _save(arr, path, srgb):
     return path
 
 
-def bake_tileable(mat, size_m=4.0, px=1024, exact=False, z=2.0, origin=(0.0, 0.0)):
-    """Albedo / roughness / normal tileable set for `mat` covering size_m x size_m metres."""
+def bake_tileable(mat, size_m=4.0, px=1024, exact=False, z=2.0, origin=(0.0, 0.0), vertical=False):
+    """Albedo / roughness / normal tileable set for `mat` covering size_m x size_m metres
+    (`vertical`: baked on a wall, for wall finishes whose weathering depends on facing)."""
     _setup()
-    plane = _plane("BakePlane", (size_m, size_m), z, origin)
+    plane = _plane("BakePlane", (size_m, size_m), z, origin, vertical)
     out = {}
     for kind, space in (("albedo", "linear"), ("roughness", "data"), ("normal", "data")):
         arr = _bake(plane, mat, kind, (px, px), space)

@@ -18,6 +18,9 @@ pub struct Library {
     pub scene: glb::Scene,
     pub materials: HashMap<String, usize>,
     pub props: HashMap<String, Prop>,
+    /// generated props (genprop.<id>, catalog/generated_props.json) -> the code prop drawn while
+    /// one is not finished
+    pub fallbacks: HashMap<String, String>,
     boards: std::sync::Mutex<HashMap<String, Arc<Image>>>,
     atlases: std::sync::Mutex<HashMap<Vec<String>, Arc<Image>>>,
 }
@@ -30,7 +33,8 @@ fn load_png(path: &Path) -> Result<Image, String> {
 impl Library {
     /// `root`: the repository (holds out/library, out/ads and catalog/).
     pub fn load(root: &Path) -> Result<Library, String> {
-        let path = root.join("out/library/library.game.glb");
+        // STADIUM_LIBRARY: another library file (a partial one exported for reviewing props)
+        let path = std::env::var("STADIUM_LIBRARY").map(PathBuf::from).unwrap_or_else(|_| root.join("out/library/library.game.glb"));
         let scene = glb::load(&path).map_err(|e| format!("{e} (run: blender -b --factory-startup -P tools/export_library.py)"))?;
         let materials = scene.materials.iter().enumerate().map(|(i, m)| (m.name.clone(), i)).collect();
         let mut props: HashMap<String, Prop> = HashMap::new();
@@ -44,14 +48,32 @@ impl Library {
             };
             props.entry(key).or_insert_with(|| Prop { parts: Vec::new() }).parts.push((*mesh, *world));
         }
+        let fallbacks = std::fs::read_to_string(root.join("catalog/generated_props.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+            .and_then(|v| v.get("props").and_then(|p| p.as_array()).cloned())
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|p| Some((format!("genprop.{}", p.get("id")?.as_str()?), p.get("fallback")?.as_str()?.to_string())))
+            .collect();
         Ok(Library {
             root: root.to_path_buf(),
             scene,
             materials,
             props,
+            fallbacks,
             boards: Default::default(),
             atlases: Default::default(),
         })
+    }
+
+    /// The library key a placement of `key` draws: the prop itself, or for a generated prop that
+    /// is not finished yet its fallback (a code prop); None if neither is in the library.
+    pub fn resolve<'a>(&'a self, key: &'a str) -> Option<&'a str> {
+        if self.props.contains_key(key) {
+            return Some(key);
+        }
+        self.fallbacks.get(key).map(|s| s.as_str()).filter(|k| self.props.contains_key(*k))
     }
 
     pub fn material(&self, name: &str) -> Option<&Material> {

@@ -40,6 +40,8 @@ pub const ROOF_LIGHTS_MIN_HEIGHT: f64 = 10.0;
 pub const CAMERA_MIN_HEIGHT: f64 = 12.0;
 /// Highest front girder a goalpost roof is built with; taller stands get a cantilever.
 pub const GOALPOST_MAX_HEIGHT: f64 = 25.0;
+/// Grounds this big get a paved plaza round them by default.
+pub const PLAZA_MIN_CAPACITY: f64 = 5000.0;
 
 /// A texture the renderer composes at runtime.
 #[derive(Clone, Debug, PartialEq)]
@@ -50,6 +52,8 @@ pub enum Tex {
     Scoreboard,
     /// goal net card: cord pattern regenerated at runtime
     Net(NetSpec),
+    /// procedural grass: the turf and the pitch frame it is laid out in
+    Grass(pitch::GrassSpec),
 }
 
 /// Net options for the game's net card (the hero net's cords are a Blender render asset).
@@ -65,6 +69,9 @@ pub struct NetSpec {
     pub band_cells: u32,
     /// sRGB 0-255
     pub colors: Vec<[u8; 3]>,
+    /// the mesh's UVs are in metres (generated fences and netting) rather than the library goal
+    /// card's units of one 120 mm hex repeat
+    pub metric: bool,
 }
 
 /// Material reference: a library material by name, optionally recoloured / emissive / textured.
@@ -203,6 +210,8 @@ struct StandsOut {
     runs: Vec<(Run, Vec<Tier>)>,
     roofs: Vec<(String, roofs::RoofOut)>,
     facade_lines: Vec<(String, f64)>,
+    /// facade height per run
+    facade_heights: Vec<(String, f64)>,
     camera_mount: Option<DVec3>,
     /// Some(radius) for a curved bowl
     corner_r: Option<f64>,
@@ -354,10 +363,20 @@ pub fn build_with_images(layout: &Value, cat: &Catalog, images: &ImageLoader) ->
 
 // -- pitch, goals, corner flags -------------------------------------------------------------------
 
+/// The pitch's procedural grass (centred on the origin).
+pub fn grass_mat(p: &Pitch) -> Mat {
+    Mat { key: "Pitch_Grass".into(), color: None, emission: None, texture: Some(Tex::Grass(p.grass_spec(DVec2::ZERO, 0.0))) }
+}
+
+/// Line paint on that grass (the paint lets the grass show through).
+pub fn paint_mat(p: &Pitch) -> Mat {
+    Mat { key: "TINT_Pitch_Paint".into(), color: Some(patterns::hex_rgb(&p.line_color)), emission: None, texture: Some(Tex::Grass(p.grass_spec(DVec2::ZERO, 0.0))) }
+}
+
 fn build_pitch(st: &mut Stadium) {
     let p = &st.pitch;
-    st.parts.push(Part { name: "PitchSurface".into(), mesh: pitch::surface_mesh(p), mats: vec![Mat::named("Pitch_Grass")], smooth_deg: 30.0 });
-    st.parts.push(Part { name: "PitchLines".into(), mesh: pitch::markings_mesh(p), mats: vec![Mat::tint("TINT_Pitch_Paint", &p.line_color)], smooth_deg: 30.0 });
+    st.parts.push(Part { name: "PitchSurface".into(), mesh: pitch::surface_mesh(p), mats: vec![grass_mat(p)], smooth_deg: 30.0 });
+    st.parts.push(Part { name: "PitchLines".into(), mesh: pitch::markings_mesh(p), mats: vec![paint_mat(p)], smooth_deg: 30.0 });
     for (kind, id, pos, yaw) in pitch::sockets(p) {
         st.sockets.push(Socket { kind, id: id.into(), loc: pos, n: DVec2::new(yaw.to_radians().cos(), yaw.to_radians().sin()), props: vec![("yaw_deg", yaw)] });
     }
@@ -365,6 +384,17 @@ fn build_pitch(st: &mut Stadium) {
 
 fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Result<(), String> {
     let goals = layout.get("goals").cloned().unwrap_or(json!({"style": "classic"}));
+    let flags = layout.get("corner_flags").cloned().unwrap_or(json!({"preset": "pro_spring"}));
+    let sets = goals_and_flags(&st.pitch, &goals, &flags, cat)?;
+    st.props.extend(sets);
+    Ok(())
+}
+
+/// Goal and corner-flag props on a pitch's sockets (pitch-local coordinates). `goals` / `flags`
+/// are the layout sections (null = none).
+pub fn goals_and_flags(pitch: &Pitch, goals: &Value, flags: &Value, cat: &Catalog) -> Result<Vec<PropSet>, String> {
+    let mut props = Vec::new();
+    let goals = goals.clone();
     if !goals.is_null() {
         let style = text(&goals, "style", "classic").to_string();
         if !cat.goals.contains_key(&style) {
@@ -380,18 +410,21 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
             let v = patterns::hex_rgb(c) * 255.0;
             [v.x.round() as u8, v.y.round() as u8, v.z.round() as u8]
         };
+        // net mesh: the layout's, else the style's (youth goals carry a square 100 mm mesh)
+        let preset = &cat.goals[&style];
         let net = NetSpec {
-            mesh: text(&goals, "mesh", "hex").to_string(),
-            mesh_size_mm: (num(&goals, "mesh_size", 0.12) * 1000.0).round() as u32,
-            cord_tenths_mm: (num(&goals, "cord_mm", 4.0) * 10.0).round() as u32,
+            mesh: text(&goals, "mesh", text(preset, "mesh", "hex")).to_string(),
+            mesh_size_mm: (num(&goals, "mesh_size", num(preset, "mesh_size", 0.12)) * 1000.0).round() as u32,
+            cord_tenths_mm: (num(&goals, "cord_mm", num(preset, "cord_mm", 4.0)) * 10.0).round() as u32,
             pattern: text(&goals, "net_pattern", "solid").to_string(),
             band_cells: num(&goals, "band_cells", 3.0).max(1.0) as u32,
             colors: nets.iter().map(|c| to8(c)).collect(),
+            metric: false,
         };
-        let items = pitch::sockets(&st.pitch).into_iter().filter(|s| s.0 == "goal").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
-        st.props.push(PropSet { key: format!("goal.{style}"), items, tints, net: Some(net) });
+        let items = pitch::sockets(pitch).into_iter().filter(|s| s.0 == "goal").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
+        props.push(PropSet { key: format!("goal.{style}"), items, tints, net: Some(net) });
     }
-    let flags = layout.get("corner_flags").cloned().unwrap_or(json!({"preset": "pro_spring"}));
+    let flags = flags.clone();
     if !flags.is_null() {
         let preset = text(&flags, "preset", "pro_spring").to_string();
         let spec = cat.corner_flags.get(&preset).ok_or_else(|| format!("unknown corner flag preset {preset:?}"))?;
@@ -401,10 +434,10 @@ fn build_goals_and_flags(st: &mut Stadium, layout: &Value, cat: &Catalog) -> Res
         for (slot, c) in ["TINT_pole_a", "TINT_pole_b"].iter().zip(poles.iter().filter_map(|c| c.as_str())) {
             tints.push((slot.to_string(), patterns::hex_rgb(c)));
         }
-        let items = pitch::sockets(&st.pitch).into_iter().filter(|s| s.0 == "corner_flag").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
-        st.props.push(PropSet { key: format!("corner_flag.{preset}"), items, tints, net: None });
+        let items = pitch::sockets(pitch).into_iter().filter(|s| s.0 == "corner_flag").map(|s| Placement::at(s.2, s.3.to_radians())).collect();
+        props.push(PropSet { key: format!("corner_flag.{preset}"), items, tints, net: None });
     }
-    Ok(())
+    Ok(props)
 }
 
 // -- stands -------------------------------------------------------------------------------------
@@ -427,6 +460,8 @@ enum Gantry {
     Hung(f64),
     /// a scaffold platform standing on the treads at this height
     Standing(f64),
+    /// a camera hut on a clad base standing on a low roof's leading edge (its top at this height)
+    OnRoof(f64),
 }
 
 /// Where the main camera goes when the tier front is too low: (depth, eye height, structure).
@@ -441,7 +476,7 @@ fn high_camera(tiers: &[Tier], roof_edge: Option<(f64, f64, f64, f64)>) -> (f64,
             return (s, z, Gantry::Hung(z_edge));
         }
         // a low roof: a gantry standing on its leading edge
-        return (s_front + 0.6, (edge_top + 1.6).max(CAMERA_MIN_HEIGHT), Gantry::Standing(edge_top));
+        return (s_front + 0.6, (edge_top + 1.6).max(CAMERA_MIN_HEIGHT), Gantry::OnRoof(edge_top));
     }
     // a platform over the back rows, reaching the minimum height
     let top = tiers.last().unwrap();
@@ -467,11 +502,11 @@ fn gantry_part(run: &Run, t: f64, s_cam: f64, z: f64, g: Gantry) -> Part {
         lines.push((vec![at(a, b, deck), at(a, b, deck + 1.1)], 0.025));
         match g {
             Gantry::Hung(top) => lines.push((vec![at(a, b, deck), at(a, b, top)], 0.04)),
-            Gantry::Standing(floor) if deck - floor > 0.3 => lines.push((vec![at(a, b, floor), at(a, b, deck)], 0.05)),
+            Gantry::Standing(floor) | Gantry::OnRoof(floor) if deck - floor > 0.3 => lines.push((vec![at(a, b, floor), at(a, b, deck)], 0.05)),
             _ => {}
         }
     }
-    if let Gantry::Standing(floor) = g {
+    if let Gantry::Standing(floor) | Gantry::OnRoof(floor) = g {
         // cross bracing every 2 m on the legs
         let mut zz = floor;
         while zz + 2.0 < deck {
@@ -486,7 +521,27 @@ fn gantry_part(run: &Run, t: f64, s_cam: f64, z: f64, g: Gantry) -> Part {
     let mut mesh = tube_lines(&lines, 8);
     let sec = Section::uniform(vec![DVec2::new(s - 1.2, deck - 0.12), DVec2::new(s + 1.2, deck - 0.12), DVec2::new(s + 1.2, deck), DVec2::new(s - 1.2, deck)], 0);
     mesh.add_prism(run, t - 1.5, t + 1.5, &sec, 0);
-    Part { name: "CameraGantry".into(), mesh, mats: vec![Mat::named("Galvanised")], smooth_deg: 60.0 }
+    if let Gantry::OnRoof(floor) = g {
+        // a hut with an open front for the camera on a braced steel frame, and a ladder
+        let m = run.metric(s);
+        let rect = |s0: f64, s1: f64, z0: f64, z1: f64| Section::uniform(vec![DVec2::new(s0, z0), DVec2::new(s1, z0), DVec2::new(s1, z1), DVec2::new(s0, z1)], 1);
+        mesh.add_prism(run, t - 1.5, t + 1.5, &rect(s + 1.1, s + 1.2, deck, deck + 2.3), 1);
+        for (ta, tb) in [(t - 1.5, t - 1.5 + 0.1 / m), (t + 1.5 - 0.1 / m, t + 1.5)] {
+            mesh.add_prism(run, ta, tb, &rect(s - 1.2, s + 1.2, deck, deck + 2.3), 1);
+        }
+        mesh.add_prism(run, t - 1.6, t + 1.6, &rect(s - 1.45, s + 1.3, deck + 2.3, deck + 2.45), 1);
+        let mut ladder: Vec<Polyline> = Vec::new();
+        for dt in [-0.22, 0.22] {
+            ladder.push((vec![run.world(t + dt / m, s + 1.45, floor), run.world(t + dt / m, s + 1.45, deck + 1.0)], 0.025));
+        }
+        let mut z = floor + 0.3;
+        while z < deck {
+            ladder.push((vec![run.world(t - 0.22 / m, s + 1.45, z), run.world(t + 0.22 / m, s + 1.45, z)], 0.012));
+            z += 0.3;
+        }
+        mesh.append(&tube_lines(&ladder, 6), 0);
+    }
+    Part { name: "CameraGantry".into(), mesh, mats: vec![Mat::named("Galvanised"), Mat::tint("Screen_Body", "#6b6f75")], smooth_deg: 60.0 }
 }
 
 struct Side {
@@ -514,7 +569,7 @@ fn nosings_mesh(segs: &[(DVec3, DVec3)]) -> MeshAcc {
         n /= n.length().max(1e-9);
         let lift = DVec3::new(0.0, 0.0, 0.002);
         let b = acc.verts.len() as u32;
-        acc.verts.extend([*p0 + lift, *p1 + lift, *p1 + n * 0.055 + lift, *p0 + n * 0.055 + lift]);
+        acc.verts.extend([*p0 + lift, *p1 + lift, *p1 + n * 0.07 + lift, *p0 + n * 0.07 + lift]);
         acc.add_face(vec![b, b + 1, b + 2, b + 3], 0, None);
     }
     acc
@@ -602,9 +657,10 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
     let mut tier_rows: Vec<Vec<usize>> = Vec::new();
     let mut vom_top: Vec<Vec<Option<usize>>> = Vec::new();
     let mut standing = 0.0;
-    let mut out = StandsOut { a, b, runs: Vec::new(), roofs: Vec::new(), facade_lines: Vec::new(), camera_mount: None, corner_r: curved.then_some(r_corner) };
+    let mut out = StandsOut { a, b, runs: Vec::new(), roofs: Vec::new(), facade_lines: Vec::new(), facade_heights: Vec::new(), camera_mount: None, corner_r: curved.then_some(r_corner) };
     let mut warnings: Vec<String> = early_warnings;
     let mut tall_goalposts: Vec<String> = Vec::new();
+    let mut plaza_items: Vec<(&'static str, DVec3, f64)> = Vec::new();
     for (ri, run) in run_defs.iter().enumerate() {
         let sc = sides.iter().find(|s| s.name == run.name).unwrap_or(&sides[0]);
         let df = if curved { focal("south").min(focal("east")) } else { focal(&run.name) };
@@ -659,6 +715,7 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
                 Mat::named("Roof_Polycarbonate"),
                 Mat::tint("TINT_roof_fascia", &hexv(rs, "fascia_color", "#1b1d20")),
                 Mat::tint("Roof_Underside", &hexv(rs, "underside_color", "#d8d8d4")),
+                Mat::tint("Roof_Steel", &hexv(rs, "steel_color", "#eceeee")),
             ];
             if !ro.mesh.faces.is_empty() {
                 st.parts.push(Part { name: format!("Roof_{}", run.name), mesh: ro.mesh.clone(), mats: rmats, smooth_deg: 35.0 });
@@ -687,6 +744,8 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             }
             st.sockets.extend(fo.sockets);
             out.facade_lines.push((run.name.clone(), fo.line_s));
+            out.facade_heights.push((run.name.clone(), fo.height));
+            plaza_items.extend(fo.props);
         } else if !curved && tiers.len() > 1 {
             // no facade gables: close the exposed ends of a multi-tier stand with a concrete wall,
             // or the concourse void under the upper tier shows as a hole
@@ -869,11 +928,19 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
     let apron_mat = match apron_kind {
         "track" => Mat::named("Apron_Track"),
         "concrete" => Mat::named("Apron_Concrete"),
-        _ => Mat::named("Pitch_Grass"),
+        _ => grass_mat(&p),
     };
     st.parts.push(Part { name: "Apron".into(), mesh: apron, mats: vec![apron_mat], smooth_deg: 0.0 });
-    let plaza_default = !out.facade_lines.is_empty();
+    // a paved plaza (and its street furniture) goes round a stadium, not a club ground
+    let plaza_default = !out.facade_lines.is_empty() && all.len() as f64 + standing >= PLAZA_MIN_CAPACITY;
     if cfg.get("plaza").and_then(|v| v.as_bool()).unwrap_or(plaza_default) {
+        let mut sets: BTreeMap<&str, Vec<Placement>> = BTreeMap::new();
+        for (key, pos, yaw) in &plaza_items {
+            sets.entry(key).or_default().push(Placement::at(*pos, *yaw));
+        }
+        for (key, items) in sets {
+            st.props.push(PropSet { key: key.to_string(), items, tints: vec![], net: None });
+        }
         let line = |names: [&str; 2]| out.facade_lines.iter().filter(|(n, _)| names.contains(&n.as_str())).map(|(_, s)| *s).fold(20.0, f64::max);
         let (reach_x, reach_y) = (line(["east", "west"]), line(["north", "south"]));
         let (hx, hy, r) = (a + reach_x + 28.0, b + reach_y + 28.0, (if curved { r_corner } else { 0.0 }).max(20.0) + 28.0);
@@ -891,6 +958,25 @@ fn build_stands(st: &mut Stadium, cfg: &Value, cat: &Catalog, images: &ImageLoad
             plaza.add_face(f, 0, Some(uv));
         }
         st.parts.push(Part { name: "Plaza".into(), mesh: plaza, mats: vec![Mat::named("Plaza_Paving")], smooth_deg: 0.0 });
+        // charcoal granite bands following the plaza's outline, 6 m and 14 m in from its edge
+        let mut bands = MeshAcc::new();
+        for d in [6.0, 14.0] {
+            let base = bands.verts.len() as u32;
+            for w in [0.0, 0.9] {
+                for k in 0..n {
+                    let ang = 2.0 * PI * k as f64 / n as f64;
+                    let q = rect_hit(DVec2::new(ang.cos(), ang.sin()), hx - d - w, hy - d - w, r - d - w);
+                    bands.verts.push(DVec3::new(q.x, q.y, -0.002));
+                }
+            }
+            for k in 0..n as u32 {
+                let k1 = (k + 1) % n as u32;
+                let f = vec![base + k, base + k1, base + n as u32 + k1, base + n as u32 + k];
+                let uv = f.iter().map(|&i| bands.verts[i as usize].truncate()).collect();
+                bands.add_face(f, 0, Some(uv));
+            }
+        }
+        st.parts.push(Part { name: "PlazaBands".into(), mesh: bands, mats: vec![Mat::named("Plaza_Band")], smooth_deg: 0.0 });
     }
     let seated = all.len();
     st.report.capacity = Capacity { seated, standing: standing as usize, total: seated + standing as usize, by_style };
@@ -933,6 +1019,32 @@ fn ad_strip(run: &Run, t0: f64, t1: f64, s_bot: f64, z_bot: f64, s_top: f64, z_t
     }
     let f = (0..ts.len() as u32 - 1).map(|j| [2 * j, 2 * j + 2, 2 * j + 3, 2 * j + 1]).collect();
     (v, f, uv)
+}
+
+/// Facade signs stand this far out from the facade line (clear of fins and cushions).
+pub const FACADE_SIGN_OUT: f64 = 1.9;
+
+/// Bottom and top of a facade sign: a tenth of the facade tall (1-4.5 m), its top just under the
+/// coping.
+pub fn facade_sign_band(height: f64) -> (f64, f64) {
+    let h = (0.1 * height).clamp(1.0, 4.5);
+    let top = height - 1.2 - 0.06 * height;
+    (top - h, top)
+}
+
+/// Run of the LED board face (s per metre of height): the face leans back ~11 deg.
+pub const LED_FACE_RAKE: f64 = 0.17 / 0.87;
+
+/// Kickstands behind an LED board run: a raking strut and a ground runner every 1.92 m.
+fn board_struts(run: &Run) -> Vec<Polyline> {
+    let mut out = Vec::new();
+    let mut t = run.t0 + 0.96;
+    while t < run.t1 - 0.3 {
+        out.push((vec![run.world(t, 0.25, 0.75), run.world(t, 0.78, 0.03)], 0.02));
+        out.push((vec![run.world(t, 0.08, 0.03), run.world(t, 0.84, 0.03)], 0.022));
+        t += 1.92;
+    }
+    out
 }
 
 fn add_vertex_uv_quads(acc: &mut MeshAcc, v: &[DVec3], f: &[[u32; 4]], uv: &[DVec2], tag: i32) {
@@ -994,12 +1106,16 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
         if kind == "led" {
             let mut housing = MeshAcc::new();
             let mut faces = MeshAcc::new();
+            let mut struts: Vec<Polyline> = Vec::new();
             for run in &runs {
-                let poly = vec![DVec2::new(0.0, 0.0), DVec2::new(0.42, 0.0), DVec2::new(0.42, 0.92), DVec2::new(0.2, 1.0), DVec2::new(0.17, 0.97), DVec2::new(0.0, 0.1)];
+                // a slim cabinet leaning back ~11 deg; the LED face sits on its front, framed by the
+                // cabinet's edges above and below, and a kickstand behind every 1.92 m module pair
+                let poly = vec![DVec2::new(0.0, 0.04), DVec2::new(0.13, 0.04), DVec2::new(0.30, 0.985), DVec2::new(LED_FACE_RAKE * 0.885, 0.985), DVec2::new(0.0, 0.1)];
                 housing.add_prism(run, run.t0, run.t1, &Section::uniform(poly, 0), 0);
                 let offset = (crc32(&run.name) as usize % n_atlas) as f64 / n_atlas as f64;
-                let (v, f, uv) = ad_strip(run, run.t0, run.t1, 0.02, 0.12, 0.165, 0.95, offset, 1.0 / (CREATIVE_M * n_atlas as f64), 0.004);
+                let (v, f, uv) = ad_strip(run, run.t0, run.t1, LED_FACE_RAKE * 0.02, 0.12, LED_FACE_RAKE * 0.85, 0.95, offset, 1.0 / (CREATIVE_M * n_atlas as f64), 0.006);
                 add_vertex_uv_quads(&mut faces, &v, &f, &uv, 0);
+                struts.extend(board_struts(run));
                 let length = run.t1 - run.t0;
                 for k in 0..(length / CREATIVE_M).floor() as usize {
                     let (q, n) = run.frame(run.t0 + (k as f64 + 0.5) * CREATIVE_M);
@@ -1008,6 +1124,9 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
             }
             st.parts.push(Part { name: "BoardHousing".into(), mesh: housing, mats: vec![Mat::named("Board_Housing")], smooth_deg: 0.0 });
             st.parts.push(Part { name: "BoardLED".into(), mesh: faces, mats: vec![led_mat("Ads_LED", strength)], smooth_deg: 0.0 });
+            if let Some(t) = tubes_part("BoardStruts", &struts, 6, Mat::named("Board_Housing")) {
+                st.parts.push(t);
+            }
         } else {
             let panel = 7.2;
             let mut legs = Vec::new();
@@ -1069,6 +1188,34 @@ fn build_ads(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&Stand
             slot(st, "carpet_3d", format!("carpet_{k}"), DVec3::new(base.x, base.y, 0.0), to_cam / to_cam.length(), width * h, bk);
         }
     }
+    // a sponsor sign high on the middle of each side's facade, on a dark frame
+    if let Some(stands) = stands {
+        let mut signs = MeshAcc::new();
+        let mut frames = MeshAcc::new();
+        for ((name, sw), (_, fh)) in stands.facade_lines.iter().zip(&stands.facade_heights) {
+            let Some((run, _)) = stands.runs.iter().find(|(r, _)| &r.name == name && !r.curved()) else { continue };
+            let (z0, z1) = facade_sign_band(*fh);
+            let s = sw + FACADE_SIGN_OUT;
+            let half = (z1 - z0) * CREATIVE_M / 2.0 / run.metric(s);
+            let tm = 0.5 * (run.t0 + run.t1);
+            let bk = &keys[(crc32(name) as usize + 1) % keys.len()];
+            let bi = keys.iter().position(|x| x == bk).unwrap();
+            let (v, f, mut uv) = ad_strip(run, tm - half, tm + half, s, z0, s, z1, 0.0, 0.0, 0.0);
+            for (i, u) in uv.iter_mut().enumerate() {
+                // read from outside, the creative runs with t
+                u.x = if i / 2 == 0 { bi as f64 / n_atlas as f64 } else { (bi + 1) as f64 / n_atlas as f64 };
+            }
+            add_vertex_uv_quads(&mut signs, &v, &f, &uv, 0);
+            let pad = 0.3 / run.metric(s);
+            frames.add_prism(run, tm - half - pad, tm + half + pad, &Section::uniform(vec![DVec2::new(s - 0.3, z0 - 0.3), DVec2::new(s - 0.02, z0 - 0.3), DVec2::new(s - 0.02, z1 + 0.3), DVec2::new(s - 0.3, z1 + 0.3)], 0), 0);
+            let (q, n) = run.frame(tm);
+            slot(st, "facade_sign", format!("{name}_facade"), DVec3::new(q.x + n.x * s, q.y + n.y * s, 0.5 * (z0 + z1)), DVec3::new(n.x, n.y, 0.0), (z1 - z0) * (z1 - z0) * CREATIVE_M, bk.clone());
+        }
+        if !signs.faces.is_empty() {
+            st.parts.push(Part { name: "FacadeSigns".into(), mesh: signs, mats: vec![Mat { key: "Ads_Print".into(), color: None, emission: None, texture: Some(Tex::BoardAtlas(keys.clone())) }], smooth_deg: 0.0 });
+            st.parts.push(Part { name: "FacadeSignFrames".into(), mesh: frames, mats: vec![Mat::named("Board_Housing")], smooth_deg: 0.0 });
+        }
+    }
     if let (Some(rb), Some(stands)) = (cfg.get("ribbons").filter(|v| v.is_object()), stands) {
         let wanted: Vec<u64> = rb.get("tiers").and_then(|v| v.as_array()).map(|a| a.iter().filter_map(|t| t.as_u64()).collect()).unwrap_or_else(|| vec![1, 2, 3]);
         let mut ribbons = MeshAcc::new();
@@ -1113,6 +1260,20 @@ fn screen_model(w: f64, h: f64) -> MeshAcc {
         add_box(&mut m, DVec3::new(-w / 2.0, -depth - 0.08, z - 0.06), DVec3::new(w / 2.0, -depth, z + 0.06), 2);
         z += 1.0;
     }
+    // vertical stiffeners behind, a bezel standing proud of the face, and a rain hood on top
+    for x in [-(w / 2.0 - 0.3), -w / 4.0, w / 4.0, w / 2.0 - 0.3] {
+        add_box(&mut m, DVec3::new(x - 0.07, -depth - 0.16, -h / 2.0), DVec3::new(x + 0.07, -depth - 0.08, h / 2.0), 2);
+    }
+    let (ew, eh) = (w / 2.0 + 0.25, h / 2.0 + 0.25);
+    for (lo, hi) in [
+        (DVec3::new(-ew, 0.0, h / 2.0), DVec3::new(ew, 0.12, eh)),
+        (DVec3::new(-ew, 0.0, -eh), DVec3::new(ew, 0.12, -h / 2.0)),
+        (DVec3::new(-ew, 0.0, -h / 2.0), DVec3::new(-w / 2.0, 0.12, h / 2.0)),
+        (DVec3::new(w / 2.0, 0.0, -h / 2.0), DVec3::new(ew, 0.12, h / 2.0)),
+        (DVec3::new(-ew - 0.1, -depth - 0.1, eh), DVec3::new(ew + 0.1, 0.4, eh + 0.12)),
+    ] {
+        add_box(&mut m, lo, hi, 3);
+    }
     let b = m.verts.len() as u32;
     m.verts.extend([DVec3::new(-w / 2.0, 0.01, -h / 2.0), DVec3::new(w / 2.0, 0.01, -h / 2.0), DVec3::new(w / 2.0, 0.01, h / 2.0), DVec3::new(-w / 2.0, 0.01, h / 2.0)]);
     // wound to face +Y; seen from the front local -X is the viewer's right, so u runs +X -> -X
@@ -1139,7 +1300,8 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
     let (w, h) = (num(cfg, "width", 18.0), num(cfg, "height", 8.0));
     let (l, wp) = (p.length, p.width);
     let led = Mat { key: "Screen_LED".into(), color: None, emission: Some((DVec3::ONE, if st.night { 1.6 } else { 3.5 })), texture: Some(Tex::Scoreboard) };
-    let mats = vec![Mat::named("Screen_Body"), led, Mat::named("Galvanised")];
+    // a mid-grey cabinet (its back is what the far end of the ground sees), dark bezels
+    let mats = vec![Mat::tint("Screen_Body", "#6b6f75"), led, Mat::named("Galvanised"), Mat::named("Board_Housing")];
     let mut tubes: Vec<Polyline> = Vec::new();
     let mut count = 0;
     let mut put = |st: &mut Stadium, name: String, pos: DVec3, yaw: f64, tilt: f64| {
@@ -1257,7 +1419,7 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
                 let e = half + 0.3;
                 add_box(&mut caps, DVec3::new(-e, -e, z - 0.3), DVec3::new(e, e, z + 0.3), 0);
             }
-            st.parts.push(Part { name: "ScreenCaps".into(), mesh: caps, mats: vec![Mat::named("Screen_Body")], smooth_deg: 0.0 });
+            st.parts.push(Part { name: "ScreenCaps".into(), mesh: caps, mats: vec![Mat::tint("Screen_Body", "#6b6f75")], smooth_deg: 0.0 });
             for (k, (ux, uy)) in [(0.0, -1.0), (1.0, 0.0), (0.0, 1.0), (-1.0, 0.0)].into_iter().enumerate() {
                 put(st, format!("Screen_centre_{k}"), DVec3::new(ux * half, uy * half, cz), (-ux).atan2(uy), 0.0);
             }
@@ -1276,6 +1438,22 @@ fn build_screens(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) -> R
 }
 
 // -- dugouts and tunnel ------------------------------------------------------------------------
+
+/// The lit segments of a seven-segment digit in the box x0..x1, z0..z1 (segment thickness t).
+fn segments(digit: usize, x0: f64, x1: f64, z0: f64, z1: f64, t: f64) -> Vec<(f64, f64, f64, f64)> {
+    let zm = 0.5 * (z0 + z1);
+    let all = [
+        (x0 + t, x1 - t, z1 - t, z1),          // a: top
+        (x1 - t, x1, zm + t / 2.0, z1 - t),    // b: top right
+        (x1 - t, x1, z0 + t, zm - t / 2.0),    // c: bottom right
+        (x0 + t, x1 - t, z0, z0 + t),          // d: bottom
+        (x0, x0 + t, z0 + t, zm - t / 2.0),    // e: bottom left
+        (x0, x0 + t, zm + t / 2.0, z1 - t),    // f: top left
+        (x0 + t, x1 - t, zm - t / 2.0, zm + t / 2.0), // g: middle
+    ];
+    let lit = ["abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc", "abcdefg", "abcdfg"][digit % 10];
+    lit.bytes().map(|ch| all[(ch - b'a') as usize]).collect()
+}
 
 struct DugoutCfg {
     style: String,
@@ -1307,6 +1485,44 @@ pub fn dugout_length(cfg: &Value, cat: &Catalog) -> Result<f64, String> {
     let d = dugout_cfg(cfg);
     let per_row = d.seats.div_ceil(2);
     Ok(per_row as f64 * num(seat_spec(cat, &d.seat)?, "width", 0.5) + 1.0)
+}
+
+/// Clear polycarbonate panels (back above `z_base`, sides from `z_base`) under a roof sloping from
+/// 2.35 m at the back to 2.15 m over the front, on a steel frame of posts, rails and rafters, with a
+/// club-colour fascia along the front edge. `walled`: brick walls carry the back below z_base.
+fn dugout_canopy(m: &mut MeshAcc, frame: &mut Vec<Polyline>, lx: f64, depth: f64, z_base: f64, walled: bool) {
+    let (yb, yf, zb, zf) = (-depth - 0.05, 0.3, 2.35, 2.15);
+    let zr = |y: f64| zb + (zf - zb) * (y - yb) / (yf - yb);
+    let quad = |m: &mut MeshAcc, q: [DVec3; 4], tag: i32| {
+        let base = m.verts.len() as u32;
+        m.verts.extend(q);
+        let uv = q.iter().map(|p| DVec2::new(p.x + p.y, p.z)).collect();
+        m.add_face(vec![base, base + 1, base + 2, base + 3], tag, Some(uv));
+    };
+    let (x0, x1) = (-lx / 2.0, lx / 2.0);
+    quad(m, [DVec3::new(x0, yb, zb), DVec3::new(x1, yb, zb), DVec3::new(x1, yf, zf), DVec3::new(x0, yf, zf)], 1);
+    quad(m, [DVec3::new(x0, -depth + 0.02, z_base), DVec3::new(x1, -depth + 0.02, z_base), DVec3::new(x1, -depth + 0.02, zr(-depth)), DVec3::new(x0, -depth + 0.02, zr(-depth))], 1);
+    for x in [x0, x1] {
+        quad(m, [DVec3::new(x, -depth, z_base), DVec3::new(x, 0.0, z_base), DVec3::new(x, 0.0, zr(0.0)), DVec3::new(x, -depth, zr(-depth))], 1);
+    }
+    add_box(m, DVec3::new(x0 - 0.05, yf - 0.06, zf - 0.18), DVec3::new(x1 + 0.05, yf + 0.02, zf + 0.04), 4);
+    let r = 0.03;
+    for x in [x0, x1] {
+        frame.push((vec![DVec3::new(x, -depth, if walled { 1.0 } else { 0.12 }), DVec3::new(x, -depth, zr(-depth))], r));
+        frame.push((vec![DVec3::new(x, 0.0, if walled { 1.0 } else { 0.12 }), DVec3::new(x, 0.0, zr(0.0))], r));
+        frame.push((vec![DVec3::new(x, -depth, z_base), DVec3::new(x, 0.0, z_base)], r));
+    }
+    frame.push((vec![DVec3::new(x0, yb, zb), DVec3::new(x1, yb, zb)], r));
+    frame.push((vec![DVec3::new(x0, 0.0, zr(0.0)), DVec3::new(x1, 0.0, zr(0.0))], r));
+    frame.push((vec![DVec3::new(x0, -depth + 0.02, z_base), DVec3::new(x1, -depth + 0.02, z_base)], r));
+    let n = 2usize.max(crate::py::round_half_even(lx / 1.2) as usize);
+    for k in 0..=n {
+        let x = x0 + lx * k as f64 / n as f64;
+        frame.push((vec![DVec3::new(x, yb, zb), DVec3::new(x, yf, zf)], 0.022));
+        if k > 0 && k < n {
+            frame.push((vec![DVec3::new(x, -depth + 0.02, z_base), DVec3::new(x, -depth + 0.02, zr(-depth))], 0.02));
+        }
+    }
 }
 
 fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&StandsOut>) -> Result<(), String> {
@@ -1354,24 +1570,27 @@ fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&S
             for x in linspace(-lx / 2.0, lx / 2.0, 5) {
                 frame_lines.push((prof.iter().map(|q| DVec3::new(x, q.x, q.y)).collect(), 0.03));
             }
+            // base and lip rails along the shell, a club-colour back panel and a kick plate
+            let (q0, q1) = (prof[0], prof[prof.len() - 1]);
+            frame_lines.push((vec![DVec3::new(-lx / 2.0, q0.x, q0.y), DVec3::new(lx / 2.0, q0.x, q0.y)], 0.04));
+            frame_lines.push((vec![DVec3::new(-lx / 2.0, q1.x, q1.y), DVec3::new(lx / 2.0, q1.x, q1.y)], 0.04));
+            add_box(&mut m, DVec3::new(-lx / 2.0 + 0.05, -depth + 0.14, 0.42), DVec3::new(lx / 2.0 - 0.05, -depth + 0.2, 1.55), 4);
+            add_box(&mut m, DVec3::new(-lx / 2.0, -0.08, 0.12), DVec3::new(lx / 2.0, 0.0, 0.32), 4);
         }
         "box" => {
-            add_box(&mut m, DVec3::new(-lx / 2.0, -depth - 0.25, 0.0), DVec3::new(lx / 2.0, -depth, 2.2), 3);
-            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.25, -depth - 0.25, 0.0), DVec3::new(-lx / 2.0, 0.0, 2.2), 3);
-            add_box(&mut m, DVec3::new(lx / 2.0, -depth - 0.25, 0.0), DVec3::new(lx / 2.0 + 0.25, 0.0, 2.2), 3);
-            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.3, -depth - 0.3, 2.2), DVec3::new(lx / 2.0 + 0.3, 0.35, 2.38), 4);
+            // a brick base (back wall and low side walls) under clear polycarbonate sides and a
+            // sloping polycarbonate roof on a steel frame, with a club-colour fascia
+            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.25, -depth - 0.25, 0.0), DVec3::new(lx / 2.0 + 0.25, -depth, 1.1), 3);
+            for sx in [-1.0, 1.0] {
+                let (xa, xb) = if sx < 0.0 { (-lx / 2.0 - 0.25, -lx / 2.0) } else { (lx / 2.0, lx / 2.0 + 0.25) };
+                add_box(&mut m, DVec3::new(xa, -depth - 0.25, 0.0), DVec3::new(xb, 0.0, 1.0), 3);
+            }
+            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.3, -depth - 0.3, 1.1), DVec3::new(lx / 2.0 + 0.3, -depth + 0.05, 1.18), 0);
+            dugout_canopy(&mut m, &mut frame_lines, lx, depth, 1.1, true);
         }
         _ => {
             mats[1] = Mat::tint("Dugout_Polycarbonate", "#dfe8ea");
-            for x in [-lx / 2.0, lx / 2.0] {
-                for yy in [-depth + 0.05, -0.05] {
-                    frame_lines.push((vec![DVec3::new(x, yy, 0.12), DVec3::new(x, yy, 2.15)], 0.04));
-                }
-            }
-            add_box(&mut m, DVec3::new(-lx / 2.0, -depth + 0.02, 0.3), DVec3::new(lx / 2.0, -depth + 0.04, 2.1), 1);
-            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.01, -depth, 0.3), DVec3::new(-lx / 2.0 + 0.01, -0.1, 2.1), 1);
-            add_box(&mut m, DVec3::new(lx / 2.0 - 0.01, -depth, 0.3), DVec3::new(lx / 2.0 + 0.01, -0.1, 2.1), 1);
-            add_box(&mut m, DVec3::new(-lx / 2.0 - 0.15, -depth - 0.15, 2.15), DVec3::new(lx / 2.0 + 0.15, 0.25, 2.22), 4);
+            dugout_canopy(&mut m, &mut frame_lines, lx, depth, 0.3, false);
         }
     }
     let spec = seat_spec(cat, &d.seat)?.clone();
@@ -1407,6 +1626,50 @@ fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&S
             None => st.props.push(PropSet { key, items, tints: vec![], net: None }),
         }
     }
+    // the fourth official's desk beside the tunnel exit, between the dugouts
+    let mut desk = MeshAcc::new();
+    let (dx, dy) = (DUGOUT_GAP / 2.0 - 0.6, y + 0.9);
+    add_box(&mut desk, DVec3::new(dx - 0.7, dy - 0.3, 0.72), DVec3::new(dx + 0.7, dy + 0.3, 0.76), 0);
+    add_box(&mut desk, DVec3::new(dx - 0.7, dy + 0.26, 0.05), DVec3::new(dx + 0.7, dy + 0.3, 0.72), 1);
+    for sx in [-1.0, 1.0] {
+        add_box(&mut desk, DVec3::new(dx + sx * 0.66 - 0.03, dy - 0.3, 0.0), DVec3::new(dx + sx * 0.66 + 0.03, dy + 0.3, 0.72), 0);
+    }
+    // the electronic substitution board in its holder at one end: a slim housing with a carry
+    // handle, and on both faces the two-digit number cells, red (off) over green (on)
+    let (bx0, by) = (dx - 0.62, dy - 0.05);
+    add_box(&mut desk, DVec3::new(bx0, by - 0.035, 0.76), DVec3::new(bx0 + 0.62, by + 0.035, 1.24), 0);
+    for hx in [bx0 + 0.1, bx0 + 0.52] {
+        add_box(&mut desk, DVec3::new(hx - 0.015, by - 0.012, 1.24), DVec3::new(hx + 0.015, by + 0.012, 1.33), 0);
+    }
+    add_box(&mut desk, DVec3::new(bx0 + 0.085, by - 0.015, 1.3), DVec3::new(bx0 + 0.535, by + 0.015, 1.34), 0);
+    for sy in [-1.0, 1.0] {
+        let (ya, yb) = if sy < 0.0 { (by - 0.039, by - 0.035) } else { (by + 0.035, by + 0.039) };
+        for (z0, mi, digits) in [(1.02, 2, [1usize, 4]), (0.8, 3, [2, 3])] {
+            for (c, &dg) in [bx0 + 0.07, bx0 + 0.33].iter().zip(digits.iter()) {
+                // read the right way round from the side it faces
+                let x0 = if sy < 0.0 { *c } else { 2.0 * bx0 + 0.62 - c - 0.22 };
+                for (sx0, sx1, sz0, sz1) in segments(dg, x0 + 0.03, x0 + 0.19, z0 + 0.01, z0 + 0.17, 0.024) {
+                    // (the glyph itself mirrored too on the face read from +y)
+                    let (sx0, sx1) = if sy < 0.0 { (sx0, sx1) } else { (2.0 * x0 + 0.22 - sx1, 2.0 * x0 + 0.22 - sx0) };
+                    add_box(&mut desk, DVec3::new(sx0, ya, sz0), DVec3::new(sx1, yb, sz1), mi);
+                }
+            }
+        }
+    }
+    // water bottles at the other end
+    for (k, bxx) in [dx + 0.25, dx + 0.36, dx + 0.47].into_iter().enumerate() {
+        let byy = dy - 0.1 + 0.06 * k as f64;
+        add_box(&mut desk, DVec3::new(bxx - 0.035, byy - 0.035, 0.76), DVec3::new(bxx + 0.035, byy + 0.035, 0.98), 4);
+        add_box(&mut desk, DVec3::new(bxx - 0.015, byy - 0.015, 0.98), DVec3::new(bxx + 0.015, byy + 0.015, 1.02), 0);
+    }
+    let led = |c: DVec3| Mat { emission: Some((c, 2.5)), ..Mat::tint("Dugout_Frame", "#101112") };
+    st.parts.push(Part {
+        name: "FourthOfficial".into(),
+        mesh: desk,
+        mats: vec![Mat::tint("Dugout_Frame", "#2b2d30"), Mat::tint("TINT_dugout", &d.color), led(DVec3::new(1.0, 0.08, 0.05)),
+                   led(DVec3::new(0.1, 1.0, 0.25)), Mat::tint("Dugout_Polycarbonate", "#6fa6d6")],
+        smooth_deg: 0.0,
+    });
     // technical areas: dashed lines 1 m beyond the seats each side, to 1 m from the touchline
     let y_front = -(w_p / 2.0 + 1.0);
     let y_back = -(w_p / 2.0 + front);
@@ -1428,8 +1691,13 @@ fn build_dugouts(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Option<&S
             }
         }
     }
-    st.parts.push(Part { name: "TechnicalAreas".into(), mesh: paint, mats: vec![Mat::tint("TINT_Pitch_Paint", &st.pitch.line_color)], smooth_deg: 0.0 });
+    st.parts.push(Part { name: "TechnicalAreas".into(), mesh: paint, mats: vec![paint_mat(&st.pitch)], smooth_deg: 0.0 });
     Ok(())
+}
+
+/// Depth of the lit porch at the tunnel mouth: a telescopic tunnel keeps most of the run.
+fn tunnel_porch_depth(style: &str, length: f64) -> f64 {
+    if style == "telescopic" { 2.4f64.min(0.4 * length).max(0.6) } else { 2.4 }
 }
 
 fn build_tunnel(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) {
@@ -1440,48 +1708,104 @@ fn build_tunnel(st: &mut Stadium, cfg: &Value, stands: Option<&StandsOut>) {
     let has_stand = stands.is_some_and(|s| s.runs.iter().any(|r| r.0.name == "south"));
     let y_wall = if has_stand { -stands.unwrap().b } else { y_end - 3.0 };
     let mut m = MeshAcc::new();
-    add_box(&mut m, DVec3::new(-w / 2.0, y_wall - 0.02, 0.0), DVec3::new(w / 2.0, y_wall + 0.01, h), 0);
-    add_box(&mut m, DVec3::new(-w / 2.0 - 0.25, y_wall, 0.0), DVec3::new(-w / 2.0, y_wall + 0.12, h + 0.25), 1);
-    add_box(&mut m, DVec3::new(w / 2.0, y_wall, 0.0), DVec3::new(w / 2.0 + 0.25, y_wall + 0.12, h + 0.25), 1);
-    add_box(&mut m, DVec3::new(-w / 2.0 - 0.25, y_wall, h), DVec3::new(w / 2.0 + 0.25, y_wall + 0.12, h + 0.25), 1);
+    // a lit porch in front of the stand wall: side walls with club-colour panels, a roof slab with
+    // light strips and a club-colour header, a floor mat, and double doors in the back wall
+    let dp = tunnel_porch_depth(&style, y_end - y_wall);
+    let (y0, y1) = (y_wall, y_wall + dp);
+    add_box(&mut m, DVec3::new(-w / 2.0, y0 - 0.02, 0.0), DVec3::new(w / 2.0, y0 + 0.01, h), 2);
+    add_box(&mut m, DVec3::new(-1.05, y0 + 0.01, 0.0), DVec3::new(1.05, y0 + 0.04, 2.35), 1);
+    for x in [-0.52, 0.52] {
+        add_box(&mut m, DVec3::new(x - 0.45, y0 + 0.04, 0.9), DVec3::new(x + 0.45, y0 + 0.05, 2.2), 6);
+    }
+    for sx in [-1.0, 1.0] {
+        add_box(&mut m, DVec3::new(sx * w / 2.0 - if sx < 0.0 { 0.3 } else { 0.0 }, y0, 0.0), DVec3::new(sx * w / 2.0 + if sx > 0.0 { 0.3 } else { 0.0 }, y1, h + 0.35), 2);
+        let (xa, xb) = if sx < 0.0 { (-w / 2.0, -w / 2.0 + 0.02) } else { (w / 2.0 - 0.02, w / 2.0) };
+        add_box(&mut m, DVec3::new(xa, y0 + 0.3, 1.0), DVec3::new(xb, y1 - 0.2, 2.2), 3);
+    }
+    for sx in [-1.0, 1.0] {
+        // the club panels framed in trim, a steel handrail along each wall below them
+        let xi = |o: f64| sx * (w / 2.0 - o);
+        let (xa, xb) = (xi(0.02).min(xi(0.045)), xi(0.02).max(xi(0.045)));
+        for (za, zb) in [(0.96, 1.0), (2.2, 2.24)] {
+            add_box(&mut m, DVec3::new(xa, y0 + 0.26, za), DVec3::new(xb, y1 - 0.16, zb), 1);
+        }
+        for (ya, yb) in [(y0 + 0.26, y0 + 0.3), (y1 - 0.2, y1 - 0.16)] {
+            add_box(&mut m, DVec3::new(xa, ya, 0.96), DVec3::new(xb, yb, 2.24), 1);
+        }
+        let (ra, rb) = (xi(0.07).min(xi(0.11)), xi(0.07).max(xi(0.11)));
+        add_box(&mut m, DVec3::new(ra, y0 + 0.15, 0.86), DVec3::new(rb, y1 - 0.1, 0.9), 7);
+        for y in [y0 + 0.4, y1 - 0.3] {
+            add_box(&mut m, DVec3::new(xi(0.0).min(xi(0.09)), y - 0.02, 0.8), DVec3::new(xi(0.0).max(xi(0.09)), y + 0.02, 0.86), 7);
+        }
+    }
+    // the doors: a meeting stile, a mid rail and stainless push bars across both leaves
+    add_box(&mut m, DVec3::new(-0.04, y0 + 0.04, 0.0), DVec3::new(0.04, y0 + 0.07, 2.3), 1);
+    add_box(&mut m, DVec3::new(-1.0, y0 + 0.04, 1.0), DVec3::new(1.0, y0 + 0.07, 1.1), 1);
+    for x in [-0.52, 0.52] {
+        add_box(&mut m, DVec3::new(x - 0.36, y0 + 0.08, 1.03), DVec3::new(x + 0.36, y0 + 0.12, 1.07), 7);
+    }
+    add_box(&mut m, DVec3::new(-w / 2.0 - 0.3, y0, h), DVec3::new(w / 2.0 + 0.3, y1, h + 0.35), 2);
+    add_box(&mut m, DVec3::new(-w / 2.0 - 0.3, y1, h - 0.05), DVec3::new(w / 2.0 + 0.3, y1 + 0.06, h + 0.4), 3);
+    for x in [-w / 4.0, w / 4.0] {
+        add_box(&mut m, DVec3::new(x - 0.08, y0 + 0.2, h - 0.04), DVec3::new(x + 0.08, y1 - 0.2, h), 5);
+    }
+    add_box(&mut m, DVec3::new(-w / 2.0, y0, 0.0), DVec3::new(w / 2.0, y1, 0.03), 4);
     if !has_stand {
         add_box(&mut m, DVec3::new(-w / 2.0 - 1.2, y_wall - 4.0, 0.0), DVec3::new(w / 2.0 + 1.2, y_wall, h + 0.8), 2);
     }
-    let mats = vec![Mat::named("Tunnel_Mouth"), Mat::named("Tunnel_Trim"), Mat::named("Tunnel_Building"), Mat::tint("TINT_tunnel", &color), Mat::named("Tunnel_Mat")];
+    let light = Mat { emission: Some((DVec3::new(1.0, 0.97, 0.92), 8.0)), ..Mat::named("Tunnel_Hoop") };
+    let glass = Mat { emission: Some((DVec3::new(1.0, 0.95, 0.85), 0.1)), ..Mat::named("Facade_DarkGlass") };
+    let mats = vec![Mat::named("Tunnel_Mouth"), Mat::named("Tunnel_Trim"), Mat::named("Tunnel_Building"), Mat::tint("TINT_tunnel", &color), Mat::named("Tunnel_Mat"), light, glass, Mat::named("Tunnel_Hoop")];
     if style == "telescopic" {
-        let n_hoops = 3usize.max(((y_end - y_wall) / 1.1) as usize + 1);
-        let ys = linspace(y_wall + 0.15, y_end, n_hoops);
+        // telescoping segments, each a little larger than the one it slides into, overlapping it;
+        // fabric drooping between each segment's end hoops and middle rib, a rubber skirt at the foot
+        let (ya, yb) = (y1 + 0.1, y_end);
+        let n_seg = (crate::py::round_half_even((yb - ya) / 1.6) as usize).clamp(2, 7);
+        let seg = (yb - ya) / n_seg as f64;
         let hw = 0.5f64.max(h - w / 2.0);
         let mut prof = vec![DVec2::new(-w / 2.0, 0.0)];
         prof.extend(linspace(PI, 0.0, 17).iter().map(|a| DVec2::new((w / 2.0) * a.cos(), hw + (w / 2.0) * a.sin())));
         prof.push(DVec2::new(w / 2.0, 0.0));
-        let hoops: Vec<Polyline> = ys.iter().map(|&y| (prof.iter().map(|q| DVec3::new(q.x, y, q.y)).collect(), 0.035)).collect();
+        let mut hoops: Vec<Polyline> = Vec::new();
+        let k = prof.len() as u32;
+        for sg in 0..n_seg {
+            let sc = 1.0 + 0.035 * sg as f64;
+            let p: Vec<DVec2> = prof.iter().map(|q| DVec2::new(q.x * sc, q.y * sc)).collect();
+            let s0 = ya + sg as f64 * seg;
+            let s1 = ya + (sg as f64 + 1.0) * seg + if sg + 1 < n_seg { 0.12 } else { 0.0 };
+            let base = m.verts.len() as u32;
+            for i in 0..5 {
+                let y = s0 + (s1 - s0) * i as f64 / 4.0;
+                let sag = if i % 2 == 1 { 0.035 } else { 0.0 };
+                for q in &p {
+                    if q.y <= 1e-6 {
+                        m.verts.push(DVec3::new(q.x, y, q.y));
+                        continue;
+                    }
+                    let r = DVec2::new(q.x, q.y - hw * sc);
+                    let qq = DVec2::new(0.0, hw * sc) + r * (1.0 - sag / r.length().max(1e-3));
+                    m.verts.push(DVec3::new(qq.x, y, qq.y));
+                }
+            }
+            for i in 0..4u32 {
+                for j in 0..k - 1 {
+                    let f = vec![base + i * k + j, base + (i + 1) * k + j, base + (i + 1) * k + j + 1, base + i * k + j + 1];
+                    let uv = f.iter().map(|&v| { let q = m.verts[v as usize]; DVec2::new(q.y, q.x + q.z) }).collect();
+                    m.add_face(f, 3, Some(uv));
+                }
+            }
+            for (y, r) in [(s0, 0.03), (0.5 * (s0 + s1), 0.025), (s1, 0.05)] {
+                hoops.push((p.iter().map(|q| DVec3::new(q.x * 1.01, y, q.y * 1.01)).collect(), r));
+            }
+            let xw = w / 2.0 * sc;
+            for sx in [-1.0, 1.0] {
+                add_box(&mut m, DVec3::new(sx * xw - 0.03, s0, 0.0), DVec3::new(sx * xw + 0.03, s1, 0.2), 4);
+            }
+        }
         if let Some(t) = tubes_part("TunnelHoops", &hoops, 8, Mat::named("Tunnel_Hoop")) {
             st.parts.push(t);
         }
-        let k = prof.len() as u32;
-        let n = (n_hoops - 1) * 4 + 1;
-        let base = m.verts.len() as u32;
-        for (i, y) in linspace(ys[0], ys[ys.len() - 1], n).into_iter().enumerate() {
-            let sag = 0.04 * (PI * ((i % 4) as f64 / 4.0)).sin();
-            for q in &prof {
-                if q.y <= 1e-6 {
-                    m.verts.push(DVec3::new(q.x, y, q.y));
-                    continue;
-                }
-                let r = DVec2::new(q.x, q.y - hw);
-                let qq = DVec2::new(0.0, hw) + r * (1.0 - sag / r.length().max(1e-3));
-                m.verts.push(DVec3::new(qq.x, y, qq.y));
-            }
-        }
-        for i in 0..n as u32 - 1 {
-            for j in 0..k - 1 {
-                let f = vec![base + i * k + j, base + (i + 1) * k + j, base + (i + 1) * k + j + 1, base + i * k + j + 1];
-                let uv = f.iter().map(|&v| { let p = m.verts[v as usize]; DVec2::new(p.y, p.x + p.z) }).collect();
-                m.add_face(f, 3, Some(uv));
-            }
-        }
-        add_box(&mut m, DVec3::new(-w / 2.0, ys[0], 0.0), DVec3::new(w / 2.0, ys[ys.len() - 1], 0.03), 4);
+        add_box(&mut m, DVec3::new(-w / 2.0, ya, 0.0), DVec3::new(w / 2.0, yb, 0.03), 4);
     }
     st.parts.push(Part { name: "Tunnel".into(), mesh: m, mats, smooth_deg: 40.0 });
     st.sockets.push(Socket { kind: "tunnel", id: "players".into(), loc: DVec3::new(0.0, y_end, 0.0), n: DVec2::new(0.0, 1.0), props: vec![("width", w), ("height", h)] });
@@ -1516,14 +1840,35 @@ fn build_floodlights(st: &mut Stadium, cfg: &Value, cat: &Catalog, stands: Optio
         roof_top: s.roofs.iter().map(|r| r.1.tail_top).fold(0.0, f64::max),
         roof_edges: s.roofs.iter().map(|r| r.1.edge_line.clone()).collect(),
         corner_r: s.corner_r,
+        main_half: s.runs.iter().find(|r| r.0.name == "south").map(|(r, _)| r.world(r.t0, 0.0, 0.0).x.abs().max(r.world(r.t1, 0.0, 0.0).x.abs())).unwrap_or(0.0),
     });
     let p = &st.pitch;
     let d = floodlights::design(&spec, p.length, p.width, p.runoff_side, info.as_ref())?;
     let fixture_key = format!("floodlight_fixture.{}", d.fixture);
-    let items = d.fixtures.iter().map(|(pos, t)| Placement::aim(*pos, *t - *pos)).collect();
-    st.props.push(PropSet { key: fixture_key, items, tints: vec![], net: None });
+    let sc = d.lamp_scale.max(1e-3);
+    let pivot = floodlights::fixture_pivot(&d.fixture) * sc;
+    let items = d
+        .lamps
+        .iter()
+        .map(|(pos, t)| Placement { scale: DVec3::splat(sc), ..Placement::aim(floodlights::mount_point(*pos, *t, pivot), *t - *pos) })
+        .collect();
+    // lenses glow ("EMIT:" lights a material up, see viewer build.rs): full at night, and stadium
+    // floodlights are switched on for televised day matches too, so roof rings and masts glow
+    // by day as well (grassroots poles stay off by day)
+    let glow = if on { 2.5 } else if d.kind == "poles" { 0.0 } else { 1.6 };
+    let tints = if glow > 0.0 { vec![("EMIT:Fixture_Lens".to_string(), floodlights::kelvin_rgb(d.kelvin) * glow)] } else { vec![] };
+    st.props.push(PropSet { key: fixture_key, items, tints, net: None });
     if let Some(t) = tubes_part("FloodlightSteel", &d.steel, 6, Mat::named("Galvanised")) {
         st.parts.push(t);
+    }
+    if d.kind == "roof" && d.fixture == "led" {
+        // the lit diffuser panels of the roof ring's floods (dimmer by day, when they are not on)
+        let c = floodlights::kelvin_rgb(d.kelvin);
+        let glow = Mat { emission: Some((c, if on { 14.0 } else { 7.0 })), ..Mat::named("Tunnel_Hoop") };
+        st.parts.push(Part { name: "FloodlightLenses".into(), mesh: floodlights::lens_panels(&d.lamps, sc), mats: vec![glow], smooth_deg: 0.0 });
+    }
+    if !d.mesh.faces.is_empty() {
+        st.parts.push(Part { name: "FloodlightPlates".into(), mesh: d.mesh.clone(), mats: vec![Mat::named("Galvanised"), Mat::tint("Stand_Concrete", "#a29e95"), Mat::named("Fixture_Body")], smooth_deg: 0.0 });
     }
     let masts: Vec<Polyline> = d.tube_masts.iter().map(|(a, b, r)| (vec![*a, *b], *r)).collect();
     if let Some(t) = tubes_part("FloodlightMasts", &masts, 16, Mat::named("Galvanised")) {

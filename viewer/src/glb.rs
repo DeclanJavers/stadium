@@ -44,12 +44,59 @@ pub struct Material {
     pub transmission: f32,
     /// glTF material extras (tint_gain for runtime-recolourable TINT_ materials)
     pub extras: Value,
+    /// procedural grass and line paint: the turf and its pitch frame (see GrassParams)
+    pub grass: Option<GrassParams>,
+}
+
+/// Per-material grass uniforms (shader.wgsl MaterialU.grass_*): every pitch and lawn carries its
+/// own turf and frame, so a site can hold many pitches facing different ways.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct GrassParams {
+    /// stripe width, angle (rad), strength, pattern id
+    pub a: [f32; 4],
+    /// natural (1) or woven artificial (0), wear zones on, frame origin x, y (kit metres)
+    pub b: [f32; 4],
+    /// cos yaw, sin yaw, blade height (m), -
+    pub c: [f32; 4],
+    /// base colour (linear), w = wear
+    pub color: [f32; 4],
+    /// dry colour (linear), w = wetness
+    pub dry: [f32; 4],
+    /// half length, half width (m)
+    pub half: [f32; 4],
+}
+
+pub fn pattern_id(p: &str) -> f32 {
+    match p {
+        "stripes" => 1.0,
+        "stripes_long" => 2.0,
+        "checkerboard" => 3.0,
+        "diagonal" => 4.0,
+        "diamond" => 5.0,
+        "circles" => 6.0,
+        _ => 0.0,
+    }
+}
+
+impl GrassParams {
+    pub fn from_pitch(p: &PitchInfo, origin: Vec2, yaw: f32, wear_zones: bool) -> Self {
+        GrassParams {
+            a: [p.width, p.angle.to_radians(), p.strength, pattern_id(&p.pattern)],
+            b: [p.natural as u8 as f32, wear_zones as u8 as f32, origin.x, origin.y],
+            c: [yaw.cos(), yaw.sin(), p.height_mm / 1000.0, 0.0],
+            color: p.color.extend(p.wear).to_array(),
+            dry: p.dry.extend(p.wetness).to_array(),
+            half: [p.half.x, p.half.y, 0.0, 0.0],
+        }
+    }
 }
 
 pub struct Primitive {
     pub positions: Vec<[f32; 3]>,
     pub normals: Vec<[f32; 3]>,
     pub uvs: Vec<[f32; 2]>,
+    /// COLOR_0 (linear rgba, multiplies the base colour); empty = white
+    pub colors: Vec<[f32; 4]>,
     pub indices: Vec<u32>,
     pub material: usize,
 }
@@ -98,8 +145,6 @@ pub struct PitchInfo {
     pub wetness: f32,
     pub height_mm: f32,
     pub half: Vec2,
-    /// true when the grass albedo is computed in the shader (editor) rather than baked (export)
-    pub procedural: bool,
 }
 
 pub fn srgb_hex(h: &str) -> Vec3 {
@@ -286,13 +331,14 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
             cutoff: f(&m["alphaCutoff"], 0.5),
             transmission: f(&ext["KHR_materials_transmission"]["transmissionFactor"], 0.0),
             extras: m["extras"].clone(),
+            grass: None,
         });
     }
     if materials.is_empty() {
         materials.push(Material {
             name: "default".into(), base_color: Vec4::ONE, metallic: 0.0, roughness: 0.6, emissive: Vec3::ZERO,
             emissive_strength: 1.0, base_tex: None, mr_tex: None, normal_tex: None, emissive_tex: None,
-            alpha: Alpha::Opaque, cutoff: 0.5, transmission: 0.0, extras: Value::Null,
+            alpha: Alpha::Opaque, cutoff: 0.5, transmission: 0.0, extras: Value::Null, grass: None,
         });
     }
 
@@ -309,6 +355,11 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
             let n = pos.len() / 3;
             let nrm = a["NORMAL"].as_u64().map(|i| doc.accessor(i as usize).0).unwrap_or_else(|| vec![0.0, 1.0, 0.0].repeat(n));
             let uv = a["TEXCOORD_0"].as_u64().map(|i| doc.accessor(i as usize).0).unwrap_or_else(|| vec![0.0; n * 2]);
+            let colors: Vec<[f32; 4]> = match a["COLOR_0"].as_u64().map(|i| doc.accessor(i as usize)) {
+                Some((c, 3)) => c.chunks(3).map(|c| [c[0], c[1], c[2], 1.0]).collect(),
+                Some((c, 4)) => c.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]).collect(),
+                _ => Vec::new(),
+            };
             let indices = match p["indices"].as_u64() {
                 Some(i) => doc.indices(i as usize),
                 None => (0..n as u32).collect(),
@@ -317,6 +368,7 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
                 positions: pos.chunks(3).map(|c| [c[0], c[1], c[2]]).collect(),
                 normals: nrm.chunks(3).map(|c| [c[0], c[1], c[2]]).collect(),
                 uvs: uv.chunks(2).map(|c| [c[0], c[1]]).collect(),
+                colors,
                 indices,
                 material: p["material"].as_u64().unwrap_or(0) as usize,
             });
@@ -389,7 +441,6 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
                     wetness: f(&params["wetness"], 0.0),
                     height_mm: f(&params["height_mm"], 25.0),
                     half: Vec2::new(f(&params["length"], 105.0) / 2.0, f(&params["width"], 68.0) / 2.0),
-                    procedural: false,
                 });
             }
         }
@@ -466,6 +517,12 @@ pub fn load(path: &std::path::Path) -> Result<Scene, String> {
                 lo = lo.min(w);
                 hi = hi.max(w);
             }
+        }
+    }
+    // the exported pitch's grass and paint take its turf (baked albedo, shader stripes)
+    if let Some(p) = &pitch {
+        for m in materials.iter_mut().filter(|m| m.name.starts_with("Pitch_Grass") || m.name.starts_with("TINT_Pitch_Paint")) {
+            m.grass = Some(GrassParams::from_pitch(p, Vec2::ZERO, 0.0, true));
         }
     }
     Ok(Scene { meshes, instances, materials, images, lights, bounds: (lo, hi), pitch, capacity, main_camera, lods, nodes: node_list })

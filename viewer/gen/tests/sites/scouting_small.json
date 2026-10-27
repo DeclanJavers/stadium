@@ -1,0 +1,37 @@
+{
+ "schema": "site-layout/1",
+ "name": "Physio room",
+ "template": "building_lot",
+ "style": "industrial",
+ "seed": 11,
+ "club": {
+  "name": "UNITED",
+  "primary": "#1d4f91",
+  "secondary": "#ffffff"
+ },
+ "boundary": {
+  "type": "railings"
+ },
+ "gate": {
+  "tier": 2
+ },
+ "plots": {
+  "B1": {
+   "state": "built",
+   "facility": "scouting_centre",
+   "tier": 1,
+   "options": {
+    "size": 1,
+    "view": "dollhouse"
+   }
+  },
+  "C1": {
+   "state": "built",
+   "facility": "car_park",
+   "tier": 2,
+   "options": {
+    "fill": 0.55
+   }
+  }
+ }
+}

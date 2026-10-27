@@ -1,0 +1,36 @@
+{
+ "schema": "site-layout/1",
+ "name": "Medical suite",
+ "template": "building_lot",
+ "style": "classic",
+ "seed": 13,
+ "club": {
+  "name": "UNITED",
+  "primary": "#1d4f91",
+  "secondary": "#ffffff"
+ },
+ "boundary": {
+  "type": "railings"
+ },
+ "gate": {
+  "tier": 2
+ },
+ "plots": {
+  "B1": {
+   "state": "built",
+   "facility": "medical_centre",
+   "tier": 2,
+   "options": {
+    "size": 2
+   }
+  },
+  "C1": {
+   "state": "built",
+   "facility": "car_park",
+   "tier": 3,
+   "options": {
+    "fill": 0.55
+   }
+  }
+ }
+}

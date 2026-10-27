@@ -27,10 +27,13 @@ def brick(name="Facade_Brick", color="#8a3b2a"):
     m, nb = material(name)
     pos = nb.geometry()["Position"]
     nrm = nb.geometry()["Normal"]
-    nx, ny, _ = nb.sep(nrm)
-    # project bricks onto the wall: horizontal coordinate along the wall, vertical = z
-    along = nb.add(nb.mul(nb.sep(pos)[0], nb.math("ABSOLUTE", ny)), nb.mul(nb.sep(pos)[1], nb.math("ABSOLUTE", nx)))
-    coord = nb.comb(along, nb.sep(pos)[2], 0.0)
+    x, y, z = nb.sep(pos)
+    ax, ay, az = (nb.math("ABSOLUTE", c) for c in nb.sep(nrm))
+    # project bricks onto the wall: along it and up it; on a horizontal face (copings, and the
+    # flat plane the game textures are baked on) x and y, so the courses survive the bake
+    along = nb.add(nb.mul(x, nb.add(ay, az)), nb.mul(y, ax))
+    up = nb.add(nb.mul(z, nb.sub(1.0, az)), nb.mul(y, az))
+    coord = nb.comb(along, up, 0.0)
     br = nb.node("ShaderNodeTexBrick", offset=0.5, offset_frequency=2, squash=1.0, squash_frequency=2)
     nb.connect(coord, br.inputs["Vector"])
     br.inputs["Scale"].default_value = 1.0
@@ -101,4 +104,4 @@ def build(run, tiers, bay_list, spec, roof_info, ends, col, parent, night=False)
                     MAT.painted_metal("Facade_Frame", "#f1f2f0", rough=0.35, dirt=0.0, scuffs=0.0), sides=6)
     for kind, ident, loc, n, props in out["sockets"]:
         socket(kind, ident, loc, math.degrees(math.atan2(n[0], -n[1])), parent=parent, col=col, **props)
-    return {"line_s": out["line_s"], "height": out["height"]}
+    return {"line_s": out["line_s"], "height": out["height"], "props": out["props"]}

@@ -51,7 +51,9 @@ def _accessor(gltf, binary, arr, kind):
 
 
 def add_instances(path, groups):
-    """groups: {node_name: dict(pos=(N,3) Blender Z-up, yaw=(N,), sx=(N,), color=(N,3) linear)}"""
+    """groups: {node_name: dict(pos=(N,3) Blender Z-up, yaw=(N,), sx=(N,), color=(N,3) linear)}.
+    Optionally tilt=(N,) (about the turned local X, after yaw) and scale=(N,3) (Blender axes) in
+    place of sx; color may be omitted (no instance colour)."""
     gltf, binary = _read(path)
     names = {n.get("name"): i for i, n in enumerate(gltf["nodes"])}
     total = 0
@@ -62,11 +64,22 @@ def add_instances(path, groups):
         t = np.stack([p[:, 0], p[:, 2], -p[:, 1]], 1)          # Blender Z-up -> glTF Y-up
         half = np.asarray(g["yaw"], float) / 2                  # yaw about Blender Z == about glTF +Y
         q = np.stack([np.zeros_like(half), np.sin(half), np.zeros_like(half), np.cos(half)], 1)
-        s = np.stack([np.asarray(g["sx"], float), np.ones(len(p)), np.ones(len(p))], 1)
+        if g.get("tilt") is not None:
+            # q = q_yaw * q_tilt, the tilt about local X (Blender X == glTF X)
+            th = np.asarray(g["tilt"], float) / 2
+            sx_, cx_ = np.sin(th), np.cos(th)
+            qy, qw = q[:, 1], q[:, 3]
+            q = np.stack([qw * sx_, qy * cx_, -qy * sx_, qw * cx_], 1)
+        if g.get("scale") is not None:
+            sc = np.asarray(g["scale"], float)
+            s = np.stack([sc[:, 0], sc[:, 2], sc[:, 1]], 1)     # Blender (x, y, z) -> glTF (x, z, y)
+        else:
+            s = np.stack([np.asarray(g["sx"], float), np.ones(len(p)), np.ones(len(p))], 1)
         attrs = {"TRANSLATION": _accessor(gltf, binary, t, "VEC3"),
                  "ROTATION": _accessor(gltf, binary, q, "VEC4"),
-                 "SCALE": _accessor(gltf, binary, s, "VEC3"),
-                 "_SEAT_COLOR": _accessor(gltf, binary, np.asarray(g["color"], float)[:, :3], "VEC3")}
+                 "SCALE": _accessor(gltf, binary, s, "VEC3")}
+        if g.get("color") is not None:
+            attrs["_SEAT_COLOR"] = _accessor(gltf, binary, np.asarray(g["color"], float)[:, :3], "VEC3")
         node = gltf["nodes"][names[name]]
         node.setdefault("extensions", {})[EXT] = {"attributes": attrs}
         total += len(p)

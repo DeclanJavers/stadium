@@ -1,0 +1,38 @@
+{
+  "_doc": "Architectural styles for training-ground buildings (kit/site/buildings.py). A site has a default style; any building can override it. Colours are defaults the player can change (wall_color, trim_color); the club's colours go on doors, signs and accents.",
+  "ultra_modern": {
+    "label": "Ultra-modern",
+    "wall": "TINT_panel", "wall_color": "#6e747b", "base": "Facade_Concrete", "storey_h": 4.2,
+    "roof": "flat", "roof_mat": "Roof_Flat", "parapet": 0.9,
+    "window": "ribbon", "glazing": 0.62, "trim_color": "#2a2c30",
+    "canopy": "cantilever", "fins": true, "led_band": true
+  },
+  "classic": {
+    "label": "Classic",
+    "wall": "Facade_Brick", "wall_color": "#8a3b2a", "base": "Facade_Stone", "storey_h": 3.8,
+    "roof": "gable", "roof_mat": "Roof_Slate", "pitch_deg": 38, "eaves": 0.45,
+    "window": "punched", "glazing": 0.28, "trim_color": "#f2f0ea",
+    "canopy": "portico", "quoins": true, "clock": true
+  },
+  "industrial": {
+    "label": "Industrial",
+    "wall": "TINT_corrugated", "wall_color": "#59616a", "base": "Facade_Concrete", "storey_h": 4.4,
+    "roof": "shallow", "roof_mat": "TINT_roof", "pitch_deg": 7, "eaves": 0.35,
+    "window": "strip", "glazing": 0.3, "trim_color": "#1e2023",
+    "canopy": "steel", "roller_doors": true, "frame": true
+  },
+  "nordic": {
+    "label": "Nordic eco",
+    "wall": "TINT_timber", "wall_color": "#b38455", "base": "Facade_Concrete", "storey_h": 4.0,
+    "roof": "mono", "roof_mat": "Roof_Sedum", "pitch_deg": 9, "eaves": 0.9,
+    "window": "large", "glazing": 0.5, "trim_color": "#3a2f26",
+    "canopy": "timber", "solar": true
+  },
+  "mediterranean": {
+    "label": "Mediterranean",
+    "wall": "TINT_render", "wall_color": "#f0ebe0", "base": "Facade_Stone", "storey_h": 3.9,
+    "roof": "hip", "roof_mat": "Roof_Terracotta", "pitch_deg": 24, "eaves": 0.6,
+    "window": "shuttered", "glazing": 0.25, "trim_color": "#2f5d50",
+    "canopy": "arcade", "arcade": true
+  }
+}

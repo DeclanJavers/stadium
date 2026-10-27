@@ -1,0 +1,167 @@
+[
+  {
+    "asset": "hedge",
+    "score": 50,
+    "pass": false,
+    "summary": "Convincing leaf texture on the faces, but it reads as a leaf-skinned box levitating on a few sticks over a mulch decal.",
+    "critique": "Proportions are roughly right for a clipped field-hedge module (about 2 m long, 1.5-1.7 m high, 1 m deep), and the dense small-leaf albedo with occasional yellow-green and dark hollows reads as privet or beech at mid distance. The problems are construction. (1) The foliage mass stops 15-25 cm above the ground with a hard, flat underside, and the gap is filled by four or five thin vertical sticks, so it looks like a box on legs. A real clipped hedge is thinner and leggier at the base but is continuous to the soil: the woody stems are dense (many per metre, crossing and leaning) and the foliage skirt tapers down to them. (2) The silhouette is a rounded box with near-perfect planar faces and uniform corner radius. Real clipped hedges have a slight batter (wider at the base, about 5-10 degrees), a softly domed top, cut-line irregularities and 10-30 cm new-growth shoots poking out of the top and faces between trims. The few bare twig 'antennae' on top read as wires, not shoots, because they have no leaves. (3) The leaf shell is a single fringe layer: edges show fringe cards, but the faces have no depth, and the dark 'holes' are painted blotches with no parallax or inner branches. (4) The mulch disc under it is a sharp-edged decal with a ragged alpha outline that does not match the hedge footprint, which makes the floating worse. It is fine as a module only if the ends are hidden; as a standalone piece, the end faces are as flat as the sides.",
+    "suggestions": [
+      "Bring the foliage to the ground: extend the shell down to about 5 cm above the soil with a 10-15% inward taper over the bottom 40 cm, and add an inner dark core box (albedo about 0.03-0.05) 15 cm inside the shell so gaps read as depth, not sky or grass. Cost: about 50 triangles.",
+      "Replace the 4-5 sticks with a stem strip: one alpha-tested card ring around the base (4 quads, 512x128 texture of tangled stems and dead leaves), or 20-30 thin 5-sided cylinders per 2 m that lean ±15 degrees and fork. Cost: under 600 triangles.",
+      "Deform the box: batter the sides about 7 degrees, dome the top 5-8 cm, and add low-frequency noise (±3-4 cm) on the faces, so the silhouette is not a perfect rounded cuboid. No extra texture cost; about 400-800 triangles on the shell.",
+      "Add 30-60 leafy shoot cards (2-quad crossed cards, 15-30 cm long, lighter yellow-green albedo about 0.25/0.35/0.12) sticking out of the top and upper faces, in place of the bare twigs. Cost: about 200 triangles and a shared atlas tile.",
+      "Make the face texture work in depth: add a normal map and an AO/cavity channel to the leaf atlas, and use 2 offset shell layers (outer layer alpha-clipped at about 50% coverage) so the faces show leaf clumps with shadowed pockets. Darken the lower 40% of the faces by about 20% to fake the self-shadowing a real hedge has.",
+      "Blend the base into the ground: replace the hard mulch decal with a soft-edged leaf-litter and bare-soil decal that follows the footprint plus 15 cm, with alpha falloff."
+    ],
+    "renderer_notes": "No GI, so the inside of the hedge never goes dark the way a real one does; the inner dark core above compensates for this cheaply."
+  },
+  {
+    "asset": "bin_wheelie",
+    "score": 57,
+    "pass": false,
+    "summary": "Right size, taper and colour, with nice decals, but the moulding is too plain and the front has a strange box bar that a real 240 L bin does not have.",
+    "critique": "Overall dimensions (about 1.07 m high, 0.58 m wide, 0.74 m deep), the taper toward the base, the council sticker, the stencilled house number and the dark-green colour are all believable. The wheel side reads reasonably well: rubber-tyred wheels with grey hubs on an axle, and the lid hinge knuckles. Problems: (1) On the front face, under the lid lip, there is a rectangular box section bar that sticks out about 6-8 cm. On a real 240 L bin the front has only the lid's grip lip, and the thick lifting comb is on the rear (hinge and handle) side, under the handle. As modelled it looks like a second lid. (2) The body is made of flat planes with a recessed rectangle on each face. Real bins have strong moulded vertical ribs at the corners, a pronounced stacking rim about 10 cm below the top, a thick top flange that the lid sits on, and a reinforced bottom with wear skids at the front corners. The silhouette is therefore too clean. (3) The lid is a flat slab with a raised rim. A real lid is slightly domed, has a moulded handle recess at the front and a hinge bar with integral pins along the back. (4) The handle on the hinge side (the bar you tilt it by) is either missing or merged into the lid hinge; the top-right view shows only lid knuckles. (5) Material: uniform semi-gloss with light speckle. Real HDPE bins are matte (roughness about 0.6-0.7) with sun-faded tops, scuffs where the bin is dragged, grime streaks from the lid down, and black rubbing on the lower front corners.",
+    "suggestions": [
+      "Remove the box bar from the front. Move a proper lifting comb to the rear: a 40 mm-deep, full-width lip with 4-6 vertical web ribs, sitting under a separate tubular handle (about 30 mm diameter, running the full width between the hinge bosses). Cost: about 300 triangles.",
+      "Add moulded features: chamfered vertical corner ribs (3-4 cm), a 2 cm stacking ledge about 10 cm below the rim all round, a top flange, and front-corner foot skids. Bevel every edge by 5-8 mm so it catches light. Cost: about 600-900 triangles in total.",
+      "Reshape the lid: 1-2 cm dome, a 12 cm-wide front grip recess, a rear hinge bar with three knuckles, and a slight overhang on all sides. About 300 triangles.",
+      "Material: roughness 0.65, albedo about (0.05, 0.12, 0.07). Add a sun-fade gradient on the lid (lighter, desaturated), grime streaks running down from the lid lip, scuff marks and black rubber marks on the lower front corners and the rear base, and a faint residue drip line under the lid on the front. 1k texture.",
+      "Give the wheels tread blocks and a visible axle end-cap; they are close to the camera whenever the bin is tilted."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "seat.bucket_fixed.std",
+    "score": 56,
+    "pass": false,
+    "summary": "Credible ergonomic shell with rear ribs, seat-number plaque and drain holes, but a CG-smooth salmon plastic on an unusual tall single pedestal.",
+    "critique": "The shell shape (dished pan, tall contoured back, slight front roll) is right for a modern fixed bucket seat, and the seat number, small drain holes, back ribs and the bolted base plate are good touches. Issues: (1) Mounting: a single round pedestal on a square concrete pad reads like a bar stool. Fixed stadium seats are almost always on a riser-face bracket or a pair of short steel feet/beam brackets bolted to the tread, and they are instanced in rows, so the mount defines the look of the stand more than the shell does. (2) The shell edge is uniformly thin with no rolled or thickened rim; real injection-moulded seats have a 6-10 mm rolled edge that catches a highlight all round. (3) The rear ribs are flat plates that project too far and are a different, much darker red; on a real seat they are moulded in the same colour and are shallower, with a perimeter rib. (4) Colour: the front reads salmon/pink (light, low saturation) while the back reads deep red; stadium polypropylene is a saturated mid red that weathers to a chalky pink on the sun-facing side only. (5) Surface: perfectly smooth with an even soft sheen; there are no mould textures, no grime in the pan, and no UV chalking gradient.",
+    "suggestions": [
+      "Change the mount to the common riser-mounted pattern: a 5 mm steel bracket plate bolted to the riser face plus a short horizontal arm under the seat pan, or two low steel feet on the tread. Keep the pedestal only as a variant. About 150-250 triangles.",
+      "Add a 6-8 mm rolled edge around the entire shell perimeter (one extra edge loop with a half-round profile). About 200 triangles.",
+      "Make the back ribs the same colour as the shell, reduce their depth to 15-20 mm, and add a perimeter rib around the back so they read as moulding rather than added plates.",
+      "Material: albedo about (0.55, 0.06, 0.06) linear for new red, roughness 0.45, with a fine mould-grain normal. Add a per-instance weathering parameter that lightens and desaturates the top surfaces (UV chalking), plus dirt in the pan crease and around the drain holes.",
+      "Add a hinge-free, moulded seat-number boss rather than a floating plate, and put a small manufacturer's mark on the back. Use an atlas so all seat colours share one texture."
+    ],
+    "renderer_notes": "The light, almost pastel front is partly the strong sun on a smooth surface; the colour difference between front and back is in the asset, though."
+  },
+  {
+    "asset": "fire_point",
+    "score": 60,
+    "pass": false,
+    "summary": "A well-dressed fire point: legible UK fire-action signage, foam and CO2 extinguishers with correct bands and horn, hood and plinth, but the board is a thin flat slab with no frame or posts.",
+    "critique": "Good: the Fire Action notice text, the FOAM and CO2 ID signs, the break-glass call point with an inspection tag, the CO2 horn and hose, the foam hose, the cream and black colour bands, the canopy hood and the concrete plinth all make it read immediately. Problems: (1) Construction: the board is a single thin red slab sitting on a tray, with two black battens on the back and nothing else. Real freestanding fire points are a framed GRP or steel cabinet back with a folded perimeter, mounted on two square posts or a welded box stand, with a visible support from behind. As modelled, nothing visibly holds it up. (2) The hood is a thin curved sheet with flat triangular cheeks, sharp edges and no fold returns; it looks like paper. (3) The extinguishers sit on the tray but there are no wall brackets: a real board has J-hook brackets at about 1 m with a strap, and the extinguisher feet are usually off the ground. (4) Materials: the red is uniform and slightly glossy everywhere, with no UV fading on the hood, no dirt splash on the lower tray and plinth, and no grime on the edges. The signs are perfectly clean and flat. (5) The 'FIREPOST' maker's stamp on the back is a nice idea, but it is so faint that it reads as a texture error.",
+    "suggestions": [
+      "Add structure: two 60x60 mm square posts behind the board from the plinth up to two-thirds height, or a welded box frame, plus a 20 mm folded return around the board perimeter so it has thickness. About 200-300 triangles.",
+      "Give the hood folded edges (a 15 mm down-turn on the front and on the cheeks) and a 5 mm thickness. About 100 triangles.",
+      "Mount the extinguishers on J-hook brackets about 0.9-1.0 m above the plinth (bracket plate, hook and strap), and lift their feet 10-20 cm off the tray. Add an optional fire blanket tube or alarm bell as variants.",
+      "Materials: albedo about (0.45, 0.04, 0.03), roughness 0.5 on the board; fade the top of the hood and the upper board by 10-15%. Add dirt splash on the lowest 20 cm, rust at the plinth fixings, and slightly curled, lightly faded sign stickers with a printed border.",
+      "Either make the rear stamp crisp (a raised moulded logo with a normal map) or drop it."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "barrier_arm",
+    "score": 55,
+    "pass": false,
+    "summary": "Correct layout (FAAC-like cabinet, about 4 m boom, fork rest post), but the boom and cabinet are simple boxes with no hinge mechanism, skirt or realistic surface detail.",
+    "critique": "Proportions are reasonable: the cabinet is about 0.35 x 0.3 x 1.1 m, the boom about 4 m, and the rest post with its fork and concrete pad is the right idea. The red and white boom stripes, the beacon, the vent louvres and the door panel help. Problems: (1) The boom is a plain square-section bar of uniform cross-section with sharp edges. Real booms are an extruded aluminium oval or rounded rectangle (about 90 x 50 mm) with a black rubber bottom bumper strip along their length, red reflective film bands with a slight sheen, and an end cap. (2) The pivot is a flat black plate glued to the side of the cabinet. A real barrier has a visible drive shaft hub, a boom-holder clamp with bolts, and the boom sits slightly off the cabinet face with a counterbalance spring housing inside. (3) The cabinet is a sharp-edged box with a flat roof and uniform, unweathered yellow. Real FAAC cabinets have rounded vertical corners, a cast top cover with a slight overhang, a lockable access door with a visible seam and lock, and a mounting base plate with anchor bolts. (4) The rest post leans in the close view and its fork is tiny, so the boom appears to hover over it. (5) There are no warning decals, no hazard tape on the post, and no dirt or wear anywhere.",
+    "suggestions": [
+      "Rebuild the boom as a rounded-rectangle extrusion (8-12 sided, 90 x 50 mm) with a black rubber skirt strip (20 mm) along the bottom and a plastic end cap. Make the red bands retroreflective (higher specular, roughness 0.3). About 200 triangles.",
+      "Model the pivot: a 120 mm round hub, a two-piece boom clamp with 4 bolt heads, and a 20 mm gap between the boom and the cabinet face. About 250 triangles.",
+      "Round the cabinet's vertical edges (r = 25 mm), give the top cover a 15 mm overhang and slight crown, add a door seam, lock barrel, warning and brand stickers, and a galvanised base plate with 4 anchor nuts.",
+      "Fix the rest post so it is vertical, make the fork a proper U-cradle (about 120 mm wide, rubber-lined) that the boom actually rests in, and add red-and-white hazard bands on the post.",
+      "Weathering: road grime on the lower 20 cm of the cabinet and post, slight fading of the yellow, tyre-splash dirt on the pad. 512-1k texture per part."
+    ],
+    "renderer_notes": ""
+  },
+  {
+    "asset": "security_hut",
+    "score": 63,
+    "pass": false,
+    "summary": "The strongest of this batch: a believable steel guard cabin with door, windows, sign, light, CCTV, downpipe, AC unit and a ponding-stained roof, but the cladding and openings are too flat and the stains read as decals.",
+    "critique": "The scale (about 3 x 2.4 x 2.6 m) and the dressing are right for a UK anti-vandal security cabin: a door with vision panel, kick plate and handle, a 'Security Office' notice, a sliding window with interior card, a bulkhead light, a CCTV camera, a black downpipe and gutter, an AC condenser, a roof vent and a hard concrete base. What keeps it in the low 60s: (1) The walls are flat panels with faint vertical streaks. Real cabins use profiled or flat-panel steel with visible vertical joints every 1-1.2 m, corner posts (the ISO-style frame) and a visible base frame with forklift pockets; none of that is modelled. (2) The windows and door are flush-mounted with thin frames. Real ones have 50-80 mm deep reveals, sills, and often steel security shutters or mesh. The interior is a flat card with no parallax. (3) The roof ponding rings and leaves are clearly decals: perfect thin outline rings and orange dots of uniform size spread evenly. (4) The roof edge trim is a uniform dark band with no gutter outlet detail at the downpipe. (5) The walls are uniformly clean off-white; real cabins show rust bleeding from fixings, dirt splash at the base and green algae on the north side.",
+    "suggestions": [
+      "Add structure: 100 mm square corner posts, a 150 mm base rail with two forklift pockets per long side, and vertical panel joints or a shallow trapezoidal profile (25 mm deep) on the walls. About 400-800 triangles.",
+      "Recess the windows and door by 60 mm with sills (30 mm projection), add optional steel shutter housings above windows, and use an interior-mapping or parallax cube for the room behind the glass (one 512 texture shared across all cabins).",
+      "Replace the ponding decals with a soft-edged dirt and moisture mask (gradient, not an outline ring) and cluster the leaves in the low corners and along the upstand, in two or three sizes and colours.",
+      "Weathering: rust streaks from wall fixings and the door hinges, dirt splash on the lowest 30 cm, algae on one face, slight chalking of the white. Roughness 0.55 on painted steel, 0.85 on the roof membrane.",
+      "Add the gutter outlet and a downpipe shoe at the ground, plus a cable conduit or armoured cable entering the base."
+    ],
+    "renderer_notes": "No GI, so the interior behind the glass and the underside of the eaves look a little flat; this is not the asset's fault."
+  },
+  {
+    "asset": "oil_drum",
+    "score": 60,
+    "pass": false,
+    "summary": "Correct 205 L proportions with swaged hoops, chimes, bungs and believable labels, but the rust is an even spray of identical halo-edged spots and the lid is mirror-glossy.",
+    "critique": "Dimensions (about 585 mm diameter, 880 mm high), the two rolling hoops, the top and bottom chimes, the two bungs on the lid, the WASTE OIL stencil with a Class 3 diamond and the paper hydraulic-oil label are all correct and help it read as the real thing. Problems: (1) Rust distribution: the spots are spread evenly over the whole shell, mostly on flat areas, each with the same white chipped-paint halo, so it reads as a procedural noise mask. Real drums rust first on the chimes, on the crests of the rolling hoops, around the bungs, in the dents, and in a band at the bottom where water sits; flat mid-panels mostly keep their paint, with scratches. (2) The chime rims are uniformly orange-brown all the way round, with vertical blue paint stripes crossing them; it looks like a texture seam, not wear. (3) The lid is very glossy and reflects the sky like a mirror; painted drum tops are dull, dusty and often hold puddle stains or oil. (4) The body has vertical streaks but no dents: real used drums almost always have a dent or two and slightly out-of-round chimes. (5) The hoops are fine, but the shell between them is perfectly cylindrical with no shallow corrugation.",
+    "suggestions": [
+      "Drive the rust mask from geometry: curvature/edge masks on the chimes and hoop crests, a bottom-band gradient (lowest 8 cm), a ring around each bung, and a few drips running down from the top chime. Cut the flat-panel spots by about 70% and vary their size and edge (no uniform white halo). Same 1k texture budget.",
+      "Make the chimes mostly paint-coloured with rust on the outer lip only, and remove the vertical blue stripes that cross them.",
+      "Lid: roughness 0.6-0.7, add a dust layer and a dark oil ring stain around the large bung, and a puddle-shaped watermark.",
+      "Add 1-2 vertex-deformed dents (depth 1-3 cm) per variant, a slightly oval top chime, and a very shallow corrugation (2-3 mm) between the hoops. No extra triangles if the shell already has 24+ segments and 10+ rings.",
+      "Expose 3-4 colour and label variants through per-instance parameters so a yard of drums does not repeat."
+    ],
+    "renderer_notes": "The mirror-like lid is partly the sky reflection with no SSR or occlusion, but the roughness is too low regardless."
+  },
+  {
+    "asset": "training_premier:buildings",
+    "score": 34,
+    "pass": false,
+    "summary": "Main building is a flat-shaded box with a timber-colour texture, dark rectangle windows and a dark entrance cube with a pixel-font 'UNITED': blocky and toy-like.",
+    "critique": "Up close the main building fails the realism bar. (1) The facade is one flat plane with a fine vertical-board texture in a uniform orange-tan; there are no cladding joints, no storey bands, no parapet coping, no soffit, no downpipes, no plant on the roof and no plinth or DPC line. (2) The windows are flat dark-blue rectangles with thin brown frames, equally spaced on a grid, with no reveals, no sills, no glass reflection and no interior. The 'blinds' are flat cream rectangles at different heights, which read as missing glass. (3) The entrance block is a dark slate box with a cyan stripe and a bitmap-style 'UNITED' with stair-stepped letter edges, which reads like a placeholder. The entrance has no canopy, no glazed doors, no signage plinth, no lighting, and the steps are a flat slab. A Premier League training centre is architect-designed: big glazing, a cantilevered entrance canopy, mixed cladding (timber, zinc, glass) and landscaped approach. (4) The indoor hall in the pitch view is a long grey box with vertical stripes, which is plausible, but flat. (5) Scale is ambiguous: the window grid suggests three storeys of about 3.3 m, which is fine, but nothing gives human-scale cues (doors, handrails, bollards, signs).",
+    "suggestions": [
+      "Recess every window by 150-200 mm with a sill and head, use a glass material (roughness 0.05, metallic 0, a reflection probe or sky cubemap) with an interior-mapping cube texture (offices, gym, changing rooms) instead of flat dark panels. Delete the flat cream blind rectangles, or make them real blinds behind the glass.",
+      "Break the facade: storey bands or floor-edge expression every 3.5 m, cladding panel joints, a 300 mm parapet with metal coping, and a contrasting plinth. Mix two or three cladding materials per elevation (vertical timber with real board grooves in a normal map, dark zinc, curtain-wall glazing).",
+      "Redesign the entrance: full-height curtain wall with mullions, a 3-4 m cantilevered canopy, glass sliding doors, a raised club crest and lettering in proper extruded type (a vector font, not a pixel font), downlights, steps with handrails and a ramp.",
+      "Add roof plant (AHUs, louvred screens, solar panels) and rainwater goods. Add weathering streaks under sills and copings.",
+      "Give the indoor hall a profiled metal cladding normal map, roof-light strips, roller-shutter doors and fire exits so it is not a featureless box."
+    ],
+    "renderer_notes": "Flat ambient and no GI make the facades look flatter than they would, but the geometry and textures are the main issue."
+  },
+  {
+    "asset": "training_premier:car park & vehicles",
+    "score": 52,
+    "pass": false,
+    "summary": "A convincing car park plan with solar canopies, planted islands, bay markings and varied cars with UK plates, but the cars are low-detail and the canopy structure is simplistic.",
+    "critique": "This is the most believable part of the site. Bays, white lines, a solar carport, planted islands with shrubs, lamp columns, varied car models and colours, and UK-format number plates (yellow rear, white front) give a convincing at-a-glance impression. Problems: (1) Cars are mid-poly with soft, melted-looking bodies, very dark tinted glass with no interior, and wheels set into the bodies with little arch gap. Several models have nearly identical silhouettes, and paint is uniform with no reflections of the canopy or sky. (2) The solar canopy is a flat slab of panels on round posts with one main beam; real carports have purlins, angled panels (5-10 degrees), visible panel framing, cable trays and lighting underneath, and posts on concrete plinths with protective bollards. The panel cells have no frame or gap between modules and read as a tiled texture. (3) The parking surface is a uniform dark asphalt with crisp lines; real car parks have oil stains in bays, tyre wear, faded lines, drainage gullies and kerb edging details. (4) The island shrubs are generic blobs sitting on bare mulch rectangles, and the birch trees are very pale and sparse.",
+    "suggestions": [
+      "Cars: add an interior silhouette (seats, headrests, steering wheel: about 300 triangles) behind lighter glass, deepen the wheel arches with dark arch liners, add panel-gap lines and door handles in the normal map, and raise paint clear-coat (roughness 0.15-0.25) so the canopy and sky reflect. Vary ride height and wheel designs per instance.",
+      "Canopy: tilt the panel plane 5-8 degrees, split it into modules with 20 mm gaps and aluminium frames, add purlins and a visible underside with cable tray and LED fittings, and put each post on a 400 mm concrete plinth with a yellow-and-black impact guard.",
+      "Asphalt: add an oil-stain and tyre-wear decal per bay (from an atlas of 4-6), fade 20-40% of the lines, add gully grates every 20-30 m, and add EV-bay green markings and disabled-bay symbols.",
+      "Planting: vary shrub species and sizes, and replace the bare mulch rectangles with bark mulch with edging and some ground cover."
+    ],
+    "renderer_notes": "No SSR or reflection probes, so car paint and glass look flatter than they should; the missing interiors are an asset issue."
+  },
+  {
+    "asset": "training_premier:pitches & training kit",
+    "score": 50,
+    "pass": false,
+    "summary": "Well-laid-out pitches with stripes, markings, goals, mannequins, poles, cones, shelters, floodlights and a filming tower, but the turf is a clean flat colour field with no wear, and the props are tiny and sparse.",
+    "critique": "The composition sells a professional training ground: multiple full-size pitches, alternating mowing stripes, white markings, goals, a mannequin wall, slalom poles, cones, a team shelter, a filming scaffold tower, ball-stop fences and floodlight columns. Problems: (1) The turf is a flat bright green with blocky mowing stripes that change shade abruptly; up close there is no blade texture, no colour variation, and no wear in the goalmouths, the centre circle or the usual coaching zones. Real elite training pitches are immaculate but still show worn goalmouths, sand-dressed patches and divots. (2) The lines are thin and slightly aliased with no paint texture or overspray. (3) Floodlight columns are very thin with tiny heads for 15-20 m columns. (4) The pitch surrounds are the same green as the pitch, without run-off variation, paths, or the artificial-turf aprons common at Premier League sites. (5) The training kit is small and scattered; it reads as a few yellow sticks rather than a set-up session (cone grids, ladders, mini goals, ball bags).",
+    "suggestions": [
+      "Turf: add a tiling grass-blade normal and a large-scale colour variation mask; soften the stripe transitions (10-20 cm blend) and make the stripe shade depend on view direction, as real mowing stripes do. Add wear decals (goalmouths, a 6-yard box, centre circle) with sand-coloured patches.",
+      "Lines: 120 mm wide with a slightly broken painted edge and a subtle brightness falloff; antialias by using a distance-field texture rather than geometry.",
+      "Floodlights: make the column taper from about 250 mm at the base to 120 mm at the top, add a head frame with 4-6 LED luminaires, an access door and a base plinth.",
+      "Dress at least one pitch as an active session: a cone grid, an agility ladder, two mini goals, a ball cart, bibs on the ground, and mannequins in a wall, laid out by a coaching template.",
+      "Vary the surrounds: an artificial-turf or tarmac apron along the touchlines, a path between pitches and a slightly duller grass outside the playing area."
+    ],
+    "renderer_notes": "The flat, saturated green is partly the sky ambient with no GI; the missing wear and blade detail is the asset."
+  },
+  {
+    "asset": "training_premier:landscape & site layout",
+    "score": 48,
+    "pass": false,
+    "summary": "A coherent site plan (river, perimeter fence, access road, car park, buildings, pitches, hedgerow field pattern) but the countryside is flat colour tiles with thin line hedges and lollipop trees.",
+    "critique": "The plan is logical and recognisably English: a secure perimeter, an access road off a lane, a car park by the main building, pitches grouped near the indoor hall, a river with tree belts, and a patchwork of fields with hedgerows beyond. Problems: (1) The surrounding fields are flat-shaded rectangles of uniform colour, with no crop rows, tramlines, field-edge margins or gates; the distant patchwork is a regular grid that reads as a texture. (2) Hedgerows are thin dark strips with no height variation, gaps, or hedgerow trees at natural spacing; real English hedgerows are 1.5-3 m wide with standard oaks every 30-80 m. (3) The trees are scattered singly and evenly, with no woodland blocks, copses, or shelterbelts, which an elite training ground typically has to screen the pitches. (4) The ground inside the site is uniform bright green, with no paths, landscaped mounds, or planting beds between buildings. (5) The river is a uniform blue-grey strip with hard edges and no bank vegetation or reeds.",
+    "suggestions": [
+      "Fields: give each field a tiled crop or pasture texture with direction (rows, tramlines), a 2-4 m uncultivated margin, and gateways; break the regular grid with irregular field shapes along lanes and the river.",
+      "Hedgerows: build them from the same hedge module (batter, gaps every 50-150 m, height 1.5-3 m) with hedgerow oaks placed every 30-80 m and occasional dead or ivy-clad trees.",
+      "Add a 20-40 m tree shelterbelt and earth bunds around the training pitches for privacy, plus a couple of woodland copses (0.5-2 ha) in the surrounding farmland.",
+      "Landscape inside the site: footpaths between the building and pitches, mown amenity grass in a different shade, planting beds and specimen trees at the entrance, and a maintenance yard with sheds and machinery.",
+      "River: soften the banks with a vegetated edge decal, add reeds and alder or willow along the banks, and vary the width."
+    ],
+    "renderer_notes": "The distance fog and flat sky ambient mute everything; field textures would read better with a colour-graded horizon."
+  }
+]

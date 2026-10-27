@@ -9,7 +9,9 @@ from .scene import descendants
 from .sockets import PREFIX
 
 
-def export_glb(root, path):
+def export_glb(root, path, **gltf):
+    """Export root and its descendants. Extra keyword arguments go to the glTF exporter (e.g.
+    export_image_format="JPEG"); without them every asset exports as it always has."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="DESELECT")
@@ -17,7 +19,7 @@ def export_glb(root, path):
         o.select_set(True)
     bpy.context.view_layer.objects.active = root
     bpy.ops.export_scene.gltf(filepath=str(path), export_format="GLB", use_selection=True,
-                              export_extras=True, export_yup=True, export_apply=True)
+                              export_extras=True, export_yup=True, export_apply=True, **gltf)
     return path
 
 

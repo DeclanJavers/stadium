@@ -1,0 +1,177 @@
+[
+  {
+    "asset": "agility_ladder",
+    "score": 15,
+    "pass": false,
+    "summary": "Not visible in any of the four views; the ladder is completely swallowed by the grass, so as presented it fails.",
+    "critique": "All four panels, including the close detail from above, show only turf. Nothing of the ladder reads at all: no yellow rungs, no straps, no shadow. The generator (kit/assets/props_training.py agility_ladder) builds rungs about 8 mm tall and webbing 1.6 mm thick sitting at z=0, so the viewer's grass canopy (clearly several centimetres of blade/shell height in these renders) covers it entirely. A real speed ladder on a grass training pitch is always clearly visible: it is laid on top of the sward and presses the blades flat, and its bright yellow rungs are the whole point. As delivered, a player or camera would never see this asset, so it cannot pass, whatever the modelling quality underneath. I could not judge shape, material or wear because none of it is on screen. The score reflects what is visible; the geometry itself may be fine.",
+    "suggestions": [
+      "Make the ladder sit on the visible grass surface: either give the asset a 'ground decal / flatten grass' footprint the turf shader respects (a mask that shortens blades under the ladder's bounding box plus about 30 mm margin), or lift the whole asset so the rungs sit at the grass canopy height (about 20 to 30 mm) with straps draped down to it. The flatten mask is the more believable option and costs nothing per instance.",
+      "Re-render the review sheet with the ladder on a flattened patch or a short-mown surface, and frame the close view at about 1.5 m from a 45 degree angle so the rungs, sleeves and strap buckles fill the frame. Without that the asset cannot be judged.",
+      "Once visible, check that the rungs read as moulded plastic: a slightly crowned top, a satin roughness of about 0.45, and a saturated yellow albedo (about sRGB 225,190,40). Add faint scuffs and grass staining on the underside edges, and give the straps a darker, slightly frayed nylon-webbing albedo (about sRGB 40,40,40) so they contrast with the rungs.",
+      "Keep it cheap: 9 rungs at about 60 triangles each plus 2 strap ribbons is under 1k triangles; reuse one 256 px webbing texture and one rung material for every instance."
+    ],
+    "renderer_notes": "The invisibility is mainly an interaction between the very thin asset and the viewer's tall grass shell rendering, but the kit must handle that interaction (a grass-flatten mask or lift), because every training pitch in the kit uses that turf."
+  },
+  {
+    "asset": "site_cabin",
+    "score": 55,
+    "pass": false,
+    "summary": "Correctly proportioned 32 ft anti-vandal cabin with good furniture (roller shutters, steps, signs, corner castings) but flat, clean surfaces and a bare roof and end wall keep it clearly CG.",
+    "critique": "The proportions are right: roughly 9.75 x 3 x 2.5 m, corrugated vertical cladding, dark grey ISO-style corner posts and castings, a ribbed roof. The steel steps with a grated tread and handrails, the door canopy, the rolled-up shutter boxes over the windows, the SITE OFFICE and first-aid signs and the 'ASHDOWN MODULAR' fleet lettering are all good, specific touches. What gives it away: (1) The cladding is a uniform off-white with only a few hairline dark streaks; real hire cabins have rust bleed from fixings and corners, dirt tide marks along the bottom 300 mm, green algae on the shaded side, and patch-painted repairs. (2) The cladding corrugation reads only as faint lines because the profile is shallow and evenly lit; real box-profile cladding throws strong vertical shadow bands. (3) The roof is a smooth ribbed sheet with a vague dark smudge; real cabin roofs have a raised perimeter upstand, lifting eyes or forklift pockets, standing water stains and moss in the corners. (4) The plain end wall (bottom-left view) has only a small vent and a hook-up box: no electrical hook-up socket housing, no water inlet or waste outlet, no cable. (5) The cabin sits straight on the grass on tiny corner feet; real units sit on timber sleepers or concrete pads about 150 to 300 mm high, which leaves a dark gap underneath. (6) The windows have no visible security mesh or bars behind the shutter boxes, and the glass is flat black with no reflection or interior. (7) Forklift pockets in the base rail, which every UK hire cabin has, are missing.",
+    "suggestions": [
+      "Raise the unit on 4 to 6 timber sleepers or concrete blocks (each about 0.2 x 0.25 x 1.2 m, 12 triangles) so there is a shadowed 200 mm void under the base frame; add two forklift pockets (about 350 x 120 mm dark recesses) in each long base rail.",
+      "Deepen the box-profile cladding: trapezoidal ribs about 35 mm deep at a 200 to 250 mm pitch, modelled as geometry on the long sides (about 2k triangles) or as a strong normal and AO map, so the vertical shadow banding reads at 20 m.",
+      "Add a 512 px grime mask shared by all cabins: rust runs from every corner casting and fixing line, a dirty splash band along the bottom 300 mm, green algae biased to one end, and slightly yellowed paint (albedo about sRGB 215,215,205 rather than near-white).",
+      "Detail the roof: a 60 mm perimeter upstand, four lifting eyes at the corners, ponding stains and dark moss in the corners, and a slight sag in the middle.",
+      "Add services to one end: a 32 A hook-up socket box, a 50 mm waste pipe down to the ground, and an armoured cable snaking off across the grass (a cheap tube spline).",
+      "Give the windows a faint interior (a blind or a shelf silhouette on an inset quad) plus a security mesh or grille texture with an alpha mask, and set the glass roughness to about 0.05 with some reflection so it is not flat black."
+    ],
+    "renderer_notes": "The flat look of the cladding is partly the lack of GI and AO in the viewer; a baked AO map on the asset would compensate."
+  },
+  {
+    "asset": "dumper",
+    "score": 44,
+    "pass": false,
+    "summary": "Reads as a small site dumper, but it is too spindly and toy-like for a 6 t front-tip machine: undersized skip, open ladder chassis, flat plate mudguards.",
+    "critique": "Against the Thwaites 6 t reference (L 4475, W 2240, H 3430), this machine looks like a 1 to 2 t dumper scaled up. (1) Skip: a real 6 t front-tip skip is huge, wider than the wheel track, overhanging the front wheels and holding about 3.3 m3 heaped. Here the skip is narrow, sits high on a thin frame and is only about the width of the body. It has a few external ribs, but it lacks the heavy rolled top lip, the thick tipping-ram brackets and a visible hydraulic ram underneath. (2) Chassis: a real dumper is a compact articulated machine with a deep cast or fabricated front chassis, a central articulation joint and steering rams. Here the middle is an open black ladder frame with daylight through it, which makes it look like a kit car. (3) Rear mudguards: big flat half-disc plates that extend below the axle line almost to the ground. Real guards are curved arches following the tyre at about 50 to 100 mm clearance. The front wheels have no guards at all. (4) Tyres: the lugged pattern is good, but at about 1.0 m diameter they are undersized; a 6 t dumper runs 405/70-20 or 500/60-22.5 tyres, about 1.1 to 1.3 m in diameter and wide. (5) ROPS: a thin single hoop with a beacon. Real fold-down ROPS have twin rectangular uprights, about 100 mm section, with a fold hinge and pin. (6) The engine cover is a soft bulbous yellow shell with no grilles, access panels, hinges or exhaust; the rear has a reflective chevron panel and number plate, which is a good touch. (7) Materials: the yellow is a fair JCB/Thwaites tone and there is some mud on the skip interior, but the exterior is very clean. There is no mud caked on the tyres, wheel arches and chassis underside, which is where a real dumper is filthiest. The lighting looks fine, so this is a geometry and proportion problem, not a renderer one.",
+    "suggestions": [
+      "Rescale the skip to the 6 t class: about 2.2 m wide at the lip (wider than the 1.9 m track), about 1.0 m deep, overhanging the front axle by about 0.6 m. Add a 60 mm rolled rim, two tipping pivots at the front and a visible tipping ram (a 90 mm cylinder with a chrome rod) between the chassis and the skip underside. That is about 1.5k triangles.",
+      "Close the chassis: replace the open ladder frame with a solid front chassis box (about 1.4 x 0.9 x 0.5 m), an articulation joint with two steering rams, and a rear engine frame. Keep daylight only under the axles.",
+      "Replace the flat-plate rear guards with curved arches about 150 mm deep that follow the tyre radius with about 80 mm clearance and stop at hub height, and add matching smaller front guards or a front tyre gap under the skip.",
+      "Increase the tyre size to about 1.2 m diameter x 0.45 m wide with a chevron traction tread; tyres are the most important cue for the machine's weight.",
+      "Replace the single-tube ROPS with a twin-post rectangular-section fold-down frame including the hinge knuckle, locking pin and seat-belt anchor.",
+      "Add engine-cover detail: louvred grilles, an exhaust stack, hinge lines and a fuel cap. Add a mud and dust mask concentrated on the tyres, guards, chassis underside and the skip lip (dried clay albedo about sRGB 120,100,80)."
+    ]
+  },
+  {
+    "asset": "tower_crane",
+    "score": 50,
+    "pass": false,
+    "summary": "Correct flat-top crane silhouette with a lattice mast and jib, cab, counter-jib ballast and trolley, but thin, clean, low-detail members and a toy-like base and hook.",
+    "critique": "At distance it reads as a modern flat-top (Liebherr EC-B-style) crane: a square lattice mast with internal ladder, a cab and slewing unit at the head, a triangular lattice jib, a counter-jib with grey concrete ballast blocks and hoist machinery, a trolley and a hook line. The proportions of mast height to jib length are plausible. What breaks it: (1) All lattice members are the same thin square section; real mast chords are heavy (about 150 to 200 mm angle or tube) and much thicker than the lacing, which gives the mast its visual weight. Here the mast reads like a 3D-printed model. (2) The base is a flat light-grey square slab with no foundation anchors, fixing angles, ballast or compound fence; real cranes on a site have a cast base about 6 x 6 m with fixing angles projecting, often a Heras-fenced compound and a mast ladder entry gate. (3) The hook block is a tiny dot on a single thin rope; real flat-tops reeve 2 or 4 falls through a large yellow-and-black hook block (about 0.8 m tall) with a visible swivel hook. (4) There are no walkways or handrails along the jib bottom chords and counter-jib, no anemometer and aviation light at the head (the small mast on the counter-jib end may be one), and no hoist rope runs along the jib to the trolley. (5) There is no material variation: uniform yellow with no grime, rust at joints, weathered ballast or manufacturer lettering on the jib or counter-jib (a big distinctive cue on real cranes). The close detail view is still too far away to show the head; the cab looks like a plain yellow box with one window.",
+    "suggestions": [
+      "Make the mast and jib chords visibly heavier than the lacing: mast chords about 160 mm and lacing about 60 to 80 mm, jib bottom chords about 120 mm. Render the lattice with real geometry at LOD0 (about 8 to 12k triangles for the whole crane) and switch to alpha-tested lattice cards beyond about 150 m.",
+      "Build a proper base: a 6 x 6 x 1 m concrete block with four fixing-angle stubs, a Heras-fenced compound (reuse the kit fence panel) and a lockable gate at the mast ladder.",
+      "Replace the hook with a reeved block: two to four parallel falls from the trolley sheaves to a yellow/black-striped hook block (about 0.6 x 0.3 x 0.8 m) with a swivel hook and safety latch, about 400 triangles.",
+      "Add jib and counter-jib walkways with handrail lines, hoist and trolley ropes along the jib, an anemometer and a red aviation light at the head and jib tip, and a cab with a wraparound tinted glazing, a door and an access platform.",
+      "Add manufacturer-style lettering panels along the counter-jib (generic, not a real brand), weathered concrete ballast blocks with chips and lifting loops, and a grime and rust mask concentrated on joints and the slewing ring."
+    ],
+    "renderer_notes": "The farmland ground texture and long shadows are fine; the crane's thinness is in the asset, not the renderer. The close detail view should be framed on the slewing head and cab rather than the whole jib."
+  },
+  {
+    "asset": "rebounder",
+    "score": 58,
+    "pass": false,
+    "summary": "Convincing powder-coated rebounder frame with a bungee-tensioned net and a fold-out A-frame leg; a clean, plausible model that still looks CG in the net and the finish.",
+    "critique": "This is one of the better props. The frame is a round-section tube with radiused corners and a believable powder-coat with slight wear. The net is held by elastic loops and hooks around the perimeter, there are angle-adjust clamps on the side and a rear support leg with ground feet. The size (about 1.2 to 1.5 m square) fits the reference. Shortfalls: (1) The net is a perfectly regular grid of thin white cords with only slight waviness and no knots. Real rebounder nets are thick (4 to 6 mm) braided polyethylene with knotted junctions, sag slightly in the middle under tension, and are usually black or two-tone with a target square. (2) The bungee attachments are small dark hooks; on a real rebounder the elastic cords are a visible colour (often black or orange) and stretched at an angle, making the tensioning obvious. (3) The rear leg is a single thin tube that comes to an almost knife-edge point at the ground; real ones have a U-shaped rear leg with rubber feet or ground pegs. (4) The finish is uniformly clean: no mud on the feet, no scuffs on the bottom rail where balls strike, no grass stains. (5) The side angle-adjust clamps look like flat plates rather than the round knobbed ratchet brackets typical of these products.",
+    "suggestions": [
+      "Model the net cords at about 5 mm diameter with small knot nodes at every junction (instanced 8-triangle bumps), add a 2 to 4 cm belly sag in the centre, and darken the albedo to an off-white or black braided texture (a 128 px tileable braid normal map).",
+      "Make the elastic tension cords visible: 6 mm coloured bungee loops between the net edge and the frame, stretched at about 30 degrees, with a few looking slightly slack.",
+      "Change the rear support to a U-frame (two legs joined by a ground bar) with rubber end caps or flat pegging plates.",
+      "Replace the plate-like angle brackets with round ratchet hubs about 60 mm in diameter with a knurled knob.",
+      "Add wear: matte scuffs and chipped powder-coat on the bottom rail and corners, mud and grass on the feet, and a slight sun-fade on the top rail. Keep the whole asset under about 2k triangles."
+    ]
+  },
+  {
+    "asset": "floodlight_fixture.led",
+    "score": 57,
+    "pass": false,
+    "summary": "Credible modern LED sports floodlight: a lens-array face, a top visor, a finned rear heatsink, a driver box and a trunnion yoke with an angle scale. Reads right, but the face lacks a glass cover and the housing is too boxy and clean.",
+    "critique": "The kit has the right parts: a rectangular LED module with about 100 individual lens optics in sub-panels, a front visor, rear heat-sink fins, a remote driver box with a cable gland, and a U-yoke trunnion with an angle-index disc. Weaknesses: (1) The front is a matt black board with flat white rings and yellow squares. Real fixtures (e.g. ArenaVision LED, Musco, Philips) have a tempered-glass front cover over the optics, which gives a sheet reflection, and the lenses are clear TIR collimators that sparkle and show the LED behind them. Here they read as printed circles. (2) The heat-sink fins only cover the middle of the back and look like thin flat cards; real LED floods have deep die-cast fins across the whole rear (40 to 60 mm deep) or a lattice of pin fins. (3) The housing is a crisp box with no die-cast draft, no chamfered edges, no screws around the bezel and no gasket line. (4) The visor is a single flat sheet with a separate rod at the back; real glare shields are formed aluminium with side cheeks and are bolted on with visible brackets. (5) The finish is a uniform clean mid-grey; there is no dust, bird soiling or streaking from the fins. (6) The yoke is a plain thin strap; real yokes are thick (10 to 15 mm) galvanised steel with bolt slots for the cross-arm.",
+    "suggestions": [
+      "Add a front glass pane (a single quad, roughness about 0.05, metallic 0, F0 about 0.04) set 5 mm in front of the optics, so it picks up a sky reflection; change the lens material to a clear, slightly emissive collimator with a small bright LED dot behind it and a 64 px normal-mapped facet texture.",
+      "Extend the heat-sink fins across the full rear and down the sides, about 50 mm deep at about 12 mm pitch, as geometry (about 2k triangles) or as one parallax and normal-mapped block.",
+      "Bevel all housing edges (3 to 5 mm) and add a bezel with screws and a dark gasket line around the glass.",
+      "Rebuild the visor as a formed shield with side cheeks and two bolted brackets; thicken the yoke to about 12 mm with slotted mounting holes at the base.",
+      "Add a weathering mask: dust in fin roots, a dark streak below each fin and a faint top-surface grime; use a slightly warm powder-coat grey (about sRGB 110,112,115, roughness 0.55)."
+    ]
+  },
+  {
+    "asset": "bin_container",
+    "score": 50,
+    "pass": false,
+    "summary": "Recognisable 1100 L galvanised Eurobin with a green domed lid, castors with brakes and a lifting trunnion, but the galvanising reads as camouflage and the body lacks the ribbed steel construction and push handles.",
+    "critique": "The proportions are close to an 1100 L Eurobin (about 1.37 m high, 1.26 m wide, 1.0 m deep) with the tapered body, domed plastic lid with hand grips and hinge, side lifting trunnions, a 4-castor base with red brake pedals and a 'B12' stencil. Problems: (1) The galvanised texture is a large-blob grey and white camouflage pattern. Real galvanising shows fine crystalline spangle and an overall dull mid-grey with darker oxidation streaks, not big mottled patches; at this scale it reads as a printed camo wrap. (2) The upper band is much darker than the lower body, which looks like a texture mismatch rather than intended wear. (3) The body is too smooth: real Eurobins have pressed horizontal stiffening ribs, a rolled top rim that the lid sits on, folded corners, and a thick base frame. The few thin ribs here barely read. (4) No push handles: every Eurobin has tubular push handles on both ends. (5) The lid is good but too clean and glossy; real HDPE lids are matte, faded and scratched, often with council lettering. (6) The castors are fine, but there is no chassis plate or drain plug at the base. (7) There is no grime: no bin juice stains running from the lid, no dents, no stickers.",
+    "suggestions": [
+      "Replace the galvanised albedo with a fine-spangle tiling texture (256 px, grey around sRGB 150,152,155, low contrast), roughness about 0.45 with variation to 0.7 in oxidised streaks, and a single dirt and streak mask running down from the lid rim.",
+      "Model 3 horizontal pressed ribs (about 25 mm proud) around the body plus a rolled top rim about 40 mm in diameter, and chamfer the vertical corners (about 1k extra triangles).",
+      "Add tubular push handles (about 30 mm tube) on both short ends, and a drain plug and base chassis plate.",
+      "Matte the lid (roughness about 0.65), add faint scratches and a sun-faded top, and an optional council or club stencil decal.",
+      "Add 2 to 3 random dents via a vertex-offset or normal-map variant, and a few stickers (a 'NO HOT ASH' label and a collection-day label) as one 256 px decal atlas shared by all bins."
+    ],
+    "renderer_notes": "The darker upper band may be partly the lack of sky occlusion under the lid overhang; check the albedo itself before changing it."
+  },
+  {
+    "asset": "site_board",
+    "score": 50,
+    "pass": false,
+    "summary": "A believable construction hoarding sign with good, legible content, but thin flat geometry, plain timber posts and only light weathering.",
+    "critique": "The graphic design is the strongest element: a red header 'NEW TRAINING FACILITY / UNDER CONSTRUCTION', a contractor logo, a role and company list, phone numbers, PPE pictograms, 'ALL VISITORS MUST REPORT TO SITE OFFICE' and a green 'SAFETY FIRST' footer with grass-splash grime. It matches real UK site boards, and the text is crisp. The posts are timber with a dug-in soil mound, and there are rear timber rails. Weaknesses: (1) The board is paper-thin with no edge thickness or frame; real signs are 3 to 4 mm aluminium composite (Dibond) on a timber or steel frame, often with a folded edge, and the board edge should read. (2) The back (top-right view) is a smooth grey sheet with blotchy grime and two thin rails; real backs show fixing bolts, cross-bracing and a raw aluminium or white finish. (3) The posts are thin (about 75 mm) square timber with uniform texture; site boards typically use 100 x 100 mm treated (green-tinted) timber or steel posts concreted in, with visible bolts through the board. (4) There are no bolt heads on the front and no edge fade, sun bleaching or scratches. (5) The red header is a slightly pink red with gradient-like grime at the top edge; the white is pure and evenly lit, which looks digital.",
+    "suggestions": [
+      "Give the board a 4 mm thickness with a 20 mm aluminium edge trim, and add 6 to 8 dome-headed bolts on the face where it meets the posts (each about 12 triangles).",
+      "Use 100 x 100 mm posts with a green-tinged treated-timber albedo (about sRGB 120,110,80) with end-grain caps and a diagonal rear brace on each post.",
+      "Model the rear frame properly: two horizontal rails and one diagonal brace bolted to the posts, and give the back a raw mill-finish aluminium texture with a printed manufacturer label.",
+      "Add subtle print weathering: a slight UV fade of the red toward a more orange-red (about sRGB 205,60,55 rather than pink), bird droppings on the top edge, and a grime drip from each bolt. Keep the white slightly off-white (about sRGB 235,235,228).",
+      "Keep cost low: the whole sign is under 500 triangles plus one 1024 x 512 decal; vary the content via a texture atlas of several different projects."
+    ]
+  },
+  {
+    "asset": "training_sunday_league:buildings",
+    "score": 40,
+    "pass": false,
+    "summary": "Basic massing: two brick barrel-vault halls, a flat-roofed grey block and small cabins. Readable at aerial distance but plain and boxy, and the sheet never shows a main-building close-up.",
+    "critique": "The sheet description promises a main-building view, but the four panels are two aerials, a car park and a pitch. The only near look at a building is the brick barrel-vault hall on the left edge of the pitch view. That hall reads as an aircraft hangar: a full-height brick end gable under a curved metal roof, with a single high strip window and no doors, canopy, signage, downpipes or plinth. Brick at that scale is a uniform reddish texture with no mortar relief or variation. From the aerial, the main clubhouse is a plain grey flat-roofed box with a darker grey forecourt pad, with no rooflights, plant, parapet or entrance canopy. The two small pitched-roof buildings on the brown plots read as barns or temporary structures. For a Sunday League ground you would expect a single-storey clubhouse or changing pavilion (brick or timber, pitched roof, a veranda facing the pitch, a team-colour fascia and a tea-hut hatch), maybe a container store; two large indoor barrel halls are out of character for this tier. At distance the buildings do not look wrong in massing, but there is nothing to pass a close look.",
+    "suggestions": [
+      "Add a main-building close-up to the review sheet (the sheet currently shows the aerial twice); the buildings cannot be judged above this level without it.",
+      "For the Sunday League preset, swap the barrel halls for a single-storey changing pavilion: about 20 x 8 m, brick plinth with timber or render upper wall, a 30-degree tiled pitched roof, a 2 m deep veranda along the pitch side on timber posts, home and away changing-room doors, a referee room door and a serving hatch. That is about 4 to 6k triangles.",
+      "On every building add an entrance canopy, gutters and downpipes, a 300 mm brick plinth, window reveals with 100 mm depth, and roof edge trims; use a brick texture with mortar normal and per-brick colour variation at a 65 mm course height.",
+      "Give the barrel halls doors (roller shutter plus a personnel door), roof translucent rooflight strips, and a gable cladding change, so they read as indoor training barns and not hangars."
+    ]
+  },
+  {
+    "asset": "training_sunday_league:car park & vehicles",
+    "score": 46,
+    "pass": false,
+    "summary": "Reasonable car models with plates and alloy wheels, but the car park is a blank pale slab with no bay markings, kerbs or drainage, and the cars are too glossy and too uniformly new for a Sunday League ground.",
+    "critique": "Cars: the hatchbacks, saloons and SUVs have believable proportions, glazing, alloys, plates and lamp detail, and parking alignment varies a little. They read about 55 on their own, but they lack reflections (renderer) and dirt, and nearly every one is a new premium SUV or saloon, which is wrong for a grassroots club (expect older Fiestas, Corsas, Golfs, a work van, a minibus). Car park surface: a uniform light grey with a fine speckle. There are no white bay lines, no disabled or parent bays, no aisle arrows, no tyre-wear darkening in the aisles, no oil stains under bays, no drainage gullies, and no kerb or edging where it meets the grass; the edge is a hard cut line. The black bollards help but are evenly spaced and pristine. The overall look is a car-park placeholder with nice cars dropped on it. At grassroots level the surface would more likely be worn tarmac or loose gravel/scalpings with potholes and puddles.",
+    "suggestions": [
+      "Paint bays: white 100 mm lines at 2.4 x 4.8 m bays with a 6 m aisle, worn and broken in the wheel tracks (a single tiled decal strip), plus 1 to 2 disabled bays near the clubhouse.",
+      "Darken and vary the surface: base asphalt about sRGB 70,70,72 (current is far too light), darker tyre tracks along aisles, oil drips under every bay centre, patch repairs and 2 to 3 potholes with puddles. For the Sunday League preset, offer a gravel/scalpings variant with rutting.",
+      "Add 125 mm precast kerbs or timber edging boards along the grass boundary, with gullies every 15 to 20 m.",
+      "Rebalance the vehicle mix for the tier: mostly older small hatchbacks, a couple of estates and a white van, with a dirt mask and lower clearcoat gloss (roughness about 0.35 rather than mirror), some missing hubcaps and one or two cars with roof boxes or bike racks.",
+      "Give the car park furniture: a barrier or open gate, a 'Members Parking' sign, a bin and a light column; reuse existing kit props."
+    ],
+    "renderer_notes": "Cars look slightly plasticky partly because there are no screen-space reflections or environment reflections on the glass and paint."
+  },
+  {
+    "asset": "training_sunday_league:pitches & training kit",
+    "score": 52,
+    "pass": false,
+    "summary": "The most convincing part: worn goalmouths and centre circle, overlapping marked pitches, goals, mannequins, poles, cones, dugouts and a rebounder. But the turf is too uniform and the kit is sparse and evenly lit.",
+    "critique": "Good: the centre-circle and goalmouth wear patches are the right idea, the overlapping dashed small-sided markings inside the main pitch are very authentic for a training ground, there are yellow mannequin walls, slalom poles, cones, footballs, a rebounder and two clear-roof dugouts. Problems: (1) The turf is one flat green with large-scale mottling and no mowing stripes; even grassroots pitches are cut in stripes, and the wear patches are pale beige diamonds rather than bare compacted soil with clumps and divots. (2) The touchline and box markings are a bright, crisp, perfectly even white; real painted lines are slightly broken, faded and uneven in width. (3) The goals are pristine white with no nets visible at that distance and no weights or pegs. (4) The dugouts are a vivid lime green that reads as plastic toy colour. (5) The kit layout is too tidy and sparse: a few poles in a line, a single mannequin wall. Real sessions have bibs, ball bags, water bottles, cone clusters and kit bags. (6) There are no floodlight columns, ball-stop netting behind the goals or perimeter rail, which most grassroots grounds have.",
+    "suggestions": [
+      "Add a mowing-stripe layer (6 to 8 m wide alternating stripes via a lightness shift of about 6% in the turf shader) and make wear patches darker and browner (bare soil about sRGB 110,90,65) with a broken edge and divot clumps, concentrated in the goalmouths and along the channel the referee runs.",
+      "Weather the line paint: 5 to 10% opacity breakup, slight width wobble (95 to 115 mm) and a faint green tint where grass has grown through.",
+      "Tone the dugouts to a realistic club colour or grey frame with a slightly scratched polycarbonate roof; add goal nets, back stanchions and ground anchors or sandbags on the goals.",
+      "Scatter session clutter as cheap props: bib piles, ball bags, water bottles, kit bags by the dugouts and cone grids in groups of 4 to 16 (cones are about 20 triangles each).",
+      "Add ball-stop netting about 4 to 6 m high behind each goal on 76 mm posts, and a perimeter post-and-rail on the spectator side."
+    ],
+    "renderer_notes": "The flat lighting on the turf is partly the lack of GI; the long-distance haze makes far pitches look washed out."
+  },
+  {
+    "asset": "training_sunday_league:landscape & site layout",
+    "score": 42,
+    "pass": false,
+    "summary": "A coherent fenced site with an access road, pitches, buildings, car park and scattered trees in a farmland patchwork, but the layout is a rigid grid of rectangles with bare-earth and grey pads, and the landscape reads as tiles.",
+    "critique": "Positives: the perimeter fence line, the spine access road with a junction, mixed tree species (oak, birch, a conifer) and a hedge belt around the pitches, and the patchwork farmland are all sensible. Problems: (1) Every element is an axis-aligned rectangle laid edge to edge: grey hard-standing pads, a light pinkish speckled pad (unclear what it is: car park overflow, a sand pitch?) and two large brown bare-earth plots with buildings on them, which read as construction sites, not a Sunday League ground. (2) There are no footpaths linking the car park, clubhouse and pitches; the access road just stops at pads. (3) Tree planting is sparse and evenly spaced as single specimens, without hedgerows with standards along the boundary, clumps or scrub, so the boundary is a bare thin fence on grass. (4) Ground transitions are hard edges; no verges, worn desire lines, gravel edges or tyre marks onto grass. (5) The farmland is flat-coloured tiles with thin dark field boundaries that look like painted lines rather than hedges, and they continue to the horizon with identical scale and no villages, roads, woods or terrain undulation. (6) The site sits on perfectly flat ground; real grounds have slight cut-and-fill embankments around the pitch platforms.",
+    "suggestions": [
+      "Break the grid: offset and rotate secondary elements a few degrees, bend the access road with one or two curves, and remove or reassign the bare-earth plots and the speckled pad for the Sunday League preset (a single clubhouse plus car park plus 2 to 3 grass pitches is typical).",
+      "Add footpaths (1.5 to 2 m tarmac or gravel) between car park, clubhouse and each pitch, and worn grass desire lines where paths are missing.",
+      "Replace the bare fence boundary with a hawthorn hedge (1.5 to 2.5 m, about 1 m wide; the kit already has hedge geometry) with oak or ash standards every 20 to 40 m, and plant tree clumps of 3 to 7 at the corners.",
+      "Soften edges: verges of rough longer grass (darker, slightly yellow) beside fences and roads, and gentle 1:3 embankments around the pitch platforms (a few hundred triangles of terrain skirt).",
+      "Make the farmland read: render field boundaries as dark-green hedge strips 2 to 3 m wide with the occasional tree, vary field sizes, add a woodland block and a village or farm cluster within 2 km, and add slight terrain undulation and atmospheric perspective."
+    ],
+    "renderer_notes": "The hazy horizon and flat lighting are the renderer; the tile-like farmland is an asset/layout issue."
+  }
+]

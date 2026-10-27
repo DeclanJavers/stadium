@@ -29,11 +29,23 @@ CENTRE_CLEARANCE = 18.0   # lowest edge of a centre-hung screen over the pitch (
 
 def panel(name, w, h, col, mat_led, depth=0.9):
     """Screen model centred at the origin, face towards +Y."""
-    body = painted("Screen_Body", "#45484d", 0.5)
+    # a mid-grey cabinet (its back is what the far end of the ground sees), dark bezels
+    body = painted("Screen_Body", "#6b6f75", 0.5)
+    bezel = painted("Board_Housing", "#34363a", 0.5)
     parts = [rounded_box("case", (w + 0.5, depth, h + 0.5), (0, -depth / 2, 0), 0.05, col, body)]
     # service rails across the back every metre: the back reads as a cabinet, not a hole
     for z in np.arange(-h / 2 + 0.5, h / 2, 1.0):
         parts.append(rounded_box("rail", (w, 0.08, 0.12), (0, -depth - 0.04, z), 0.01, col, galvanised()))
+    # vertical stiffeners behind, a bezel standing proud of the face, and a rain hood on top
+    for x in (-(w / 2 - 0.3), -w / 4, w / 4, w / 2 - 0.3):
+        parts.append(rounded_box("stiffener", (0.14, 0.08, h), (x, -depth - 0.12, 0), 0.01, col, galvanised()))
+    ew, eh = w / 2 + 0.25, h / 2 + 0.25
+    for lo, hi in (((-ew, 0.0, h / 2), (ew, 0.12, eh)), ((-ew, 0.0, -eh), (ew, 0.12, -h / 2)),
+                   ((-ew, 0.0, -h / 2), (-w / 2, 0.12, h / 2)), ((w / 2, 0.0, -h / 2), (ew, 0.12, h / 2)),
+                   ((-ew - 0.1, -depth - 0.1, eh), (ew + 0.1, 0.4, eh + 0.12))):
+        size = tuple(b - a for a, b in zip(lo, hi))
+        centre = tuple((a + b) / 2 for a, b in zip(lo, hi))
+        parts.append(rounded_box("bezel", size, centre, 0.01, col, bezel))
     V = [(-w / 2, 0.01, -h / 2), (w / 2, 0.01, -h / 2), (w / 2, 0.01, h / 2), (-w / 2, 0.01, h / 2)]
     # wound to face +Y; seen from the front, local -X is the viewer's right, so u runs from +X to -X
     face = mesh_object("face", V, [(0, 3, 2, 1)], col, materials=[mat_led],
@@ -178,7 +190,7 @@ def build(cfg, pitch, stands, night, col=None):
         # real centre-hung boards clear the pitch by ~25 m; never higher than just under the roof edge
         cz = min(z_edge - 6.0 - h / 2, 25.0 + h / 2)
         half = w / 2 + 0.3
-        body = painted("Screen_Body", "#45484d", 0.5)
+        body = painted("Screen_Body", "#6b6f75", 0.5)
         for z in (cz - h / 2 - 0.4, cz + h / 2 + 0.4):          # close the cube top and bottom
             cap = rounded_box("ScreenCap", (2 * half + 0.6, 2 * half + 0.6, 0.6), (0, 0, z), 0.05, col, body)
             cap.parent = root

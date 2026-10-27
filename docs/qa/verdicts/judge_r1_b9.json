@@ -1,0 +1,196 @@
+[
+  {
+    "asset": "bin_litter",
+    "score": 30,
+    "pass": false,
+    "summary": "A black cylinder with a bulbous cap and a gold band. It has no litter opening, so it reads as a bollard or grit bin, not a Jubilee-style litter bin.",
+    "critique": "The biggest failure is that the bin has no way to put litter in. A Glasdon Jubilee 110 (H 1158, W 598, D 553) has one or two hooded apertures, about 250 x 180 mm, cut into the domed top with a deep dark recess. This model has a solid dome, so its function cannot be read. The proportions are roughly right, about 1.15 m tall and a little under 0.6 m across, but the dome is a squashed mushroom cap that overhangs the body. The real dome sits flush and has a moulded rim. The gold band is a flat strip that zig-zags with the low cylinder segment count. It looks jagged in the close-up, and the cap silhouette is visibly faceted. The body is a perfect cylinder with no draft taper, no vertical moulded panels or fluting, and no door or lock on the front. The 'LITTER' decal is tiny. Its letters sit on separate dark rectangles, so it reads as a texture error rather than a printed label. The material is a uniform, mid-gloss black plastic with no grime, scuffs, faded UV chalkiness or sticker residue. The base ring is a plain torus that floats slightly proud of the body.",
+    "suggestions": [
+      "Cut one or two hooded litter apertures into the dome: a recessed opening about 260 x 180 mm with a 30 mm overhanging hood lip and an interior of near-black albedo (about 0.02). Add a dark inner liner rim visible through it. This costs about 150-250 extra triangles.",
+      "Raise the radial segment count to 32 (or use smooth normals with 24) so that the band and dome rim stop zig-zagging. Make the gold band a slightly raised ring, 3-4 mm proud and 40 mm tall, with its own UV, not a projected strip.",
+      "Reshape the dome so it sits flush on the body with a 15-20 mm moulded lip. Give the body a 2-3% taper towards the base and 8-12 shallow vertical flutes or panel lines, using a normal map or about 200 triangles.",
+      "Add a front service door outline with a triangular-key lock boss about 1/3 of the way down, plus a small council crest or 'LITTER' plate decal, 150 x 40 mm, printed in gold directly on the body with no black boxes.",
+      "Material: black plastic albedo at about 0.03-0.04 and roughness 0.45-0.6, varying with a grime mask. Add dirt and splash up the bottom 200 mm, finger smudges around the aperture, and light UV fading on the dome. Put a small amount of litter or a bag edge peeking from the aperture on some instances.",
+      "Ground the base with a slightly darker anchoring plinth or bolt heads instead of a floating torus."
+    ],
+    "renderer_notes": "The close-up shows strong per-face shading on the dome. This is partly flat normals or a low segment count, which is an asset problem, not the renderer."
+  },
+  {
+    "asset": "corner_flag.grassroots",
+    "score": 42,
+    "pass": false,
+    "summary": "The pole height and banding are plausible, but the flag is a crumpled, jagged, faceted sheet that looks shredded rather than like limp cloth.",
+    "critique": "The pole is about 1.5 m with red and white bands, which matches the Laws of the Game (a post of at least 1.5 m). However, it is a perfectly straight, uniformly glossy cylinder. It has no flexible spring-base section and no dark ground socket or collar, only a tiny black dot. Grassroots corner flags are usually hollow PVC poles, often yellow or plain, with a spring base or spike. The flag is the weak part. It is chequered orange and white, which is not a common corner-flag pattern (solid red, yellow or orange is more usual). It is also modelled as a crumpled, low-resolution mesh with sawtooth edges and hard faceted folds. It looks torn and crushed rather than hanging or fluttering. The checker squares are oversized and the colours are flat with no fabric weave or translucency. The flag also seems to wrap partly around the pole, with no visible sleeve or attachment. Its size looks smaller than the usual 450-500 mm. There is no fading, mud splash or wear on the pole base, which a grassroots flag would always have.",
+    "suggestions": [
+      "Rebuild the flag as a regular 10 x 10 grid (about 200 triangles), 450 x 450 mm, with a sleeve or tube along the pole edge. Drape it with a smooth function (sag plus a gentle sine flutter) instead of random vertex noise, and use smooth normals. Use a two-sided material with slight transmission or back-lighting.",
+      "Change the default flag to a solid colour (red, yellow or orange) and offer checker as a variant. Add a subtle fabric normal and a hemmed edge strip, and fade the colour toward the free edge.",
+      "Add a spring or flex section, about 120 mm long and 40 mm diameter in black rubber, at the base. Add a ground socket ring (80 mm diameter, dark plastic), and put mud staining on the bottom 200 mm of the pole.",
+      "Pole: PVC roughness about 0.35. Make the bands slightly scuffed, with the white tending to off-white (albedo about 0.7). For grassroots, give the pole a tiny lean of 1-3 degrees on some instances."
+    ],
+    "renderer_notes": "Flat lawn and sky are fine. The faceted, crumpled look is from the mesh and normals, not the lighting."
+  },
+  {
+    "asset": "goal.box",
+    "score": 52,
+    "pass": false,
+    "summary": "The goal frame proportions are believable and the netting is reasonable, but the box frame has no top rear bar or ground frame. The net is chunky white hex mesh that floats and sags unrealistically.",
+    "critique": "The front frame reads correctly at 7.32 x 2.44 m and the post diameter is plausible, about 100 mm. However, the posts are uniform glossy white tubes with no welded corner joints, no ground sockets and no back stanchion connections. The 'box' design is incomplete. A real box goal has a rectangular back frame: two rear uprights, a rear top bar, and ground bars running back from each post and across the back, often with a depth of about 2 m. Here there are only two thin rear posts. The roof net sags in a large wave between the crossbar and the rear posts with no top bar supporting it. The base of the net curves onto the turf with no ground frame or pegs. In the opposite three-quarter view the rear post looks detached from the frame. The hex mesh cords are too thick and too bright for their distance, so the net reads as a white plastic grid rather than nylon cord. Real goal nets use about a 120 mm mesh and roughly 3-4 mm cord, which turns grey and translucent at range. The net has no droop or slack at the bottom and no tie-on points to the frame. Nothing is weathered: there are no grass stains on the post bases and no paint chips.",
+    "suggestions": [
+      "Complete the box frame. Add a rear top bar between the rear uprights at about 2.0 m, plus ground bars (40-50 mm diameter, white or galvanised) along both sides and across the back at a depth of 2.0 m. Join them with simple elbow or T-joint geometry, about 400-600 extra triangles in total.",
+      "Re-drape the net onto the frame. The roof should be taut between the crossbar and the rear top bar with only 50-100 mm of sag. The sides and back should hang to the ground bars with a slight belly, and the bottom should be tied to the ground bars.",
+      "Make the net cords thinner (alpha-tested texture: 3 mm cord on a 120 mm mesh). Use mipmapped alpha-to-coverage and a slightly off-white or greyish albedo (about 0.6) so the net does not glow at distance.",
+      "Add net clips or hooks every 300-400 mm along the posts and crossbar using a normal map or tiny instanced geometry. Add ground sockets or anchor weights at the base of each post.",
+      "Posts: paint roughness 0.3-0.4, with scuffs and grass staining on the lower 300 mm and slight dulling on the crossbar top."
+    ],
+    "renderer_notes": "The shadows show the net silhouette nicely. The hex net reads well up close, but it aliases at mid-range, which is partly a renderer issue (lack of MSAA or alpha-to-coverage on thin geometry)."
+  },
+  {
+    "asset": "pallet_stack",
+    "score": 40,
+    "pass": false,
+    "summary": "A bulk bag and a block pallet on wooden pallets. Both are clean, featureless primitives: the bag looks like a white plastic cushion and the blocks look like uniform grey boxes.",
+    "critique": "The scale and composition are right: a 1 t FIBC bulk bag and a pallet of concrete blocks on EUR-size pallets. But both loads lack the cues that make them readable. The bulk bag is a smooth, glossy, pillowy cube with rounded edges. A real FIBC is woven polypropylene with visible weave texture, vertical seam lines down each corner, a slumped and bulging body, and slight wrinkles near the top. Its four lifting loops are flat fabric webbing 70-100 mm wide, usually the same colour or with a coloured stripe. Here the loops are thin metal-wire hoops that read as steel handles. There is no top filling spout, label or print. The concrete blocks are perfectly identical grey boxes with flat albedo. They have no aggregate texture, no edge chipping and no variation in shade from block to block. They are not shrink-wrapped or strapped: builders' merchant blocks come wrapped in clear plastic film, or at least strapped with two polypropylene bands. The wooden pallets are dark brown and simplistic, with no top-board gaps, no stringer blocks visible on all sides and no grain or weathering. They look about right in size (1200 x 1000). The two stacks are placed perfectly square to one another.",
+    "suggestions": [
+      "Bulk bag: replace the smooth material with woven PP (roughness 0.65-0.75, albedo about 0.75, tiny weave normal map). Add vertical corner seam lines and slump the body: bulge the sides about 60-80 mm outward and let the top sag or wrinkle. Replace the wire hoops with flat strap loops (80 mm wide, 5 mm thick) about 250 mm tall at each corner. Add a printed safety label decal (about 300 x 200 mm) on one side and a closed top spout or tied flap.",
+      "Concrete blocks: add per-block albedo variation (0.45-0.55), an aggregate or pore normal map, and slight random offsets (5-10 mm). Chip one or two corners. Add two PP banding straps over the top and down the sides, about 15 mm wide and blue or black, or a semi-transparent shrink-wrap shell with a crinkle normal.",
+      "Pallets: show the standard pattern (5-7 top boards with 20-30 mm gaps, 9 blocks, 3 bottom boards). Lighten the wood to weathered softwood (albedo about 0.45 with a grey-brown tint) with grain texture, and add a stamped 'EPAL' or heat-treatment mark decal on one block.",
+      "Composition: rotate one stack by 3-8 degrees and offset it so they are not perfectly aligned. Optionally add a broken pallet board or spilt sand around the base of the bulk bag."
+    ],
+    "renderer_notes": "Without GI the white bag looks very flat under ambient light. This exaggerates the plastic look, but the shape and material are still at fault."
+  },
+  {
+    "asset": "scrap_car",
+    "score": 30,
+    "pass": false,
+    "summary": "An abandoned hatchback on blocks. The concept is good, but the body is a soft blob in salmon-pink paint, with flat black windows, cube mirrors and smudge-like headlights.",
+    "critique": "The idea (no wheels, propped on breeze blocks, rust patches, a number plate) is right for a dumped car. The execution reads as a toy. The body is a rounded, inflated shell with no crisp crease lines: the bonnet edge, door shut lines and wing-to-bumper split are almost invisible or drawn as faint dark lines. In the side view the proportions are a little off. The cabin looks short and the front overhang long, and the waistline sits high relative to the glasshouse. A Mk8 Golf is 4284 long and 1456 high on a 2636 wheelbase, and that wheelbase-to-length ratio is not obvious here. The windows are opaque flat black planes with no glass reflection, no visible interior, and no broken or missing panes, which a scrap car would usually have. The mirrors are orange cubes. The headlights are irregular blue-orange smudges rather than lens units, and the rear lights are small flat red rectangles. The paint colour is a uniform salmon pink. Real faded red paint goes chalky orange-pink on the horizontal surfaces but keeps a deeper red on the verticals, and the rust here is just scattered spots. There are no hubs, brake discs or suspension visible in the empty wheel arches, which instead show the open underside. The blocks under the car are pale grey boxes that look too small and are not under the hub points. There are no wipers, door handles or grille mesh.",
+    "suggestions": [
+      "Re-sculpt the body shell with defined feature lines: a sharp shoulder line along the sides, a bonnet shut line, A, B and C pillars and a separate bumper volume. Use about 3-5k triangles with 2-3 mm bevels. Check the side profile against the 4284 x 1456 / 2636 wheelbase reference.",
+      "Glass: use a dark, glossy glass material (albedo about 0.02, roughness 0.05, specular) over a simple interior (seat silhouettes and a dash slab). Make one or two panes smashed: add a missing or cracked side window decal with an empty frame.",
+      "Wheel arches: add brake discs and hubs (a 280 mm disc, 60 mm thick, rusty albedo) on visible stub axles, each sitting on a stacked pair of 440 x 215 x 100 mm concrete blocks under the hub. Add inner arch liners in black plastic.",
+      "Replace the cube mirrors with proper mirror housings on arms. Model headlight units as recessed lenses with chrome reflector normals (one smashed). Add a grille mesh, door handles and wiper arms.",
+      "Paint: use a deeper base red (linear albedo about 0.35, 0.05, 0.04) with oxidation fading to pink-orange on the roof and bonnet. Add rust streaks running down from seams, edges of wheel arches and door bottoms, panel dents (normal map), and moss or dirt on the sills. Add a 'POLICE AWARE' or abandonment sticker decal on the windscreen as a storytelling touch."
+    ],
+    "renderer_notes": "Lighting is fine. The flatness of the windows is partly due to the lack of screen-space or environment reflections, but even an environment probe would not save an opaque black material."
+  },
+  {
+    "asset": "site_board",
+    "score": 33,
+    "pass": false,
+    "summary": "A flat white panel on two square timber posts. The board is offset off-centre from its posts with no fixings, and the face graphic uses a blurry pixel font.",
+    "critique": "A construction hoarding sign (about 2400 x 1200 mm on 100 x 100 posts) is the right concept and roughly the right size. But the board overhangs one post by about 15% of its width and stops short of the other, so it is visibly asymmetric. In views 1 and 4 there is a gap, and the board looks like it is floating in front of or behind the posts. There are no bolts, coach screws, brackets or rails holding it on. The panel is a plain white slab about 20 mm thick with no edge trim. Its back is completely blank: real boards show composite or dibond backs with aluminium rails or timber battens. The posts are plain tan boxes with no grain, chamfers or ground disturbance, and they are too thin for a board this size. The front graphic has a sensible layout (red header, white middle band, green safety footer), but the text is a low-resolution pixel or bitmap font that blurs and wobbles. A real contractor board uses clean sans-serif type with a logo. The panel has no dirt, weather streaks, faded red, or cable ties.",
+    "suggestions": [
+      "Centre the board on its posts and fix it to their faces. Model the board as a 3 mm aluminium composite panel (or 18 mm ply) on two horizontal timber battens, 50 x 25 mm, which also show on the back. Add 4-6 visible coach-screw heads on the front.",
+      "Make the posts 100 x 100 mm treated softwood (green-brown, albedo about 0.3) with 5 mm chamfers and a grain normal. Sink them into a slightly churned soil patch or gravel decal at the base.",
+      "Re-author the face texture at 1024 x 512 or higher, using a clean bold sans-serif (rasterised from vector into an atlas). Add a contractor logo block, a safety-sign row (hard hat, hi-vis and boots pictograms) and a contact phone number line.",
+      "Weathering: dirt splash on the bottom 150 mm of the board and posts, slight rain streaks down from the top edge, faded red header (desaturate by about 15%), and roughness 0.4-0.5 on the face. Optionally add a few cable ties and a ripped corner."
+    ],
+    "renderer_notes": "The pale, flat look of the blank back in view 1 is partly due to the lack of GI, but there is genuinely no geometry there."
+  },
+  {
+    "asset": "tree_willow",
+    "score": 50,
+    "pass": false,
+    "summary": "The weeping curtain silhouette reads correctly at a distance, but the tree is a squat, dense dome with almost no visible trunk or limb structure. Up close the strands are flat, ragged cards.",
+    "critique": "The main signature, long pendulous curtains hanging to near the ground in pale yellow-green, is present, and from range it reads as a willow. Proportions are the problem. A mature weeping willow (Salix babylonica) is 12-20 m tall with a 15-20 m spread and a clear, massive, often leaning trunk (0.5-0.9 m diameter) that splits into a few heavy scaffold limbs, which arch up and then drop. This model is a low, uniform dome, wider than it is tall. It has no rising crown, the trunk is barely visible in the shadowed interior, and there are no thick arching limbs. The branch structure that does show through the top is a tangle of thin twigs of similar thickness, without the gradient from heavy limbs to fine whips. The curtain is too uniform: every strand is about the same length, and the hem is an even ring at constant height. A real willow has layered curtains with varied lengths, gaps where the trunk and limbs show, and an asymmetric crown. In the close-up the strands are flat ragged card strips with jagged sawtooth leaf edges, and some cards are visible edge-on. The leaf colour is fairly uniform with little light-to-dark variation between the outer sunlit strands and the inner shaded ones.",
+    "suggestions": [
+      "Restructure the skeleton. Use a thick trunk (0.6-0.8 m diameter, 2-3 m to first fork, slight lean) splitting into 3-5 scaffold limbs that rise to 10-14 m and arch outwards. Only then attach the pendulous whips. This raises the crown to a rounded peak and makes the overall height about 0.8-1x the spread instead of 0.5x.",
+      "Vary the curtains. Make whip length random from 2 to 8 m, so the hem is ragged, and leave a few gaps (rotate clusters) so the trunk and a dark interior show through. Allow some strands to reach the ground on one side.",
+      "Strands: use narrow alpha cards (0.15-0.25 m wide) with a proper willow leaf texture (long lanceolate leaves, 80-120 mm). Use crossed cards or slight twist so no card is seen edge-on, and set normals pointing outward from the crown for soft shading. Keep the total to about 8-15k triangles for the LOD0 tree.",
+      "Colour: give the outer sunlit leaves a lighter yellow-green (sRGB about 160, 185, 90) and the inner leaves a darker olive. Add AO-based darkening toward the trunk and give the bark a deep-furrowed grey-brown texture."
+    ],
+    "renderer_notes": "The bright, flat lawn and the lack of GI make the interior look less dark than it would in reality. Foliage subsurface or translucency would help, but the structure problems are the asset's."
+  },
+  {
+    "asset": "stadium_sunday_league:seating_stands",
+    "score": 45,
+    "pass": false,
+    "summary": "There is a small covered stand with seats and a long low seated stand on the far side. They are plausible as a non-league ground but simplified, with odd scaffolding on top.",
+    "critique": "Judged from the overall sheet only, since no detail sheet was given. The main stand has terraced rows of grey and green seats behind green steel columns, which is the right idiom for a step 5-7 ground. The seats read as a repeated grey texture strip rather than individual tip-up seats, and there are no aisles, handrails, stair nosings or rear wall detail. The end of the stand shows a large plain triangular wedge, a raked concrete or earth slope with no side screen. On the far side a long, low dark seated stand runs most of the touchline. A Sunday-league ground would more likely have nothing there, or a short 3-5 bay 'Arena' type modular stand. It also looks like a single dark box with seats rather than a structure. A scaffold camera gantry sits on top of the main stand roof, floating above it with no access ladder; it looks like a misplaced asset.",
+    "suggestions": [
+      "Model seats individually, or as an instanced 3-seat module (about 60 triangles per seat), at 450-500 mm pitch and 800 mm row depth. Add aisles every 10-14 seats, with handrails and a front balustrade.",
+      "Close the stand ends with a clad side screen (corrugated sheet or clear polycarbonate) instead of an open triangular wedge.",
+      "For the sunday_league layout, cut the far-side stand down to one or two short modular 'Arena'-style units (about 6-10 m each, 3-5 rows). Otherwise, keep that side open with just a rail.",
+      "Remove or relocate the scaffold gantry on the roof. If it stays, put it on the ground behind the stand with an access ladder and handrails."
+    ],
+    "renderer_notes": "Inside the stand everything is lit by flat ambient light, so the seating rows lose depth. Contact shadows or AO would help."
+  },
+  {
+    "asset": "stadium_sunday_league:roof",
+    "score": 42,
+    "pass": false,
+    "summary": "A simple green steel truss with a flat sheet roof over the main stand and a corrugated pitched roof on the clubhouse. The construction reads, but both are thin and plain.",
+    "critique": "The main stand roof has a green lattice truss edge and slender columns, which is a good non-league cue. But the roof sheet is a flat slab with no corrugation profile, no fascia or gutter, and no downpipes, and the underside is a uniform grey. The truss reads as a texture or very thin geometry. The clubhouse roof is a pale green-grey pitched corrugated sheet with a ridge, which reads reasonably from above, though it is very clean, with no lichen, rust or staining and no flashing at the verges. The small floodlight-style frame on the clubhouse roof is not explained.",
+    "suggestions": [
+      "Give the stand roof a trapezoidal corrugation normal (about 200 mm pitch), a 150 mm fascia with a gutter along the front edge, and two or three downpipes on the columns.",
+      "Make the truss real geometry: two chords of 100 mm box section with diagonals, about 300 triangles per bay. Add column base plates and bolts.",
+      "Weather both roofs. Add rust streaks from fixings, darker drip lines along the leading edge, moss and lichen patches on the clubhouse roof, and roughness variation (0.4-0.7)."
+    ]
+  },
+  {
+    "asset": "stadium_sunday_league:exterior",
+    "score": 35,
+    "pass": false,
+    "summary": "A single brick clubhouse block with a pitched roof. The setting is a huge rounded-rectangle concrete apron that no real community ground would have.",
+    "critique": "The clubhouse is a brick box with a pitched roof, a recessed door or window and a small canopy. The type is right, but it lacks windows with frames, fascia, guttering, signage, a club crest or name, and the clutter typical of a grassroots ground (benches, bins, kit hampers). The brick texture is barely readable at this range. The main problem is the site: the whole pitch sits in a vast uniform light-grey concrete apron with large-radius rounded corners, extending 30-60 m beyond the touchlines. A Sunday-league or step 6-7 ground is grass to a perimeter post-and-rail fence, with a narrow hardstanding path and a small gravel car park. The apron reads as an unfinished level-design placeholder. There is no perimeter fence, turnstile, entrance gate or car park.",
+    "suggestions": [
+      "Replace the concrete apron with grass. Add a 1.2-1.5 m wide concrete or tarmac hardstanding path behind the pitch-side rail, a 2 m high weld-mesh or palisade perimeter fence, a gated entrance with a small turnstile block, and a gravel or tarmac car park on one side.",
+      "Clubhouse: add uPVC windows with frames (white, 3-4 per long side), a fascia board with the club name, guttering and downpipes, an external light, and a few props (picnic benches, wheelie bins, a kit trolley).",
+      "Make the brick texture read: 215 x 65 mm bricks with mortar normal and albedo variation, plus a darker plinth course and dirt splash near the ground."
+    ],
+    "renderer_notes": "The large flat concrete area blows out in the sun because it has no texture detail. A grime or crack texture would help, but the main issue is layout."
+  },
+  {
+    "asset": "stadium_sunday_league:floodlights",
+    "score": 42,
+    "pass": false,
+    "summary": "Six slender columns with small lamp heads. The layout is plausible for a non-league ground, but they are thin spindles with tiny heads and no detail.",
+    "critique": "The 6-column layout (3 per side) and a height of about 15-18 m are realistic for a step 5-7 ground. However, the columns are uniform-diameter thin cylinders with no taper, base flange or access door, and they read like lamp posts. The heads are small, flat, open frames with 2-4 lamp blocks. Real non-league floodlight heads carry 4-8 large rectangular LED or metal-halide luminaires on a horizontal bracket, angled down at the pitch. They are visibly chunky, about 0.6 x 0.5 m each, and their glass faces catch the light. There is no cable conduit, control box at the base, or ladder or climbing pegs. The columns appear to sit behind the board line without a footing pad.",
+    "suggestions": [
+      "Taper each column from about 400 mm at the base to about 200 mm at the top (octagonal, 8-12 sides). Add a base flange with bolt heads and a hinged access door about 0.5 m above ground.",
+      "Rebuild the head: a horizontal headframe about 2.5 m wide carrying 4-6 luminaires (0.6 x 0.45 x 0.15 m boxes with emissive or glass faces, tilted 15-25 degrees toward the pitch). Add a small control box, 400 x 300 mm, at the head.",
+      "Add a ground-level control cabinet (600 x 400 x 1200 mm, green or grey) at one column per side, plus a concrete footing pad."
+    ]
+  },
+  {
+    "asset": "stadium_sunday_league:pitch_goals_nets",
+    "score": 50,
+    "pass": false,
+    "summary": "Correct markings and believable goals. The worn goalmouths are blotchy camouflage noise and the mowing stripes are over-contrasted and too even.",
+    "critique": "The line markings, centre circle, penalty boxes and arcs are geometrically correct, and the goals with white posts and white nets look plausible. In the close-up view the net mesh reads and the posts have the right thickness. The goals look slightly small or thin against the boards, though that is hard to verify without the detail sheet. The pitch surface is the weak part. The mowing stripes are high-contrast and perfectly regular, with hard edges. A real grassroots pitch has softer, fainter stripes, often one direction only and less uniform. The wear patches are brown-olive noise blobs with hard edges spread evenly across the six-yard box and penalty area, and they look like camouflage. Real goalmouth wear is concentrated in an oval in front of the goal line (bare, muddy, darker and wetter, sometimes with puddles), fading through thin yellowed turf to full grass. There is also a worn line down the centre and in the linesman's channel. The line paint stays crisp and bright across worn mud, when it would be broken and muddy there. There are no divots, sand top-dressing or footprints.",
+    "suggestions": [
+      "Rewrite the wear mask as a smooth falloff. Make an oval about 6 x 10 m centred 3-5 m in front of each goal at full mud, fading over 4-6 m to thin turf. Add a softer channel along the centre of the pitch and the touchline running channels. Use a low-frequency noise to break the edge, not high-frequency speckle.",
+      "Mud material: darker brown (sRGB about 85, 65, 45) with low roughness (0.35-0.5) in the wettest centre. Thin turf in between should be yellowed (desaturated, lighter). Optionally add small puddles with near-zero roughness.",
+      "Reduce stripe contrast to about 6-10% luminance difference and soften the edges, with slight width variation.",
+      "Fade and break the line paint over the mud areas (alpha multiplied by the inverse wear mask times noise).",
+      "Goals: give them a slightly heavier post (100 mm), add net pegs or ground bars, and make sure their scale matches 7.32 x 2.44 m relative to the 18-yard box (16.5 m deep, 40.3 m wide)."
+    ],
+    "renderer_notes": "Distant stripe aliasing and the very bright, flat grass are partly renderer issues (no GI and a uniform sky ambient)."
+  },
+  {
+    "asset": "stadium_sunday_league:dugouts_tunnel",
+    "score": 40,
+    "pass": false,
+    "summary": "Two boxy perspex-sided dugouts with green tops. They read as dugouts, but they are bulky cubes with no seating or structure detail, and there is no tunnel or players' route.",
+    "critique": "The dugouts sit in front of the main stand as two separate boxes with clear side panels and a green roof edge. That is a common grassroots style (curved polycarbonate shelters), but these are straight cubes, about 3 x 2 m, that look like display cases. The polycarbonate reads as matte grey-white with no transparency, so the bench seating inside cannot be seen. There is no curved roof, no frame tubes, no bench, no hard-standing pad and no club colours. They also look short: a typical team shelter is 4-6 m long for 6-10 people. There is no tunnel or fenced walkway from the clubhouse to the pitch. Grassroots grounds usually have at least a section of rail opening or a retractable tunnel.",
+    "suggestions": [
+      "Rebuild each dugout as a curved-front team shelter: a 5 m long aluminium tube frame (50 mm), a curved polycarbonate roof and rear panel (transparent, roughness 0.1, slight tint), and a bench with 6-8 moulded bucket seats inside. Mount it on a 0.15 m concrete pad.",
+      "Make the polycarbonate genuinely translucent (alpha about 0.3 with a specular highlight) so the interior reads. Add a green or club-coloured kick plate and the club name on the roof fascia.",
+      "Add a players' entrance: a gap in the perimeter rail with a short retractable or fixed tunnel (2.5 m tall, 2 m wide, 6-8 m long), or at least a fenced walkway from the clubhouse door."
+    ],
+    "renderer_notes": "Without transparency sorting or refraction the clear panels may look opaque. Check whether the material is meant to be transparent but rendering as opaque."
+  },
+  {
+    "asset": "stadium_sunday_league:boards_screens",
+    "score": 50,
+    "pass": false,
+    "summary": "A clean ring of advertising boards with legible fictional local sponsors. They look tidy and printed, but are too uniform and too complete for a Sunday-league ground.",
+    "critique": "The boards themselves are good. Local-sounding sponsor names (Bridge St Garage, J. Hargreaves & Son, Tidewater, Lumen Sport) are set in readable type with varied colours, which gives believable flavour. However, they form a continuous, perfectly aligned, identical-height wall around the pitch, which is how a professional stadium does it. A grassroots ground has mismatched boards of different heights and ages, often PVC banners zip-tied to a post-and-rail fence, with gaps, sagging, faded print and some boards missing. The boards are flat slabs with no visible frame, legs or support from behind and no thickness detail. The printing is perfectly fresh with no weathering. There are no scoreboards or screens, which is correct for this level.",
+    "suggestions": [
+      "For the sunday_league layout, mount sponsors as PVC banners (2-3 m x 0.8-1 m) zip-tied to a post-and-rail fence (48 mm tube rail at 1.1 m). Add slight sag between ties, cloth-like wrinkles (normal map), and some variety: a few rigid boards on timber legs, a few gaps.",
+      "Vary the heights (0.8-1.2 m), ages and colours. Fade some prints by 20-40%, and add grime along the bottom edge and rust or dirt runs from the fixings.",
+      "Give the rigid boards a visible frame back (aluminium or timber, about 40 mm), legs or kickstands, and a 15-20 mm panel thickness, for about 50 extra triangles per board.",
+      "Optionally add a small manual scoreboard (number tiles) on the clubhouse wall as a period touch."
+    ]
+  }
+]

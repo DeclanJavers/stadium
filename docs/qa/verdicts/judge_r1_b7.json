@@ -1,0 +1,158 @@
+[
+ {"asset": "bike_rack", "score": 40, "pass": false,
+  "summary": "Correct Sheffield-stand idea, but five bare dark-grey tube hoops with no base fixings, finish or wear.",
+  "critique": "This reads as a row of Sheffield stands, and the tube bend radius is reasonable. Everything else is minimal. The hoops look taller than they are wide (roughly 0.6 m wide by 0.9-1.0 m tall in the close view), but a ground-fixed Sheffield stand is 750 x 750 mm, or 1050 mm tall only if root-fixed. The legs end flush in the grass with no base plate, bolts or root collar, so the stands look stuck into the ground rather than installed. The tube looks thinner than 48 mm in the close-up. The material is one flat dark-grey metal with a uniform highlight: no galvanised spangle, no powder-coat sheen, no scuffs where bikes lean, no chips at the feet. Real UK stands nearly always have a feature: black powder coat with a reflective or contrasting tapping band at about 2/3 height, or stainless. The row spacing (about 1 m) is fine.",
+  "suggestions": [
+   "Set the proportions to spec: 750 mm wide between tube centres, 750 mm tall for ground-fixed (or 1050 mm root-fixed with a buried section), tube diameter 48 mm. Keep 12-16 radial segments; at about 400 tris per hoop it is still cheap.",
+   "Add ground-fixed feet: a 150 x 150 x 8 mm steel base plate per leg with 4 bolt heads (about 60 tris each), or a dark concrete collar/patch for root-fixed stands.",
+   "Add a tapping band: a 100 mm white or yellow reflective ring at about 600 mm on each leg, or a horizontal crossbar at 250 mm (the common 'toast-rack' anti-wheel bar). Either breaks the silhouette and is instantly recognisable.",
+   "Material: pick black powder coat (albedo about 0.04, roughness 0.45) or galvanised (albedo about 0.55 grey, roughness 0.5, metallic 1, mottled spangle noise). Add a worn-to-bare-metal mask on the top arc and the inner legs where bikes rub, and rust bleed at the feet. One shared 256 px wear texture covers it.",
+   "Optional variety: a single Sheffield stand plus a 3- or 5-stand rail variant with a ground bar linking them."
+  ],
+  "renderer_notes": "The flat lawn and soft sky ambient make the metal look uniformly matte-grey. The lack of environment reflections (no SSR, no probes) hurts metals especially."},
+ {"asset": "cone_tall", "score": 36, "pass": false,
+  "summary": "Recognisable traffic cone, but plain orange plastic with odd floating black rectangles instead of reflective collars, and a faceted top.",
+  "critique": "The silhouette (tapered body on a square base with rounded corners and a stepped double base) is right. Problems: (1) The black rectangles on the body read as floating decals or hole cut-outs and match no real cone. If they are meant to be handle slots or tape, they are wrong. Real UK cones have one or two retro-reflective white or silver sleeves (bands) wrapping the full circumference. (2) The tip shows visible faceting (octagonal top) and a dark hole cap. Real cones have a round open top about 40 mm across with a rolled lip. (3) The material is one uniform saturated orange with a smooth plastic sheen. Real PVC cones are glossy and dirty: grime toward the base, scuffs, sun-bleached paler top, mud splashes. (4) The base is thin and looks like two stacked plates. A real cone base is a black (often recycled rubber) square, about 30-40 mm thick, with a slight raised lip. Proportions are plausible for a 750 mm road cone, though the body looks slightly too fat at the base relative to the 380-400 mm base square.",
+  "suggestions": [
+   "Remove the black rectangles. Add one 150-200 mm reflective sleeve band (two for a 750 mm or 1 m cone) as a separate albedo region: white or silver, roughness 0.3, a slight sparkle or bead-retroreflection normal pattern. It costs no geometry if done as a UV-mapped band.",
+   "Use 24-32 radial segments on the body (about 200 tris) so the top is round, and model the open top with a small rolled lip and a visible hollow interior a few cm deep.",
+   "Make the base a separate black rubber part: 380-400 mm square, 35 mm thick, chamfered edges and corners, slight top lip where the cone sits. Albedo about 0.05, roughness 0.85.",
+   "Material: orange albedo about (0.80, 0.25, 0.05) linear, roughness 0.35. Add a vertical dirt gradient (darker and browner in the bottom 20 percent), a few scuff streaks, and a faded paler top. A 512 px texture shared across all cone variants is enough.",
+   "Optional: embossed text ring at the base ('CHAPTER 8' or a manufacturer name) as a normal-map detail."
+  ],
+  "renderer_notes": "The orange looks somewhat flat because there is no GI bounce; that is not the asset's fault."},
+ {"asset": "fuel_tank", "score": 32, "pass": false,
+  "summary": "A plain green box with a flat lid slab, a vent stick and a DIESEL sticker; it reads as a bunded tank only from the sticker.",
+  "critique": "Bunded diesel tanks (e.g. 2500 L site bowsers or static tanks) have a lot of clear construction detail, and this asset has almost none. The body is a uniform-green box with large rounded vertical edges, more like a plastic storage bin or a jerrycan than welded steel. The top hatch is a featureless raised slab. The only real fittings are a thin grey vent pipe and a hose drawn as a thin black loop hanging off a side panel. There is no dispensing cabinet with a door, no nozzle holster, no contents gauge, no fork pockets or skids, no lifting eyes, no welded seams or stiffening ribs, and no ladder or step. The DIESEL plate is legible but small, and there are no hazard diamonds or capacity plate. The material is one flat matte green with no wear, rust at the base, fuel staining under the nozzle or scratches. The proportions (about 2 m long by 1.3 m tall) are plausible for a 2000-2500 L tank.",
+  "suggestions": [
+   "Rebuild the shell as welded steel: sharp edges with a 20 mm bevel instead of the large rounded radius. Add 2-3 horizontal stiffening ribs or a pressed panel pattern on the long sides, and a perimeter weld seam where the inner and outer tanks meet at the top. About 300 extra tris.",
+   "Add a skid base: two 100 x 100 mm box-section skids along the length with fork-pocket openings (dark recesses) on the long sides, plus 4 lifting eyes at the top corners.",
+   "Make a proper lockable dispensing cabinet at one end: a door with a hinge line, hasp and padlock, a recessed panel. Inside or on top, a nozzle in its holster with a coiled 4 m hose (a torus-ish spiral of 8 segments, about 500 tris) and a pump/meter box with a dial face texture.",
+   "Top fittings: a round 400-500 mm manway lid with 8 bolt heads, a contents gauge (round dial), a vent with a mushroom cap, a fill point with a cap. Replace the plain raised slab.",
+   "Materials: paint green albedo about (0.10, 0.22, 0.12), roughness 0.55. Add a wear mask with edges chipped to dark primer or bare steel, rust streaks from bolts, a dark fuel-stain spill patch under the cabinet, and dirt on the lower 15 percent. Decals: a 'DIESEL' label, an orange 'Flammable' or 'Harmful to environment' diamond, a capacity plate ('2500 LITRES'), and a manufacturer logo. A 1k texture shared with other site plant is enough.",
+   "Replace the black loop with a thick (30 mm) rubber hose with real coils and a metal nozzle."
+  ],
+  "renderer_notes": "The side facing away from the sun goes almost black (bottom-left view) because there is no GI bounce. That exaggerates the flat look but is the renderer, not the asset."},
+ {"asset": "minibus", "score": 38, "pass": false,
+  "summary": "Clearly a white minibus, but blocky and generic: a short stubby nose, a blank rear, flush black window panes and no Transit-specific detail.",
+  "critique": "The overall layout (cab, long high-roof body, three side windows, rear lights, yellow rear plate) is right. Proportions: in the side view the length-to-height ratio is about 2.8. A Transit L4 high-roof minibus (6704 x 2780 mm) is about 2.4, so the body reads too low and long, or the roof is not high enough. The bonnet is very short and boxy, without the Transit's sloping bonnet, large trapezoid grille, swept headlamps or raised wheel-arch shape. The rear is a flat white panel with no rear-door split, no rear windows (Transit minibuses have twin rear doors, usually glazed) and no step or bumper detail. The windows are opaque black-blue panes flush with the body, with no rubber seals, depth or interior seats visible. The sliding side door is not clearly defined (no top rail, no handle recess). The wheels are plain dark discs with minimal hub detail, and there are no visible arch liners. The mirrors are tiny. The paint is uniform matte-ish white with no clearcoat reflection, panel gaps or dirt. The rear roof corner is rounded like a toy.",
+  "suggestions": [
+   "Fix the proportions to the Transit L4 high roof: L 6.70 m, W 2.11 m (excluding mirrors), H 2.78 m, WB 3.75 m, front overhang about 1.0 m, rear overhang about 1.95 m. Raise the roof so the body side is clearly taller than the cab, with a step-up at the windscreen header.",
+   "Model the front properly: a sloped bonnet at about 20 degrees, a large trapezoidal black grille with 3 horizontal bars, swept-back headlamps that wrap into the wings, a separate black textured lower bumper, and large van mirrors on arms (about 300 x 200 mm heads). Front end about 1.5k tris.",
+   "Rear: twin rear doors with a centre split line, two rear windows, vertical tail lamps at the corners (present, keep them), a black step-bumper, a high-level brake light, door handles and hinges.",
+   "Glazing: inset the windows 15-20 mm with black rubber surrounds, and use a dark glass material (albedo about 0.02, roughness 0.05, slight env reflection) with a simple interior behind it: a row of seat-back silhouettes and headrests, about 400 tris, so the glass is not an opaque slab.",
+   "Side door: a cut line for the sliding door with a visible top/bottom runner track and a handle. Add a black rubbing strip along the lower body and wheel-arch flares.",
+   "Wheels: 16-inch steel or alloy with 5 lug nuts, 235/65 R16C tyre sidewall (diameter about 0.71 m), tyre roughness 0.9, dark brake drum visible through the spokes.",
+   "Paint: white albedo about 0.80, roughness 0.25 clearcoat. Add 2-3 mm dark panel gaps on all doors, road grime on the lower 300 mm and arches, and optional club livery decals and a crest on the side."
+  ],
+  "renderer_notes": "No SSR or reflection probe means white paint shows no reflections, which flattens it. Shadows and lighting look fine."},
+ {"asset": "roller", "score": 26, "pass": false,
+  "summary": "A greybox twin-drum roller: flat yellow slabs over cylinders, a floating seat, and a bare ROPS bar frame with a beacon.",
+  "critique": "This is close to placeholder. The concept (two drums, a centre body, seat, ROPS hoop, amber beacon) is right, but every part is a primitive. The front and rear frames are flat boards hovering over the drums, with thin rectangular side plates instead of real drum frames or scrapers. The centre body is a plain box with no engine hood, cooling grilles, exhaust, fuel or water tank, steps or handrails. There is no visible articulation joint. There is no steering wheel; two thin vertical sticks stand in for controls. The seat is a dark box floating on top. The ROPS frame is a thin square tube with no mounting brackets. The drums are smooth grey or black cylinders without edge chamfers, scraper bars or water-spray bars. Proportions vs the Bomag BW 120 (L 2.53 m, W 1.27 m, drum width 1.2 m, about 2.0 m to the top of the ROPS): the overall length and drum width look about right, but the body is far too low and thin. A real BW 120 has a tall hood the operator sits on top of, and the drums sit well inside chunky frames. Materials: flat saturated yellow with no decals, wear, mud or oil.",
+  "suggestions": [
+   "Re-block it from reference: a central articulated chassis with an engine hood about 1.1-1.3 m high, the operator's seat on top at about 1.35 m, and the ROPS rising to 2.0-2.4 m. Drums 1200 mm wide, about 700 mm diameter. Each drum sits in a C-frame of 15-20 mm plate with large bolted drum hubs (about 300 mm discs with 8 bolts).",
+   "Add an articulation joint between front and rear halves: a visible pivot block with a hydraulic steering ram. This is the defining tandem-roller detail.",
+   "Operator station: a steering wheel on a column (a 12-segment torus, about 300 tris), a small dash with gauges, a forward/reverse lever, a deck plate with checker-plate normal map, a step and grab handles each side.",
+   "Drums: add scraper bars (thin plates touching each drum front and rear), water-spray bars with small nozzles above each drum, and edge chamfers on the drums. Drum material should be bare steel worn shiny on the rolling face (albedo 0.55, metallic 1, roughness 0.35) with mud and asphalt residue on the edges.",
+   "Hood: louvred engine grille panels on the sides, an exhaust stack, a fuel cap and a water-tank filler on top. Rounded hood edges with about 40 mm bevels.",
+   "Materials and decals: Bomag-style yellow albedo about (0.75, 0.55, 0.05), roughness 0.5. Black lower chassis. Decals: brand-neutral logo, model number, 'DANGER articulation zone' stripes, hazard chevrons at the rear. Wear: chipped edges, mud on the lower frames, oil streaks under the hood. One 1k atlas.",
+   "Mount the seat on a suspension base, and fix the ROPS to the chassis with visible brackets and bolts."
+  ],
+  "renderer_notes": "No issues specific to the renderer; the asset itself is the problem."},
+ {"asset": "shrub", "score": 36, "pass": false,
+  "summary": "A leafy card cluster round a dark faceted core; the polyhedral core shows through and the bottom looks cut off, so it reads as a leafy rock.",
+  "critique": "The leaf texture is reasonable and the scale reads (about 1.2-1.5 m), but the construction is visible. (1) A dark faceted low-poly core (icosphere-like) shows between card clusters and especially at the base, where flat dark triangles meet the ground with a hard edge (visible in all four views). (2) The leaf cards are big and planar, with visible stretched or smeared textures where cards are seen edge-on (the top-down view shows streaked textures along the card planes). (3) There are no woody stems at the base: real shrubs show a few stems or a branching base and some ground-level gaps. Here the mass sits on the lawn like a boulder, and from the side it even looks to float slightly because the dark core undercut catches no light. (4) The silhouette is a lumpy sphere. It needs a more irregular, wider-than-tall outline with protruding sprigs. (5) The colour is uniform bright green with little variation: no older, darker interior leaves or yellowed tips.",
+  "suggestions": [
+   "Remove the dark core, or shade it with the foliage albedo and a dark-interior AO gradient so gaps read as shadowed leaves, not facets. Better: replace the core with 5-8 woody stems (8-sided, tapering from 25 to 5 mm) fanning from a single root crown, with cards attached to them.",
+   "Use smaller, more numerous cards (about 40-60 cards of 30-40 cm, each 2 tris) oriented with their normals facing outward from the centre, and bend the normals spherically so the shading is soft. This kills the edge-on stretched-texture look. About 120-250 tris per shrub.",
+   "Lift the base: let the lowest cards stop 10-20 cm above ground on one side so stems are visible, and add a small dark leaf-litter or mulch decal under the shrub to ground it.",
+   "Silhouette: make it wider than tall (e.g. 1.6 x 1.2 m) and irregular, with 3-5 sprigs poking 15-25 cm beyond the hull.",
+   "Colour variation: per-card hue/value jitter (plus or minus 10 percent), a darker interior via a vertex AO term, and a few yellow-brown dead leaves. Add a subsurface-like translucency term if the shader allows (cheap wrap lighting) so back-lit leaves glow.",
+   "Wind: vertex sway weight by distance from the stem root, painted into vertex colour."
+  ],
+  "renderer_notes": "Hard-edged shadow-map shadows of alpha cards look fine. The lack of foliage translucency or GI makes the interior read darker than reality; part of the dark-core look is the renderer."},
+ {"asset": "stadium_premier:seating & stands", "score": 55, "pass": false,
+  "summary": "A convincing two-tier bowl of red tip-up seats with aisles, vomitories and seat-mosaic 'KIT FC' lettering; it reads as a real stadium at distance but is clean and repetitive close up.",
+  "critique": "This is the strongest part of the stadium. The two tiers with a concourse/box level, radial aisles with stepped gangways, and seat-pattern lettering all read correctly. The row pitch and seat scale look plausible. Weaknesses: every seat is the same instance and colour with no fading, no mixed seat colours, and no dirt, so large areas look like a CG tile. The stairs and gangways have no handrails or central rails, so the aisles look like bare white strips. The tier fronts are plain dark bands with no glazed hospitality boxes or balcony detail. The vomitory openings are plain dark rectangles. The seat backs read as identical blocks from below. The corners, where tiers wrap, look plausible.",
+  "suggestions": [
+   "Add handrails: central gangway handrails on every aisle (a 40 mm tube at 1.1 m height, posts every 2 m) and a glass or steel balustrade along each tier front. Use an instanced mesh, about 100 tris per 2 m segment.",
+   "Seat variation: per-instance colour jitter of plus or minus 3-5 percent value, about 1 percent of seats in a faded or replaced tone, and occasional folded-down seats (rotate the seat pan). This costs nothing extra beyond an instance attribute.",
+   "Upper-tier front: model a row of glazed hospitality boxes with mullions every 4-5 m and dark tinted glass, plus a fascia band. This is the key premier-stadium cue.",
+   "Vomitories: give each a frame (concrete lintel and side walls with depth about 1 m), a handrail around the top, and a lit interior (emissive back wall).",
+   "Gangway steps: add a yellow nosing stripe on each step edge (texture only) and a slightly darker concrete albedo with wear."
+  ],
+  "renderer_notes": "The strong sun/shadow contrast on the seats is a renderer effect and looks fine. The empty bowl is expected."},
+ {"asset": "stadium_premier:roof", "score": 42, "pass": false,
+  "summary": "The underside truss grid reads well, but from outside the roof is a flat, featureless white slab.",
+  "critique": "From inside, the radial and ring trusses under the roof are a decent cue for a modern cantilever roof. From the aerial view, the roof is one smooth flat white surface with a slightly lighter inner band (presumably meant to be translucent polycarbonate). It has no panel seams, standing-seam lines, gutters, maintenance walkways, roof lights, fall-arrest rails or drainage. The leading edge is a plain thin lip with no fascia or gutter depth. The roof sits on a black shadow gap above the facade with no visible structure connecting it. The tall concrete pylons stop just above the roof edge as flat-topped stubs with no tie or mast connection. There is no catwalk or lighting gantry under the inner edge (where floodlights would be).",
+  "suggestions": [
+   "Add standing-seam roof sheeting as a normal or albedo stripe texture running radially (400-600 mm pitch), and show the inner translucent band as a different material (polycarbonate: lighter, slightly translucent, with a visible ribbed pattern).",
+   "Model the leading edge: a 1-1.5 m deep fascia/gutter box, with a catwalk and an LED floodlight gantry on its underside running the full ring (see floodlights).",
+   "Add maintenance walkways on top (thin grey strips with handrail lines), roof drains and a few hatches; these break the large flat area at low cost.",
+   "Connect the pylons to the roof: either have the roof primary trusses visibly land on the pylon heads, or add tension rods or masts from the pylon tops. A flat-topped stub that ends in mid-air reads as unfinished.",
+   "Make the roof white a little less pristine: albedo 0.70, roughness 0.5, with faint streaking near drains and toward the outer edge."
+  ],
+  "renderer_notes": "The roof top may look overly flat partly because of the lack of GI and the high sun. The underside trusses look good with shadow maps."},
+ {"asset": "stadium_premier:exterior/facade", "score": 38, "pass": false,
+  "summary": "A white diamond-panel skin with heavy concrete fins; no entrances, signage, stairs or turnstiles, so it reads as a sealed drum.",
+  "critique": "The diamond/ETFE-like cladding pattern and rhythmic concrete pylons give a contemporary look, but the facade has none of the street-level elements that make a stadium believable. There are no turnstile blocks, entrance gates, ticket offices, club shop, external stair cores or ramps, glazed concourse openings, club crest or name signage. The pylons are plain grey extruded prisms. The plinth/forecourt is a uniform flat grey slab with no paving pattern, bollards, barriers, planters or lighting columns. The cladding pattern is perfectly uniform around the whole bowl. The shadow gap under the roof is pure black.",
+  "suggestions": [
+   "Add ground-level programme: 6-12 turnstile blocks (each a 6 m wide low glazed box with numbered gates and blue/club-coloured signage), 2-4 main entrances with a canopy, a club shop with glazing, and ticket windows. These can be modular instanced pieces.",
+   "Add external stair cores or spiral ramps (2-4) at corners, which also break the drum silhouette and are typical of UK stadiums.",
+   "Facade signage: large club name and crest on the main stand side (emissive at night), plus gate letter/number signs above each entrance.",
+   "Break the cladding up: vary the diamond-panel tint and reflectivity per panel by 5-10 percent, and add horizontal concourse glazing bands at each level so the skin shows the floors behind it.",
+   "Forecourt: a paving texture (300 x 600 mm slabs), lamp columns, bollards, crowd barriers, planters and litter bins from the kit's own street-furniture set."
+  ],
+  "renderer_notes": "The pure black shadow band under the roof and the dark recesses come partly from no GI."},
+ {"asset": "stadium_premier:floodlights", "score": 20, "pass": false,
+  "summary": "No visible floodlights in any view: no roof-edge gantry lamps, no masts.",
+  "critique": "A premier-league stadium has a continuous LED floodlight ring on the inner roof edge (or 4 corner masts at older grounds). In all four views there are no lamp heads on the roof leading edge or the underside trusses, and no masts. If lights are meant to be integrated, they are not visible at any scale in these renders, so the stadium could not plausibly host a night match. Judged as missing.",
+  "suggestions": [
+   "Add a roof-edge gantry ring: a 1 m wide catwalk on the leading-edge underside carrying LED floodlight heads (each about 0.6 x 0.4 x 0.2 m, with a dark housing, a bright lens face and an angled bracket) at about 1.5-2 m spacing, aimed at the pitch. Instanced, about 80 tris each, so 200-300 heads cost about 20k tris total, or use LODs.",
+   "Make the lens faces emissive (switchable for night) and use a light grey housing so they read against the dark truss underside in day renders.",
+   "Optionally offer a 'corner mast' variant for lower-league layouts (30-40 m lattice masts with a lamp array head), reusing the same lamp instance."
+  ],
+  "renderer_notes": "If the lights exist but are hidden by the roof edge in these camera angles, add a view that shows the inner roof edge from the pitch."},
+ {"asset": "stadium_premier:pitch & goals & nets", "score": 58, "pass": false,
+  "summary": "Good: a striped pitch with crisp markings, hex-mesh nets and plausible goal frames; but the turf is a flat albedo and the goals lack depth supports and ground fixings.",
+  "critique": "The mowing stripes, line markings, centre circle and goal-area lines are correct and crisp. The hexagonal net pattern with depth supports reads convincingly, and the goal frame proportions (7.32 x 2.44 m) look right. Weaknesses: the turf has stripes but no grain or blade detail at close range, no wear patches in the goalmouths or at the centre spot, and line paint has no softness. Lines look like perfect vector strips. The goal posts look slightly thin and perfectly white with no ground socket, no net hooks or back-stanchion bars, and no shadow detail at the base. The net hangs too taut, like a sheet, with no sag at the bottom or droop at the back.",
+  "suggestions": [
+   "Turf: add a tiling grass-blade detail normal (512 px) and per-stripe roughness change, plus wear masks (worn and sandy patches in the goalmouths, the centre circle and along the touchlines where linesmen run).",
+   "Lines: give paint a 1-2 cm soft edge in the mask and a slight brightness variation along the length.",
+   "Goals: post diameter 120 mm elliptical or 101.6 mm round. Add the back stanchion (a bent tube frame 2 m deep), net hooks every 150-200 mm along the crossbar, and a ground sleeve flush ring at each post.",
+   "Net: sag the bottom of the back net 10-15 cm, let it pool on the grass, and add a slight catenary droop to the roof netting. This is a vertex-displacement change and costs no extra triangles."
+  ],
+  "renderer_notes": "The very dark pitch in the shadowed half (bottom-left view) is because there is no GI or sky bounce in shadow. That is the renderer and should not be counted against the turf."},
+ {"asset": "stadium_premier:dugouts & tunnel", "score": 45, "pass": false,
+  "summary": "Dugouts with black seats and a red extendable tunnel are in the right place, but they are simple and the tunnel reads as a plastic tube.",
+  "critique": "The layout (two dugouts either side of a central tunnel on halfway) is correct. The dugouts show rows of black bucket seats under a clear canopy, which is believable at distance. The tunnel is a red concertina tube with a plain dark opening, missing the ribbed fabric segments, club crest, metal hoop frames and wheels typical of telescopic tunnels. The tunnel mouth in the stand is a plain black box with no frame. The dugouts sit on a dark plinth with no visible steps, technical-area markings or water-bottle crates. The red tunnel cover is an unlit flat red with very few ribs.",
+  "suggestions": [
+   "Tunnel: model 8-10 telescopic hoop segments (each a slightly larger arch section with a visible aluminium hoop and fabric between), small wheels at the base of each hoop, and the club crest on the side panel. About 2k tris.",
+   "Tunnel mouth: a concrete or steel portal with a club-branded header sign and a lit interior wall (emissive).",
+   "Dugouts: add a curved polycarbonate canopy with a visible aluminium frame, a club-coloured back panel with crest, and white technical-area lines on the grass in front.",
+   "Seats: use a sports bucket seat with a headrest (like the stadium seats but bigger and padded), in club colours instead of plain black."
+  ],
+  "renderer_notes": ""},
+ {"asset": "stadium_premier:advertising boards & screens", "score": 55, "pass": false,
+  "summary": "LED ribbon boards, perimeter boards and scoreboard screens with plausible fictional sponsors read convincingly; they lack emissive glow, pixel texture and housings.",
+  "critique": "The fascia LED ribbons on both tier fronts with varied sponsor panels (HALCYON, VOLTA, NORTHWIND, etc.) and the corner scoreboards showing '2-1' with team names and match time are effective at distance. Perimeter boards around the pitch and 3D carpet boards behind the goal are present. Weaknesses: the boards look like printed decals, not LEDs. There is no emissive bloom, LED pixel grid, or moiré at close range, and the brightness is the same in sun and shade (the shaded ribbon looks dark like paint). The scoreboard screens are flat textures with no deep housing, support frame or bezel. The perimeter boards show a thin black housing with no back frame visible.",
+  "suggestions": [
+   "Make all LED surfaces emissive (about 300-600 nits equivalent) so they stay bright in shadow, and add a fine LED pixel-grid detail texture (8-10 mm pitch) that appears at close range.",
+   "Scoreboards: give each a 0.6-1 m deep black housing with a bezel, a support frame or hangers to the roof truss, and access walkway rails.",
+   "Perimeter boards: model the A-frame or cabinet back (angled support legs, cable runs), at about 50 tris per 6 m board.",
+   "Ribbon variety: offset each tier's animation phase and add club-branded segments (crest and club name) between sponsors."
+  ],
+  "renderer_notes": "No bloom in the renderer makes emissive surfaces less convincing; the main thing the asset needs is an emissive channel."},
+ {"asset": "tree_dead", "score": 44, "pass": false,
+  "summary": "A believable bare branching structure with bark texture, but it is too neat and healthy-looking: a uniform crown, no snapped limbs, and a cylindrical trunk with no root flare.",
+  "critique": "The branching recursion gives a convincing winter-tree silhouette from a distance, and its shadow reads well. It reads more as a healthy deciduous tree in winter than as a dead tree. (1) The trunk is a near-perfect cylinder of constant diameter from ground to fork, with no root flare, buttresses or taper, and it just pokes out of the lawn. (2) The crown is a symmetric dome: every branch terminates at a similar radius with similar-length twig tips, like a pollard or a lollipop topiary. (3) There are no dead-tree cues: no snapped-off limb stubs, no broken top, no hollow, no peeling or missing bark showing pale wood, no fungus brackets, no ivy. (4) The twigs are uniform-thickness cylinders, and the tips look blunt rather than tapering to a point. (5) The bark is a fine uniform grey tiling. The pale bleached grey is fine for dead wood, but it needs variation (darker in crotches, lichen patches, bare wood where bark has fallen). The tree's height looks about 6-7 m, with the first fork at about 2.5 m, which is plausible for a small dead tree.",
+  "suggestions": [
+   "Trunk: taper from about 1.4x diameter at the ground to 1x at the fork, with a root flare of 4-6 buttress lobes spreading 0.3-0.5 m into the ground, plus a slight lean and kink. About 300 tris.",
+   "Asymmetry: break the dome. Remove 1-2 major limbs entirely (leave 20-60 cm snapped stubs with a jagged end cap), let one limb hang or droop, and vary branch lengths by plus or minus 40 percent. Optionally snap the leader so the top is broken.",
+   "Twigs: taper every terminal twig to a 2-3 mm point (a 3-sided cone end), and thin out the outer twig density by 30-40 percent; dead trees lose fine twigs first.",
+   "Bark material: a 1k bark atlas with three zones (intact grey ridged bark, bare silver-pale wood with a smooth roughness of 0.6, dark rot in crotches), blended by a vertex-colour mask. Add 2-3 bracket fungus meshes (about 30 tris each) and lichen splotches (albedo pale green-grey).",
+   "Ground: a small leaf-litter or dead-grass decal and a few fallen branch pieces at the base sell a dead tree.",
+   "LOD: collapse the fine twigs into alpha cards for LOD1 to keep it instanceable."
+  ],
+  "renderer_notes": "Shadows from shadow maps look good. The pale bark looks slightly washed out under the high sun, which is fine."}
+]

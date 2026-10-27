@@ -1,0 +1,214 @@
+[
+  {
+    "asset": "bin_recycling",
+    "score": 56,
+    "pass": false,
+    "summary": "Credible Glasdon Nexus-style trio from the front, but the back and sides are featureless near-black slabs with a grubby brown band.",
+    "critique": "Front three-quarter and close-up are the strongest views: colour-coded sloped lids with recessed apertures, flat waste-stream signs with pictograms and small print, door outlines, hinge knuckles, keyhole locks and a darker plinth all read correctly, and the proportions (roughly 0.6 W x 1.2 H per unit) match the Nexus 140. The illusion collapses from any other angle. The rear and sides (views 2 and 3) are a single dark matte charcoal with no panel break, no rear hinge line, no moulding draft, no ventilation, no fixing bolts at the plinth, and the albedo is so low (looks about sRGB 35-40) that the shadowed faces go almost pure black. The top rear of each lid carries a brown-orange smudge band that reads as a texture error rather than grime: dirt collects at the base and around the aperture lip, not as a horizontal stripe along the lid back. The coloured lid inserts are flat plastic with no texture, no scuffing around the opening where hands and bags rub, and the aperture has no rubber flap, brush or restrictor (glass ports usually have a round hole, paper a slot - the slot is right, the glass square is not). Units are three identical boxes butted together with no shared base rail or linking bracket. Signs are spotless and perfectly flat - no edge lift, no fading.",
+    "suggestions": [
+      "Raise the body albedo to about sRGB 55-60 (dark grey polyethylene, roughness 0.55-0.65) so rear and shadow faces keep form; it is currently reading as black.",
+      "Remove the brown band on the lid backs; move grime to an AO-driven mask: base 150 mm darkening, splash at the plinth, finger-dark smudges around each aperture lip.",
+      "Give the back and sides geometry: a 5 mm recessed panel line 40 mm in from each edge, a horizontal lid seam, two bolt heads per side on the plinth, and a moulded handle recess on the back. About 150-250 tris per unit.",
+      "Make the glass aperture round (about 160 mm diameter) with a black rubber collar, and add a brush or flap strip inside the paper slot (one alpha-tested quad).",
+      "Add a shared galvanised base rail or two linking brackets between units so the trio reads as one installation.",
+      "Age the signs: slight sun-fade on the coloured fields, a lifted corner on one, light scratching; 256x256 per sign is enough.",
+      "Add subtle scuffs and a faint fleck/mould texture to the lid plastic (shared 512 tiling detail map)."
+    ],
+    "renderer_notes": "Some of the blackness on the shadowed sides is the lack of GI/bounce, but the albedo is low enough that it would read black in most engines too."
+  },
+  {
+    "asset": "seat.bench.plank",
+    "score": 48,
+    "pass": false,
+    "summary": "Correct idea (extruded aluminium plank bench on a single pedestal) but clean, untextured and mechanically unconvincing at the joints.",
+    "critique": "The plank profile is good: rounded nose, longitudinal grooves, countersunk fixings, and three planks with drainage gaps is a real stadium/terrace bench configuration. The pedestal (tapered flat-bar web on a bolted base plate) is plausible. Problems: everything is one flat, uniform light grey with no anodised sheen variation, no brushed direction, no oxidation, no chewing-gum, no scuffs - it looks like an untextured CAD render. The planks overhang the single pedestal by a large cantilever on one side and the under-bracket (the short box under the planks) only supports part of their depth, so from the end view the planks appear to hover on a thin plate; real benches have a full-depth saddle bracket under all planks with visible bolts through each. Plank ends are closed, solid faces; real extrusions show a moulded end cap (black plastic) or an open hollow profile. The pedestal web is extremely thin and the base plate flanges are tiny for the load, with no anchor-bolt detail beyond two hex heads. There is no seat number plate, no row letter, no foot rail. Scale is hard to read but the seat height looks plausible (~450 mm).",
+    "suggestions": [
+      "Replace the partial under-box with a full-depth saddle bracket spanning all three planks (about 300 mm deep, 60 mm tall, 6 mm plate) with a bolt head under each plank; this fixes the floating look from the end. About 80 tris.",
+      "Add black plastic end caps (10 mm thick, matching the plank profile) to every plank end, or show the hollow extrusion with 2 mm walls.",
+      "Material: anodised aluminium, albedo sRGB ~175, metallic 1, roughness 0.35-0.45, with a lengthwise brushed anisotropy or stretched noise; add a wear mask so the seat tops are slightly polished and the grooves collect dark grime.",
+      "Thicken the pedestal web to read as 10-12 mm plate or switch to a 60x60 SHS post, paint it a different finish (galvanised or powder-coated dark grey), and add four anchor bolts with nuts and washers on a 200x150 base plate.",
+      "Add a small seat number plate (60x40 mm decal) on the front plank nose every 450-500 mm so the bench reads as stadium seating.",
+      "Limit the cantilever: put the pedestal no more than 400-500 mm from each plank end, or tile two pedestals per 2 m plank."
+    ],
+    "renderer_notes": "Flat lighting and no reflections exaggerate the clean CAD look, but the material itself has no variation to reveal."
+  },
+  {
+    "asset": "car_hatch",
+    "score": 48,
+    "pass": false,
+    "summary": "Hatchback proportions are about right but the bodywork is soft and generic, the paint is flat, and several parts (wiper, spoiler, nose) look wrong.",
+    "critique": "Overall length/height ratio (~2.9) matches a Golf/Focus-class hatch and the wheelbase-to-overhang split is reasonable. Positives: UK plates front (white) and rear (yellow), full-width light bar, tail lamps, mirrors, tinted glass with an interior, five-spoke alloys. But it reads as a mid-2000s game car. The paint is flat saturated blue with no clearcoat specular or environment reflection, so the body shape is carried only by diffuse shading and looks like plastic. Panel shut lines are barely visible; there is no door handle relief, no fuel flap, no side skirt or character line - the flanks are slabs, and the rear quarter between the C-pillar and tail is especially boxy. The nose is oddly low and wedge-like with a thin chrome strip that looks more like a concept car than a UK hatch; the lower intake is a flat dark rectangle. In the close-up the windscreen wiper is enormous and light grey, lying like a bar across the scuttle. The roof spoiler projects too far and is too thick. Wheel arches have no liners visible and the tyres show no sidewall lettering or tread from the side. Glass is uniformly dark with no reflection, hiding the interior.",
+    "suggestions": [
+      "Give the paint a clearcoat look: metallic 0, roughness 0.2-0.3, plus a cheap reflection (sky cubemap or fresnel-boosted specular); this alone will lift the form more than any geometry change.",
+      "Cut 3-4 mm dark shut lines (normal map or thin inset geometry) for doors, bonnet, tailgate and fuel flap; add flush door handles and a waist character line about 150 mm below the glass.",
+      "Shrink the wiper arms to about 15 mm wide, matte black, parked low under the bonnet line.",
+      "Reduce the roof spoiler to about 40 mm thick and 150 mm overhang, matching the roof curvature.",
+      "Rework the front: raise the bonnet leading edge to about 750 mm, add a proper upper grille between headlamps and a mesh lower intake with fog-lamp recesses; use an alpha-masked mesh texture rather than a flat black plane.",
+      "Add black arch liners (one ring per wheel) and a tyre sidewall normal map with lettering; give glass a light reflection (roughness 0.05, fresnel) and slightly lighter tint so the interior reads.",
+      "Add a little road grime along sills and behind wheels via a shared dirt mask; keep under 15k tris for LOD0 and 2k for crowd-parking LODs."
+    ],
+    "renderer_notes": "No SSR or environment reflections hurts car paint more than anything else; even so the albedo/roughness setup reads matte."
+  },
+  {
+    "asset": "tractor",
+    "score": 55,
+    "pass": false,
+    "summary": "Instantly reads as a John Deere 6-series-style tractor with good cab and tyre detail, but the front fenders, wheel rims and under-bonnet voids are crude.",
+    "critique": "Silhouette and proportions are good: long bonnet, four-post cab with glazing and pillars, rear wheels about 1.35x the fronts (6120M is 600/65R38 rear vs 540/65R24 front), lugged tyres with real tread silhouettes, rear three-point linkage, number plate, amber beacon, exhaust stack, side mirrors on arms, front ballast block, and decent dirt/scuff on the bonnet. The weak points: the front mudguards are oversized, paper-thin flat arcs that stick out like wings; real steered fenders are about 300 mm wide, follow the tyre closely and have a visible mounting arm. Rear fenders are also a single thin sheet with no rolled edge. Wheel centres are flat yellow discs with a ring of dots - no dished rim, no centre hub, no valve, no rim-to-disc bolts - so from the side the wheels look like stickers. Under the bonnet and between the axles there is a black void: no engine block, no frame rails, fuel tank, battery box, steps or hydraulic lines, so the side view looks hollow. The exhaust is a short grey stub rather than a 1.2 m vertical pipe with a guard. Paint is very saturated and uniform under the wear; no mud on the tyres or lower chassis, which a working tractor always carries.",
+    "suggestions": [
+      "Replace the front fenders with narrow (~300 mm) curved guards with a 20 mm rolled lip, set 80-100 mm off the tyre, on a black mounting arm from the hub; give rear fenders a rolled edge and a work-light at the top corner.",
+      "Model the rims as a dished cylinder (inner barrel) plus a centre disc with a raised hub, 8-10 wheel nuts and a valve; about 300 tris per wheel and transforms the side view.",
+      "Fill the chassis void: a dark grey engine/transmission block, a black fuel tank on the left under the cab with a filler cap, a battery/step box with two treads, and a few hydraulic hoses at the rear (instanced tubes).",
+      "Make the exhaust a 120 mm pipe rising ~1 m above the bonnet beside the right A-pillar with a perforated heat guard (normal map) and a rain flap.",
+      "Add a mud mask: tyres and lower 400 mm of chassis caked with brown-grey dirt, splash on fenders; desaturate the green slightly (John Deere green is around sRGB 54,124,43).",
+      "Add a rear tow hitch hook, PTO shield and work lights on the cab roof corners."
+    ],
+    "renderer_notes": "Shadows under the tractor look fine; the black under-bonnet area is a geometry gap, not lighting."
+  },
+  {
+    "asset": "reeds",
+    "score": 46,
+    "pass": false,
+    "summary": "Recognisable bulrush clump with good seed heads, but the leaves are sparse grass-like strands and the mud decal is a black cut-out.",
+    "critique": "The Typha seed heads (brown cylinders with a thin spike above) are the best part and read correctly. The rest is weak. Real bulrush leaves are broad (10-20 mm), stiff, upright strap leaves with a spongy sheath, in dense fans, mostly green with some brown die-back; here they are thin grass-like ribbons, many of them pale straw, arranged sparsely so you see straight through the clump. The clump looks like a tuft of dry ornamental grass with cattails stuck in it. Leaves appear single-sided and flat-shaded without translucency or a mid-rib, and their colour (pale grey-green) is too desaturated against the lawn. The ground patch is a near-black, jagged-edged disc that reads as a hole or an oil spill rather than wet mud; reeds placed on a dry lawn would not sit in a puddle anyway, and when placed at a pond edge the decal would conflict with the water. Stems of the cattails are thin and long without leaf sheaths at the base.",
+    "suggestions": [
+      "Rebuild leaves as 12-18 mm wide strap cards, 1.2-2.0 m tall, mostly upright with a slight outward lean and a few bent over at mid-height; cluster in fans of 4-6 from shared bases. Two-sided, with backface translucency and a lighter mid-rib in the texture.",
+      "Increase density to roughly 60-90 leaves per 0.6 m clump while keeping cost down with crossed card clusters (each card carrying 4-6 leaves on alpha): about 400-800 tris total.",
+      "Shift the colour mix to 80% mid green (sRGB ~85,115,60) and 20% tan die-back, with brown tips; currently the straw ratio is too high.",
+      "Thicken cattail stems to about 8-10 mm and add leaf sheaths wrapping the lower 300 mm.",
+      "Replace the black ground disc with a soft-edged, brown-grey wet-mud decal with a roughness drop (0.3) and a few dead leaf litter flecks, or make it optional so it can sit on a water edge instead."
+    ],
+    "renderer_notes": "No subsurface/translucency in the forward renderer makes thin leaves look flat; this is partly renderer, but leaf width and density are the main problems."
+  },
+  {
+    "asset": "fuel_tank",
+    "score": 58,
+    "pass": false,
+    "summary": "Convincing bunded diesel tank with good safety signage and a dispensing cabinet, let down by plain flat sides and soft, smeared texturing.",
+    "critique": "This reads correctly as a site bunded fuel tank: rectangular steel bund on skids, DIESEL signage, GHS flammable/health and no-smoking pictograms, a rating plate, manway lid, fill point, mushroom vent, lifting lugs and a lockable dispenser cabinet containing a meter, nozzle and hose. Proportions are plausible for a 2,500-5,000 L unit. Where it falls short: the sides are large flat sheets with only two faint pressed lines; real bunded tanks have prominent vertical or horizontal stiffening ribs, a flanged roof edge and welded corner seams, which give the strong silhouette and shadow breakup this lacks. The rust/dirt streaks are blurry vertical smears at low resolution, and the green is uniform elsewhere. The manway lid is a plain disc with no bolt ring detail visible at distance, and the cabinet door is a thin flat sheet (no door frame thickness, no lock hasp detail, no drip lip). The hose in the cabinet is a thin wire loop. No earth/bonding cable, no fill-level gauge, no forklift pockets in the skids, no padlock.",
+    "suggestions": [
+      "Add 3-4 horizontal box-section stiffening ribs per long side (50 mm proud, 60 mm tall) and a 30 mm flanged roof perimeter; welded corner seams as a small bevel. About 300 tris and a large gain in silhouette.",
+      "Re-author the streaks at higher frequency: thin run marks originating under the vent, fill cap and roof lip, rust bloom at the bottom edge and skids, scratched paint around the cabinet; 1024 texture on a shared trim sheet.",
+      "Give the cabinet door 25 mm frame thickness, a T-handle lock with padlock hasp and a small drip lip above the opening; make the hose a 25 mm rubber tube coiled on a hook with a proper nozzle holster.",
+      "Add forklift pockets in the skids (two 200x80 openings each side), a contents gauge on the roof, and an earth cable with a crocodile clip.",
+      "Vary the paint: slight sun-fade on the roof (lighter, more yellow), darker at the base."
+    ],
+    "renderer_notes": "Ground-level shadow and lighting are fine."
+  },
+  {
+    "asset": "bin_litter",
+    "score": 60,
+    "pass": false,
+    "summary": "A solid Jubilee-style UK litter bin with correct proportions, hood, aperture and visible litter inside; surface and band need more physicality.",
+    "critique": "Proportions match the Glasdon Jubilee 110 (H/W about 1.95). Domed hood with apertures, inner liner visible with a discarded cup, crest and LITTER lettering, a reflective-style gold band, plinth base with bolts and grime around the bottom - all correct and the close-up holds up reasonably. Shortcomings: the body is a faceted cylinder with visible polygon facets in the close-up and a uniform satin black with faint smears; real bins of this type show moulded flutes or a textured finish, sun-faded tops, sticker residue, chewing gum and scratches. The gold band is a flat painted stripe sitting flush rather than a raised moulded band or applied reflective tape with edges. The hood has no visible hinge or locking point; the apertures are plain rectangles with no edge lip or rain shield. The lettering is crisp and new. The darker band right under the hood (the seam ring) is good but slightly heavy.",
+    "suggestions": [
+      "Increase radial segments to 32-40 for the body or smooth normals properly; add 12-16 shallow vertical flutes via normal map if matching a fluted model.",
+      "Make the band a raised ring 3-4 mm proud with a slight bevel and a retroreflective texture (fine micro-prism pattern, roughness 0.3).",
+      "Add a wear pass: sun-faded hood top (slightly lighter, grey-brown), scuffs and sticker residue at kick height, a gum blob or two, and a light vertical drip from aperture corners; reuse a shared 512 grime atlas.",
+      "Add a hinge/lock detail on the back of the hood (keyhole plus a small hinge knuckle) and a 10 mm lip around each aperture.",
+      "Lightly age the LITTER lettering and crest (scratches, slight fade) so it is not print-fresh."
+    ],
+    "renderer_notes": "The close-up looks lighter grey than the other views, which is lighting angle, not a material inconsistency."
+  },
+  {
+    "asset": "stadium_mega:seating & stands",
+    "score": 54,
+    "pass": false,
+    "summary": "Huge, convincing bowl geometry with vomitories, aisles and tier fascias, but the random multi-colour seat confetti looks like noise rather than a real seating scheme.",
+    "critique": "The three-tier bowl, rake, curved corners, aisle stairs with yellow nosings, vomitory openings, hospitality/box fronts and the seat-mosaic lettering ('OASIS') visible from above are all impressive at scale. The main realism breaker is seat colour: every seat is randomly green, white, yellow or grey, producing a glittery confetti that no real club would install - real stadia use one dominant colour with deliberate block patterns, lettering or crests, plus a few rows of a contrasting colour. Seats are also all in a deployed position with no seat-up/seat-down variation, and the seat rows have no visible row riser lighting, row letters or handrails on the steep upper tier. The vomitory mouths look like flat grey boxes without parapet rails or depth. The tier fascias are uniform with LED ribbons all around, fine for a mega stadium. No crowd, which is expected for an asset kit.",
+    "suggestions": [
+      "Change the seat colour logic to a dominant colour (85-90%) with designed patterns: club initials, stripes, or upper-tier block colour; keep randomness only within a 5% 'faded/replaced seat' variation of the same hue.",
+      "Add 1.1 m glass or steel balustrades at vomitory openings and the front of each tier, and handrails down aisles on the upper tier (instanced, cheap).",
+      "Mix in 10-20% seats in the folded-up position to break the regular grid in close views (same instanced seat mesh, second variant).",
+      "Darken the vomitory interiors and give them depth (a 3 m tunnel box with a dark gradient) rather than flat grey faces.",
+      "Add row letters / seat numbers via a decal atlas on step risers for close-up shots."
+    ],
+    "renderer_notes": "Shadowing of the upper tiers is believable; lack of GI makes under-tier areas a bit flat."
+  },
+  {
+    "asset": "stadium_mega:roof",
+    "score": 48,
+    "pass": false,
+    "summary": "Continuous ring roof reads at a distance, but both faces are plain: a flat white top and an underside of repeated thin rafters with no structural depth.",
+    "critique": "From above the roof is a clean white annulus divided into radial panels; it reads as membrane or metal sheet but has no ridges, gutters, rooflights, maintenance walkways, edge truss or compression ring, so it looks like a plastic lid. The underside view shows radial rafters with a regular purlin grid and a thin leading edge; a real cantilever or tension-ring roof has a deep primary structure (2-5 m deep trusses or cable trusses), a catwalk at the leading edge carrying floodlights, PA speakers and cameras, and visible translucent panels near the inner edge. The rafters here are spindly and evenly spaced and the leading edge is a thin flat lip with no fascia. The roof colour is the same flat light grey/white everywhere with no weathering streaks or dirt at panel joints.",
+    "suggestions": [
+      "Add an inner leading-edge truss/catwalk (a 2 m deep triangulated truss, instanced segments) around the full ring; it carries the floodlight ring and speakers and gives the underside its main read.",
+      "Deepen the primary rafters to 1.5-3 m tapering trusses (instanced lattice segments, ~200 tris each) every 15-20 m, with lighter secondary purlins between.",
+      "Make the inner 10-15 m of the roof translucent polycarbonate (alpha 0.5, slightly blue-white) so light reaches the front rows.",
+      "On top: standing-seam normal map, gutters at panel lines, a perimeter edge beam, rooflight strips and maintenance walkway with rails; add streaky dirt below panel laps.",
+      "Add a fascia band (1-2 m) on the outer and inner roof edge, optionally with club branding."
+    ],
+    "renderer_notes": "The underside is evenly lit by sky ambient with no occlusion; real roof undersides are much darker, which the renderer can't show without AO/GI."
+  },
+  {
+    "asset": "stadium_mega:exterior/facade",
+    "score": 42,
+    "pass": false,
+    "summary": "Bold yellow fin cladding between concrete piers gives a strong distant silhouette, but the facade has no ground-level life: no entrances, turnstiles, glazing or signage.",
+    "critique": "The vertical-fin screen and repeating concrete piers read as a modern stadium envelope from distance, and the dark bay variation adds rhythm. Up close it is a uniform drum: no entrance canopies, turnstile blocks, glazed atria, ticket office, stair cores, signage with the club name, emergency exits or service doors. The base meets the plaza in a straight line with no plinth, steps or ramps. The piers are plain grey boxes with no articulation (no fixings, joints, shadow gaps). The surrounding plaza is a huge blank light-grey slab with sparse, thin saplings; there is no bollard line, lighting, wayfinding, kiosks or paving pattern. The roof edge sits on the cladding with no transition detail.",
+    "suggestions": [
+      "Add ground-floor entrance modules every 40-60 m: turnstile banks (instanced), glazed doors, a steel canopy and an illuminated gate-number sign.",
+      "Insert 2-3 glazed stair/lift cores and a main entrance with large glazing and the club crest/name in 3D letters (the kit already has lettering).",
+      "Give the cladding fins depth variation (some angled, 300 mm deep) and an opening reveal where the cores sit; add shadow gaps and fixings on the piers.",
+      "Pattern the plaza (paving grid normal/albedo), add bollards, lamp columns, bins, wayfinding totems and larger trees in tree pits along the approach.",
+      "Add a 1 m concrete plinth with louvres and service doors at the facade base, and steps/ramps up to entrances."
+    ],
+    "renderer_notes": "The one dark facade bay may be a shading artefact or an intentional colour change - it reads as a missing texture either way."
+  },
+  {
+    "asset": "stadium_mega:floodlights",
+    "score": 30,
+    "pass": false,
+    "summary": "No readable floodlighting: no pylons, and no visible roof-edge light ring or gantry.",
+    "critique": "A modern enclosed bowl puts its floodlights on a continuous catwalk or ring along the roof leading edge; in these renders there is at most a line of tiny dots under the roof and nothing that reads as rows of luminaires. From the pitch, the roof edge looks bare. With no pylons either, the stadium appears to have no pitch lighting, which is a major missing feature for a top-flight venue.",
+    "suggestions": [
+      "Add a leading-edge lighting ring: a catwalk with rows of rectangular LED floodlights (about 0.6 x 0.5 x 0.15 m each, two to three rows, angled down toward the pitch), instanced in the hundreds, concentrated along the sidelines.",
+      "Make the luminaire fronts emissive (or high-albedo glass with dark housings) so the ring reads even in daytime shots; dark grey housings, sRGB ~50.",
+      "Add access ladders and cable trays on the catwalk and a few TV camera/PA speaker clusters to break up repetition.",
+      "Optionally provide an emissive night variant with light cones/flares for match-night presets."
+    ],
+    "renderer_notes": "Daytime renders reduce the visibility of lights, but the housings themselves should still be visible."
+  },
+  {
+    "asset": "stadium_mega:pitch & goals & nets",
+    "score": 62,
+    "pass": false,
+    "summary": "The best part of the stadium: correct markings, mowing stripes, goalmouth wear and a believable goal with a hex net.",
+    "critique": "Line markings are crisp and correctly placed, mowing stripes and colour variation give the pitch scale, and there are worn patches in the goalmouth and six-yard box that sell use. The goal frame has the right 7.32 x 2.44 proportions, white round posts, rear stanchions and a hexagonal net with sensible depth. Weaknesses: at grazing angles the grass is a smooth flat colour with no blade breakup or height near the camera; lines are perfectly sharp and uniformly bright with no paint-on-grass softness; the run-off area is the same turf with no artificial-turf strip or drainage channel in front of the boards. Net sag is minimal and there is no anchoring to the ground at the back, nor net support poles/ropes. Penalty spot and centre spot are fine.",
+    "suggestions": [
+      "Add a near-camera grass shell or blade cards within ~15 m (cheap, distance-faded) so low camera views have texture.",
+      "Soften the lines: 120 mm width with a slightly translucent, grass-tinted edge and patches where the paint is thinner.",
+      "Give the net catenary sag between supports and pin its back and bottom edges to the ground with pegs; add two rear net-support poles with elastic ties.",
+      "Add a perimeter artificial-turf/run-off strip of a different, darker green with a drainage channel grate in front of the boards."
+    ],
+    "renderer_notes": "The huge flat roof shadow on the pitch is correct; the turf looks smooth partly because of distance shading."
+  },
+  {
+    "asset": "stadium_mega:dugouts & tunnel",
+    "score": 50,
+    "pass": false,
+    "summary": "Right components in the right places (two dugouts flanking an extendable tunnel), but simplified and low on detail.",
+    "critique": "The dugouts are long low shelters with transparent fronts/roofs and rows of bucket seats, and the extendable tunnel is an arched green hood with a dark mouth - all correct ideas for a top-flight ground, with a technical area marked. However, the dugout shells are simple box frames with flat green panels, the polycarbonate looks like an untinted pane with no frame thickness or reflections, the seats are uniform dark grey without headrests or padding (premium dugouts use padded leather-style seats), and the tunnel is a single smooth arch with no concertina ribs, no sponsor branding and no visible doors behind. There is no fourth-official area, no coaching-staff box, and no matchday clutter (water bottles, kit bags, tablets).",
+    "suggestions": [
+      "Model the tunnel as concertina segments (5-7 ribbed arches of decreasing width) with a vinyl texture and sponsor logos; about 1k tris.",
+      "Give dugout canopies a 50 mm aluminium frame, tinted polycarbonate (alpha 0.35, slight blue, specular) and a branded fascia strip.",
+      "Use padded stadium-style seats with headrests, two-tone, and stagger a raised second row.",
+      "Add a fourth-official desk/board stand between the dugouts and scatter a few instanced props (bottles crates, cones) for life."
+    ],
+    "renderer_notes": "Transparent materials look flat without reflections."
+  },
+  {
+    "asset": "stadium_mega:advertising boards & screens",
+    "score": 57,
+    "pass": false,
+    "summary": "Varied, readable perimeter LED boards, ribbon boards and a scoreboard give strong broadcast flavour, but the boards are flat graphics and the big screen's back is a blank slab.",
+    "critique": "The perimeter boards carry distinct fictional sponsors with clean typography, there are continuous LED ribbon bands on every tier fascia, a hanging scoreboard with team names, score and clock, and 3D carpet-style pitch-side prints. All good. Problems: the LED boards are flat textured boxes with no pixel grid, no slight emissive glow, no frame/cabinet joins or support legs, so up close (Kestrel Bank) they read as printed vinyl rather than LED. The ribbon boards repeat the same sponsor sequence at the same scale so the repetition is obvious. The large screen seen from behind is an enormous plain grey box with a tiny header - real screens have a structural steel back with access doors, cooling vents and rigging. The scoreboard's surround is plain.",
+    "suggestions": [
+      "Give LED boards emissive output (strength 1.5-3), a fine pixel-grid normal/albedo micro-pattern visible within 10 m, 1 m cabinet seams, and a black back frame with angled support legs.",
+      "Randomise ribbon board content per tier and per segment (offset the sponsor sequence, mix in club messages) to hide repetition.",
+      "Model the back of the big screen with a steel truss back frame, vent grilles, access ladder and suspension cables to the roof; about 1-2k tris.",
+      "Add a black bezel with branding to the scoreboard face and a slight emissive bloom."
+    ],
+    "renderer_notes": "No bloom/emissive glow makes LED content look printed; partly renderer."
+  }
+]

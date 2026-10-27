@@ -27,6 +27,7 @@ from ..stands import sightlines as S
 from . import seat as SEAT
 
 CAMERA_MIN_HEIGHT = 12.0  # main TV camera; a lower tier front gets a gantry instead
+PLAZA_MIN_CAPACITY = 5000   # grounds this big get a paved plaza round them by default
 STANDING_PER_M = 1.8   # spectators per metre of terrace step (Green Guide 4.7/m2 on 0.38 m steps)
 
 
@@ -36,6 +37,41 @@ def _stable(text):
 
 
 # -- materials --------------------------------------------------------------------------------
+
+def blockwork(name="Stand_Block", color="#b3aea4"):
+    """Fair-faced concrete blockwork (440 x 215 mm blocks, 10 mm joints, stretcher bond): the
+    concourse walls under an upper tier. A block a shade off its neighbours, rain streaks and grime."""
+    if bpy.data.materials.get(name):
+        return bpy.data.materials[name]
+    m, nb = material(name)
+    geo = nb.geometry()
+    pos, nrm = geo["Position"], geo["Normal"]
+    x, y, z = nb.sep(pos)
+    ax, ay, az = (nb.math("ABSOLUTE", c) for c in nb.sep(nrm))
+    # along the wall and up it (x and y on a horizontal face: the plane game textures bake on)
+    along = nb.add(nb.mul(x, nb.add(ay, az)), nb.mul(y, ax))
+    up = nb.add(nb.mul(z, nb.sub(1.0, az)), nb.mul(y, az))
+    br = nb.node("ShaderNodeTexBrick", offset=0.5, offset_frequency=2, squash=1.0, squash_frequency=2)
+    nb.connect(nb.comb(along, up, 0.0), br.inputs["Vector"])
+    br.inputs["Scale"].default_value = 1.0
+    br.inputs["Mortar Size"].default_value = 0.01
+    br.inputs["Mortar Smooth"].default_value = 0.2
+    br.inputs["Brick Width"].default_value = 0.45
+    br.inputs["Row Height"].default_value = 0.225
+    c = srgb(color)
+    br.inputs["Color1"].default_value = c
+    br.inputs["Color2"].default_value = tuple(v * 0.9 for v in c[:3]) + (1,)
+    br.inputs["Mortar"].default_value = srgb("#8f8a80")
+    fine = nb.noise(pos, 60.0, detail=4, rough=0.7)
+    tone = nb.noise(pos, 0.9, detail=4)
+    base = nb.mix(nb.madd(tone, 0.4, nb.mul(fine, 0.3)), br.outputs["Color"], srgb("#7f7b72"))
+    streak = nb.smooth(0.5, 0.75, nb.noise(nb.vmath("MULTIPLY", pos, (6.0, 6.0, 0.35)), 1.0, detail=3))
+    base = nb.mix(nb.mul(streak, 0.25), base, srgb("#5f5c55"))
+    joint = nb.sub(1.0, br.outputs["Fac"])
+    nb.output(nb.principled(Base_Color=base, Roughness=0.9,
+                            Normal=nb.bump(nb.add(joint, nb.mul(fine, 0.3)), 0.4, 0.006)))
+    return m
+
 
 def concrete(name="Stand_Concrete", color="#9d998f"):
     if bpy.data.materials.get(name):
@@ -64,9 +100,10 @@ def painted(name, color, rough=0.5):
         return bpy.data.materials[name]
     m, nb = material(name)
     pos = nb.geometry()["Position"]
+    # factory powder coat: an even colour, lightly weathered (a dark finish shows every streak)
     v = nb.noise(pos, 2.0, detail=4)
-    col = nb.mix(nb.mul(v, 0.15), srgb(color), nb.mix(1.0, srgb(color), (0.8, 0.8, 0.8), blend="MULTIPLY"))
-    col, r = MAT.weathering(nb, col, nb.madd(nb.sub(nb.noise(pos, 4.0, detail=3), 0.5), 0.1, rough + 0.05), 0.5)
+    col = nb.mix(nb.mul(v, 0.06), srgb(color), nb.mix(1.0, srgb(color), (0.8, 0.8, 0.8), blend="MULTIPLY"))
+    col, r = MAT.weathering(nb, col, nb.madd(nb.sub(nb.noise(pos, 4.0, detail=3), 0.5), 0.1, rough + 0.05), 0.22)
     nb.output(nb.principled(Base_Color=col, Roughness=r, Specular_IOR_Level=0.45,
                             Normal=nb.bump(nb.noise(pos, 90.0), 0.08, 0.001)))
     return m
@@ -114,7 +151,7 @@ def _nosings_mesh(name, segs, col, parent, mat):
         n = np.array([d[1], -d[0], 0.0])
         n /= max(1e-9, np.linalg.norm(n))
         lift = np.array([0, 0, 0.002])
-        V += [p0 + lift, p1 + lift, p1 + n * 0.055 + lift, p0 + n * 0.055 + lift]
+        V += [p0 + lift, p1 + lift, p1 + n * 0.07 + lift, p0 + n * 0.07 + lift]
         F.append((4 * k, 4 * k + 1, 4 * k + 2, 4 * k + 3))
     return mesh_object(name, np.array(V), np.array(F), col, parent, materials=[mat])
 
@@ -143,7 +180,8 @@ def smooth_by_angle(obj, degrees=35.0):
     obj.data.set_sharp_from_angle(angle=math.radians(degrees))
 
 
-def paving(name="Plaza_Paving"):
+def paving(name="Plaza_Paving", c1="#a7a399", c2="#958f84", mortar="#6e6a62"):
+    """Flag paving, 600 x 300 mm in stretcher bond (Plaza_Band: the charcoal granite bands)."""
     if bpy.data.materials.get(name):
         return bpy.data.materials[name]
     m, nb = material(name)
@@ -154,9 +192,9 @@ def paving(name="Plaza_Paving"):
     br.inputs["Mortar Size"].default_value = 0.008
     br.inputs["Brick Width"].default_value = 0.6
     br.inputs["Row Height"].default_value = 0.3
-    br.inputs["Color1"].default_value = srgb("#a7a399")
-    br.inputs["Color2"].default_value = srgb("#958f84")
-    br.inputs["Mortar"].default_value = srgb("#6e6a62")
+    br.inputs["Color1"].default_value = srgb(c1)
+    br.inputs["Color2"].default_value = srgb(c2)
+    br.inputs["Mortar"].default_value = srgb(mortar)
     stain = nb.noise(pos, 0.15, detail=5)
     col = nb.mix(nb.mul(nb.smooth(0.5, 0.8, stain), 0.3), br.outputs["Color"], srgb("#6f6b63"))
     nb.output(nb.principled(Base_Color=col, Roughness=0.8, Normal=nb.bump(nb.sub(1.0, br.outputs["Fac"]), 0.3, 0.004)))
@@ -169,21 +207,58 @@ def _plaza(A, B, reach_x, reach_y, R, col, parent):
     n = 256
     ang = np.linspace(0, 2 * np.pi, n, endpoint=False)
     hx, hy, r = A + reach_x + 28.0, B + reach_y + 28.0, max(R, 20.0) + 28.0
-    pts = []
-    for a in ang:
-        dx, dy = math.cos(a), math.sin(a)
-        lo, hi = 0.0, 4 * (hx + hy)
-        for _ in range(40):
-            mid = 0.5 * (lo + hi)
-            x, y = abs(dx * mid), abs(dy * mid)
-            qx, qy = max(x - (hx - r), 0), max(y - (hy - r), 0)
-            inside = x <= hx and y <= hy and qx * qx + qy * qy <= r * r
-            lo, hi = (mid, hi) if inside else (lo, mid)
-        pts.append((dx * lo, dy * lo, -0.012))
-    V = np.array([(0.0, 0.0, -0.012)] + pts)
+
+    def outline(hx, hy, r, z):
+        pts = []
+        for a in ang:
+            dx, dy = math.cos(a), math.sin(a)
+            lo, hi = 0.0, 4 * (hx + hy)
+            for _ in range(40):
+                mid = 0.5 * (lo + hi)
+                x, y = abs(dx * mid), abs(dy * mid)
+                qx, qy = max(x - (hx - r), 0), max(y - (hy - r), 0)
+                inside = x <= hx and y <= hy and qx * qx + qy * qy <= r * r
+                lo, hi = (mid, hi) if inside else (lo, mid)
+            pts.append((dx * lo, dy * lo, z))
+        return pts
+    V = np.array([(0.0, 0.0, -0.012)] + outline(hx, hy, r, -0.012))
     j = np.arange(n)
     F = np.stack([np.zeros(n, int), 1 + j, 1 + (j + 1) % n, 1 + (j + 1) % n], 1)[:, :3]
-    return mesh_object("Plaza", V, F, col, parent, materials=[paving()])
+    plaza = mesh_object("Plaza", V, F, col, parent, materials=[paving()])
+    # charcoal granite bands following the plaza's outline, 6 m and 14 m in from its edge
+    Vb, Fb = [], []
+    for d in (6.0, 14.0):
+        base = len(Vb)
+        Vb += outline(hx - d, hy - d, r - d, -0.002) + outline(hx - d - 0.9, hy - d - 0.9, r - d - 0.9, -0.002)
+        Fb += [(base + k, base + (k + 1) % n, base + n + (k + 1) % n, base + n + k) for k in range(n)]
+    mesh_object("PlazaBands", Vb, Fb, col, parent,
+                materials=[paving("Plaza_Band", "#6c6a66", "#62605c", "#4a4946")])
+    return plaza
+
+
+def _place_props(items, col, parent):
+    """Library props (plaza furniture) as linked duplicates of one prototype per key; the
+    prototypes are templates and never ship."""
+    from mathutils import Matrix
+    from . import props as PR
+    protos = {}
+    for i, (key, pos, yaw) in enumerate(items):
+        if key not in protos:
+            pcol = collection(f"Proto_{key}")
+            try:
+                r = PR.build(key, pcol)
+            except KeyError:
+                protos[key] = []
+                continue
+            for o in [r] + list(r.children_recursive):
+                o["template"] = True
+                o.hide_render = True
+            bpy.context.view_layer.update()
+            protos[key] = [c for c in r.children_recursive if c.type == "MESH"]
+        place = Matrix.Translation(pos) @ Matrix.Rotation(yaw, 4, "Z")
+        for k, c in enumerate(protos[key]):
+            o = link(bpy.data.objects.new(f"{key}_{i}_{k}", c.data), col, parent)
+            o.matrix_world = place @ c.matrix_world
 
 
 def _apron(p, A, B, R, corners, col, parent, kind):
@@ -317,7 +392,7 @@ def build(cfg, pitch_params, col=None):
 
     mats = [concrete(color=cfg.get("concrete", "#9d998f")),
             painted("TINT_fascia", cfg.get("fascia_color", "#1b1d20"), 0.4),
-            painted("Stand_Soffit", "#d9d6cf", 0.8), concrete("Stand_Block", "#b3aea4")]
+            painted("Stand_Soffit", "#d9d6cf", 0.8), blockwork("Stand_Block", "#b3aea4")]
     rail_mat = SEAT.galvanised()
     nose_mat = painted("Step_Nosing", "#f2c200", 0.55)
     glass_mat = glass()
@@ -432,10 +507,12 @@ def build(cfg, pitch_params, col=None):
         _seat_points(f"Seats_{style}", [all_anchors[i] for i in idx], colors[idx], style, col, root)
         seats[style] = len(idx)
     _apron(p, A, B, R, corners, col, root, cfg.get("apron", "turf"))
-    if cfg.get("plaza", bool(facades)):
+    # a paved plaza (and its street furniture) goes round a stadium, not a club ground
+    if cfg.get("plaza", bool(facades) and len(all_anchors) + standing >= PLAZA_MIN_CAPACITY):
         reach_x = max([facades[k]["line_s"] for k in ("east", "west") if k in facades] + [20.0])
         reach_y = max([facades[k]["line_s"] for k in ("north", "south") if k in facades] + [20.0])
         _plaza(A, B, reach_x, reach_y, R if corners == "curved" else 0.0, col, root)
+        _place_props([it for f in facades.values() for it in f.get("props", [])], col, root)
     capacity = {"seated": len(all_anchors), "standing": int(standing), "by_style": seats}
     capacity["total"] = capacity["seated"] + capacity["standing"]
     root["capacity"] = capacity["total"]
@@ -470,7 +547,7 @@ def _high_camera(tiers, roof_edge):
             z = min(max(z_edge - 2.2, _floor_at(tiers, s) + 2.2), z_edge - 0.3)
             return s, z, ("hung", z_edge)
         # a low roof: a gantry standing on its leading edge
-        return s_front + 0.6, max(edge_top + 1.6, CAMERA_MIN_HEIGHT), ("standing", edge_top)
+        return s_front + 0.6, max(edge_top + 1.6, CAMERA_MIN_HEIGHT), ("roof", edge_top)
     s = tiers[-1]["s_back"] - 1.2
     floor = _floor_at(tiers, s)
     return s, max(floor + 1.6, CAMERA_MIN_HEIGHT), ("standing", floor)
@@ -501,19 +578,41 @@ def _gantry(run, t, s_cam, z, gantry, col, parent, mat):
             lines.append(([at(a, b, deck), at(a, b, zr)], 0.04))
         elif deck - zr > 0.3:
             lines.append(([at(a, b, zr), at(a, b, deck)], 0.05))
-    if kind == "standing":
+    if kind in ("standing", "roof"):
         zz = zr
         while zz + 2.0 < deck:
             for k in range(4):
                 (a0, b0), (a1, b1) = corners[k], corners[(k + 1) % 4]
                 lines.append(([at(a0, b0, zz), at(a1, b1, zz + 2.0)], 0.03))
             zz += 2.0
-    _tubes_mesh("CameraGantry_frame", lines, col, parent, mat, sides=8)
     acc = G.MeshAcc()
     poly = np.array([(s - 1.2, deck - 0.12), (s + 1.2, deck - 0.12), (s + 1.2, deck), (s - 1.2, deck)])
     acc.add_prism(run, t - 1.5, t + 1.5, (poly, [0] * 4))
-    V, F, _, UV = acc.arrays()
-    mesh_object("CameraGantry", V, F, col, parent, materials=[mat])
+    if kind == "roof":
+        # a hut with an open front for the camera on a braced steel frame, and a ladder
+        m = run.metric(s)
+
+        def rect(s0, s1, z0, z1):
+            return (np.array([(s0, z0), (s1, z0), (s1, z1), (s0, z1)]), [1] * 4)
+        acc.add_prism(run, t - 1.5, t + 1.5, rect(s + 1.1, s + 1.2, deck, deck + 2.3), cap_tag=1)
+        for ta, tb in ((t - 1.5, t - 1.5 + 0.1 / m), (t + 1.5 - 0.1 / m, t + 1.5)):
+            acc.add_prism(run, ta, tb, rect(s - 1.2, s + 1.2, deck, deck + 2.3), cap_tag=1)
+        acc.add_prism(run, t - 1.6, t + 1.6, rect(s - 1.45, s + 1.3, deck + 2.3, deck + 2.45), cap_tag=1)
+
+        def w(dt, zz):
+            p_, n_ = run.frame(t + dt / m)
+            q = p_ + n_ * (s + 1.45)
+            return (float(q[0]), float(q[1]), zz)
+        for dt in (-0.22, 0.22):
+            lines.append(([w(dt, zr), w(dt, deck + 1.0)], 0.025))
+        zz = zr + 0.3
+        while zz < deck:
+            lines.append(([w(-0.22, zz), w(0.22, zz)], 0.012))
+            zz += 0.3
+    _tubes_mesh("CameraGantry_frame", lines, col, parent, mat, sides=8)
+    V, F, tags, UV = acc.arrays()
+    mesh_object("CameraGantry", V, F, col, parent, materials=[mat, painted("Screen_Body", "#6b6f75", 0.5)],
+                mat_index=tags, uvs=UV)
 
 
 def _end_walls(run, tiers, col, parent, mat, name):

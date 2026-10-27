@@ -55,6 +55,13 @@ pub struct Catalog {
     pub grass: Entries,
     pub goals: Entries,
     pub corner_flags: Entries,
+    /// training grounds (kit/site): site templates, plot occupants, facilities, building styles
+    pub sites: Entries,
+    pub occupants: Entries,
+    pub facilities: Entries,
+    pub styles: Entries,
+    /// rooms of buildings with interiors (kit/site/interior.py)
+    pub rooms: Entries,
 }
 
 fn load_map(dir: &Path, name: &str) -> Result<Entries, String> {
@@ -84,6 +91,11 @@ impl Catalog {
             grass: load_map(dir, "grass")?,
             goals: load_map(dir, "goals")?,
             corner_flags: load_map(dir, "corner_flags")?,
+            sites: load_map(dir, "sites")?,
+            occupants: load_map(dir, "occupants")?,
+            facilities: load_map(dir, "facilities")?,
+            styles: load_map(dir, "styles")?,
+            rooms: load_map(dir, "rooms")?,
         })
     }
 

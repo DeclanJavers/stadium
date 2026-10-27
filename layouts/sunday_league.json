@@ -77,5 +77,11 @@
     "style": "shelter",
     "seats": 10,
     "color": "#2f4a2a"
+  },
+  "tunnel": {
+    "style": "telescopic",
+    "color": "#2f4a2a",
+    "width": 2.2,
+    "height": 2.3
   }
 }

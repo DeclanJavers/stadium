@@ -1,0 +1,165 @@
+[
+ {"asset": "barrier_arm", "score": 40, "pass": false,
+  "summary": "Right overall layout (housing, long boom, rest post) but the housing is a plain yellow box and the boom a plain round tube, so it reads as a toy.",
+  "critique": "Proportions are roughly right. The housing looks about 1.0-1.1 m tall against a 4-5 m boom, which matches the FAAC 620 (350 x 1080 x 170 housing, 4 m boom), and the rest post holds the boom at housing-top height. The problems are in construction and materials. (1) The housing is a rounded box with a plain cap and one black disc where the boom pivots. A real cabinet has a removable front door with a lock barrel, shut lines, a vent louvre, a base flange bolted to a concrete plinth, a pivot hub with a visible shaft and a counterweight or spring cover, and maker and warning decals. (2) The boom is a thin round tube. Real booms are an extruded aluminium profile, about 70-100 mm deep and 40-60 mm wide, rectangular or elliptical, with a rubber bumper strip along the underside. The red and white bands should be retro-reflective vinyl about 300-500 mm long with a slight sheen; here they are flat painted stripes. (3) The rest post is a plain grey post with a small fork at the top. It needs a U-cradle with a rubber pad, a base plate with four anchor bolts, and usually a yellow/black or red/white band. (4) There is no wear anywhere: no grime at the base, no scuffed paint on the housing corners, no dirt on the lower boom. The flat matte yellow albedo, with no roughness variation, makes it look plastic.",
+  "suggestions": [
+   "Housing: model a front door panel inset 3-5 mm with a 2 mm shut-line groove, a lock cylinder (12-16 sided, 25 mm diameter), a louvre grille on one side (6-8 slats), and a 20-30 mm base flange on a 500 x 300 x 100 mm concrete plinth. Make the cap overhang about 15 mm with a 5 mm bevel. Roughly +300 tris.",
+   "Pivot: replace the black disc with a hub. Use a 120 mm diameter boss, a protruding 40 mm shaft, and a boom clamp plate (two bolted flat plates gripping the boom). About +150 tris.",
+   "Boom: change the cross-section from a round tube to a rounded rectangle or ellipse about 90 x 50 mm. Add a black rubber skirt strip about 30 mm deep along the underside and an end cap. Make the red bands retro-reflective (roughness 0.3, a slight clearcoat look) and the aluminium between them satin (metallic 1, roughness 0.35, albedo about 0.75).",
+   "Rest post: add a U-fork with a rubber pad, a 200 x 200 mm base plate with 4 bolt heads, and a red/white or yellow/black banded sleeve.",
+   "Materials: use RAL 1003/1023 signal yellow at albedo about (0.75, 0.55, 0.05) with roughness 0.45. Add a cheap tiling wear mask for edge chips and dark grime about 150 mm up from the base. Add a small black-on-yellow warning decal and a maker plate on the door."
+  ],
+  "renderer_notes": "The flat, even grass and sky are scene context only. Shadows look correct."},
+
+ {"asset": "cctv_pole", "score": 45, "pass": false,
+  "summary": "Believable slim column with a dome and a bullet camera on an arm, but the column has no base detail, door or bracketry, and the head hardware is small and simplified.",
+  "critique": "The column's height and slenderness look right for a 6 m CCTV column, and there is a small root swell near the ground. The camera head (a dome on a short collar plus a bullet camera with a sunshield on a side arm) reads correctly in the three-quarter view. Weak points: (1) The column is one untextured grey cylinder. A real column has a base flange or plinth with anchor bolts (or a planted root with a ground collar), an inspection door about 500 mm up (around 400 x 100 mm, with a tamper-proof lock), a clear shaft taper from about 140-160 mm at the root to 76 mm at the top, and a top cap. (2) Head bracketry is thin. Real installs have a pole-top adapter plate, a junction or power box (about 300 x 200 x 120 mm) clamped to the pole with banding straps, and visible cable glands. (3) From the side view the bullet camera reads as a flat plate. The sunshield dominates and the body under it is too thin, so it looks like a sign. (4) In the top view the pole ends in a bare flat disc with no cap. (5) Materials: the galvanised or painted steel shows no zinc spangle, no streaking, no weld seam and no grime band at the bottom.",
+  "suggestions": [
+   "Taper the shaft linearly from 150 mm to 76 mm diameter. Add a 300 x 300 x 20 mm base plate with 4 bolt-and-nut stacks and a 400 mm high shroud, or for a planted root a 50 mm concrete collar. Add a domed top cap. Roughly +250 tris.",
+   "Add an inspection door at 0.6 m: an inset rectangle with a 2 mm groove and a triangular-key lock boss. Add a vertical seam line.",
+   "Mount a junction box about 0.8 m below the head using two band clamps, with a conduit running into the pole. Thicken the camera arm into a cast bracket with a wall plate and gusset.",
+   "Rebuild the bullet camera as a 300 x 110 x 110 mm cylinder or box body with a sunshield overhanging by 30 mm, a recessed glass front with a dark lens and IR LED ring (emissive off), and a cable tail. Make the dome a 160 mm smoked hemisphere (roughness 0.05, dark tint) under a white housing.",
+   "Materials: galvanised steel (metallic 1, roughness 0.45-0.6, albedo about 0.6) with a low-frequency mottle, plus grime and rust streaks under the bolts and at the base. Add a small asset-number sticker and a 'CCTV in operation' sign plate (about 300 x 200 mm) at 2.5 m."
+  ],
+  "renderer_notes": "In the close-up the pole looks very pale and flat because of sky ambient with no GI. That is a lighting issue, not geometry."},
+
+ {"asset": "floodlight_fixture.halide", "score": 18, "pass": false,
+  "summary": "Does not read as a metal-halide sports floodlight: a faceted half-cylinder with a white inner dome and two loose arch shells, lying on the grass with no yoke, glass or housing.",
+  "critique": "A metal-halide stadium floodlight (Philips ArenaVision MVF403/404, Thorn Champion, GE/Abacus types) is a compact, heavy luminaire. It is either a rectangular die-cast box about 600 x 500 x 350 mm with a flat tempered-glass front, or a round reflector bowl about 600 mm diameter with a glass lens. It has a deep rear housing for the lamp and gear, a U-shaped yoke bracket pivoting on two side trunnions with an aiming-angle scale, cooling fins, and often an external louvre or visor. This asset is a stretched half-pipe of low-segment arch shells. Two shells are detached and float apart with open gaps. Inside is a large bright white bulbous surface, there is no front glass, and there is no mount, yoke or pivot. It sits on the ground like a tunnel or tent, so its scale and use are unclear. The faceting on the curved shells is visible (about 12 segments), and the dark/grey shells with no material break read as plastic. As shown it would be mistaken for an inflatable tunnel or a bin lid.",
+  "suggestions": [
+   "Rebuild from reference as a box luminaire: a 600 x 500 mm front frame with a 20 mm bezel, a tempered glass pane (transmissive or dark reflective, roughness 0.05), a faceted specular reflector visible behind the glass, a lamp capsule, and a tapered rear housing about 300 mm deep with 8-12 cooling fins. About 600-900 tris.",
+   "Add the yoke: a U-bracket of 10 x 80 mm flat bar wrapping the housing, pivoting on two trunnion bosses (60 mm diameter) with an aiming protractor plate, and a mounting spigot or bolt plate at the base of the U. About +200 tris.",
+   "Add an optional glare visor: a 4-sided flared hood about 150 mm deep along the top edge. Join it to the housing; it must not float.",
+   "Export the asset at its in-use orientation (aimed about 20-30 degrees down) on a short mounting stub, so the preview shows it as a lamp. Make the mounting point the origin so it instances cleanly onto pylon headframes.",
+   "Materials: die-cast aluminium in grey RAL 9006/7035 (metallic 0.8, roughness 0.4), black gasket rims, a mirror-finish reflector (metallic 1, roughness 0.1), and dust and bird soiling on the top surfaces. Add an emissive lamp/glass channel for the 'on' state.",
+   "Raise the curve segment count to 24+ on any round parts, or add smooth normals, so the faceting disappears."
+  ],
+  "renderer_notes": "The bright white inner surface may be over-exposed by the specular sun response, but the shape problems are in the asset itself."},
+
+ {"asset": "mannequin", "score": 38, "pass": false,
+  "summary": "Recognisable free-kick mannequin silhouette on a spring, but it is a flat untextured yellow cutout with a plain plank stuck on the front.",
+  "critique": "The silhouette (head, shoulders, tapered body, merged legs) and the spring-and-spike base match the common training-ground product, and the height looks close to 1.8 m. The construction is too thin and too clean. (1) It is a flat slab of uniform thickness with a sharp cut edge. Real mannequins are blow-moulded or rotomoulded HDPE, 20-60 mm thick with rounded edges, and have moulded relief: shoulder and chest bulge, an arm line, a leg split groove, and often a handle slot near the head. (2) The vertical strip on the front is a second flat board, with nothing showing how it fixes to the spring. Real mannequins have a ground spike (about 300 mm) through a steel spring coupling into a socket moulded into the base of the body, or a weighted or pegged base plate. (3) The head is a thin rounded rectangle on a short neck; the neck should be thicker and the head about 220 mm wide. (4) The material is flat pastel yellow with no roughness variation, so it reads as card. Real ones are saturated hi-vis yellow, red or blue plastic with a slight sheen, ball scuff marks at chest height, mud splash on the lower third, and faded UV patches. (5) The side view shows it is paper-thin and makes the spring look like it pierces the body.",
+  "suggestions": [
+   "Rebuild the body as a closed, inflated shell: extrude the silhouette to 40 mm, bevel or round all edges with a 15-20 mm radius (2-3 segments), and add a soft bulge so the centre is about 60 mm thick and the edges 25 mm. About 600-1000 tris.",
+   "Add moulded details as shallow insets: a leg split groove from crotch to base, arm lines from shoulder to hip, a 120 x 35 mm hand-grip slot through the head or shoulders, and a moulded number or logo area.",
+   "Replace the front plank with a base socket boss (about 70 mm diameter, 120 mm tall) at the bottom of the body. Under it put the spring (keep it) and a 300 mm steel ground spike with a T-handle or flat foot plate at ground level.",
+   "Material: saturated yellow at albedo about (0.85, 0.7, 0.05), roughness 0.35. Add a tiling wear mask: ball scuffs (grey-brown ovals at 1.2-1.5 m), mud and grass staining on the bottom 300 mm, and slight UV fading on the top edges.",
+   "Variants: red, blue and yellow tints, plus a wall version of 3-5 bodies linked by a bar, so groups can be instanced."
+  ],
+  "renderer_notes": "The opposite three-quarter view looks dark olive because it is backlit with no GI bounce. That is a renderer limit, not an albedo error."},
+
+ {"asset": "reeds", "score": 47, "pass": false,
+  "summary": "Credible bulrush clump from mid distance, but the seed heads are pointed leaf shapes rather than sausage-shaped cattails, and the blade cards and square footprint show up close.",
+  "critique": "Colour (straw to olive), height variation and the mix of upright and arching blades work at mid range, and the cast shadow has a natural ragged edge. Problems: (1) Typha seed heads are dense brown cylinders about 20-30 mm in diameter and 150-300 mm long, blunt at both ends, on a rigid stem, with a thin pale male spike above. Here they are almond or lanceolate shapes that look like brown leaves or flames. (2) The heads are clustered at nearly the same height in a tight bunch. Real stands have fewer heads, spread across the clump and staggered in height by 300-500 mm. (3) Typha leaves are flat straps 10-20 mm wide, slightly twisted, blue-green with dead straw tips. Here the blades are hair-thin and uniform, closer to grass or rush (Juncus). (4) The close-up shows the clump sits on a square footprint with vertical card edges, so the base looks like a box. Real clumps spread irregularly from rhizomes, with dead leaf litter and a darker wet base. (5) Every blade has the same yellow-green value, with no variation between living green and dead stems.",
+  "suggestions": [
+   "Remodel the heads as 8-sided cylinders (about 25 mm diameter, 200 mm long) with hemispherical caps, velvety brown albedo about (0.32, 0.2, 0.12) and roughness 0.8. Add a 100-150 mm thin spike above and a rigid green-brown stem. Use 6-10 heads per clump, staggered in height. About 60 tris per head.",
+   "Widen the blades into 12-18 mm strap ribbons with a gentle twist (3-4 segments each). Bend the tips of about 30% over and give 20% dead tips. Albedo: live (0.35, 0.45, 0.2), dead (0.6, 0.5, 0.3).",
+   "Break the square base: scatter blade roots in a noisy ellipse, splay the outer blades 15-30 degrees outward, and add a small dark litter disc or decal at the base (wet mud, albedo about 0.15).",
+   "Add per-blade colour and value jitter (+/-10%) and a vertex-colour gradient darker at the base for fake AO. Keep the total around 1.5-2.5k tris, or bake the far LOD to 2-3 crossed cards.",
+   "Offer a waterline variant with blades emerging from a flat water decal, since reeds rarely grow out of mown lawn."
+  ],
+  "renderer_notes": "The mown lawn under it is scene context; reeds would normally stand in shallow water or a damp margin."},
+
+ {"asset": "seat.wooden_tipup.std", "score": 15, "pass": false,
+  "summary": "Broken construction: slats float in two offset sheets beside one bent stick standard, with no seat pan, hinge, arms or second standard, so it doesn't read as a seat.",
+  "critique": "A wooden tip-up stadium seat (the old-ground type at Fratton, Goodison and similar) is a pair of cast-iron or steel standards bolted to the terrace step, carrying a hinged seat of 3-4 hardwood slats that tips up to about 80 degrees, and a fixed backrest of 2-3 slats. It is about 450-500 mm wide, the seat about 430-480 mm high and the back top about 850-900 mm. This asset has one thin dark bar with a kink partway up and a T foot. Two groups of chunky, highly glossy orange slats are offset front and back, apparently with nothing fixing them to the bar. The side view shows the slat groups splayed in a V, like branches on a tree, and nothing is horizontal to sit on. The slats look too thick and too rounded (almost cylindrical edges) and are evenly saturated orange with a strong clearcoat sheen. There are no bolts, no hinge pin, no armrests and no seat number. It looks like a transform or pivot bug, with the seat and back rotated about the wrong axis, combined with a missing second standard.",
+  "suggestions": [
+   "Fix the rig first. Build two mirrored standards (cast profile: floor foot about 300 x 60 mm, upright, a back-support arm angled 10-15 degrees back, and a hinge boss at seat height). Hang the seat on a horizontal hinge pin between them and fix the back to the rear arms. Check that the pivot origins sit on the hinge axis, not at the slat centres.",
+   "Seat: 3-4 slats, 20-25 mm thick x 60-70 mm wide x 450 mm long, 8-10 mm gaps, on two steel cross-bearers. Show it in the tipped-up state (about 80 degrees) as std, with a down variant. Back: 2-3 slats at 15 degrees of rake, top edge about 870 mm above the floor.",
+   "Reduce the edge bevel to a 3 mm chamfer. The current near-round edges make the slats look like sausages.",
+   "Wood material: weathered iroko or teak, with albedo varying from about (0.45, 0.28, 0.16) to grey silvered (0.5, 0.48, 0.44) on exposed faces. Roughness 0.7-0.85 with no clearcoat, grain from a tiling texture, and per-slat hue jitter. Paint the standards cast iron in dark green or black (roughness 0.6) with chipped edges and rust bleed at the bolts.",
+   "Add carriage-bolt heads on the slats (2 per slat end), a small brass or plastic seat-number plate on the back top rail, and arms between seats if the row variant needs them. Aim for about 400-700 tris so rows can instance in the thousands."
+  ],
+  "renderer_notes": "The heavy specular sheen on the slats may be partly the sun specular on a low-roughness material, but the geometry is wrong regardless."},
+
+ {"asset": "stadium_mega_overall:seating & stands", "score": 55, "pass": false,
+  "summary": "Convincing bowl scale and tier stacking, with mosaic colour patterns and vomitories, but the seats are boxy blocks, rakes are uniform, and there is no stair, handrail or row detail up close.",
+  "critique": "From the pitch this reads as a large modern three-tier bowl. The tier fronts carry LED fascias, the stepped seat colouring (including the 'OASIS' mosaic) is a nice touch, aisles break the seating into blocks, and vomitory openings show as dark portals. Close up (view 1, bottom), the seats are near-identical low-poly blocks scattered across random colour noise, so the pattern looks like pixel static rather than deliberate design or wear. Aisle stairs read as pale flat strips with no tread nosing contrast or handrails down the middle. Row risers and the concrete stepping between rows are hard to see. All three tiers have the same rake, whereas real upper tiers rake at about 34 degrees against about 20-25 degrees lower down. Tier-front balustrades (glass or steel) are missing on the upper tiers, and there are no hospitality boxes or glazing band between tiers, which every UK bowl of this size has.",
+  "suggestions": [
+   "Replace the random per-seat colour noise with a designed pattern (solid team colour with a crest or lettering, or a 2-3 tone gradient), plus about 3% random 'replaced seat' outliers. Random static reads as low quality.",
+   "Seat mesh: give each seat a moulded shell silhouette (seat pan plus back with a 10-degree curve and a seat-number plate). Keep about 60-120 tris per seat with instancing and a 12-tri card LOD beyond 40 m.",
+   "Aisle stairs: half-step treads with yellow nosing strips, central handrails (48 mm tube on posts every 1.5 m), and gangway-end railings at the vomitories.",
+   "Increase the upper-tier rake toward 30-34 degrees and add glass or steel balustrades (1.1 m) on tier fronts. Add a hospitality glazing band with box divisions between the lower and middle tiers.",
+   "Add concrete row riser edges and dark seat-shadow strips between rows (vertex AO or a decal) so rows read clearly in shade."
+  ],
+  "renderer_notes": "The hard rectangular sun shadow from the roof opening is shadow-map resolution and filtering. The darker look of the stands in shade is due to no GI."},
+
+ {"asset": "stadium_mega_overall:roof", "score": 45, "pass": false,
+  "summary": "Full cantilever ring with a visible truss underside, but from above it is a blank white slab, it has no edge or structural articulation, and it lacks the depth of real large roofs.",
+  "critique": "The underside shows a light truss grid and purlins, and the inner edge has a soffit band, which is the right idea for a large cantilever. From outside (view 2) the roof is a perfectly flat, uniform white plane with no sheeting seams, no gutter, no translucent leading-edge strip, no rooftop plant or access walkways, and no visible primary structure such as masts, tension ring or rafters. That makes it read like a CG placeholder lid. The outer edge meets the facade at a thin line with no fascia depth. On large UK roofs the leading 5-10 m is usually polycarbonate (translucent) to light the pitch, and that is missing. The underside trusses are thin and regular, with no secondary bracing depth, gantries, speaker clusters or floodlight rows.",
+  "suggestions": [
+   "Add standing-seam sheeting: a tiling normal or albedo stripe every 400-600 mm running radially, plus panel joints every 10-15 m. Add a perimeter gutter and fascia (1-1.5 m deep, metallic grey) at the outer edge. This is texture-only cost.",
+   "Make the inner 6-10 m of the roof a translucent polycarbonate strip (alpha or a lighter albedo with slight transmission), with visible ribs.",
+   "Express the primary structure. Either add radial rafter ribs on top (about 1.5 m deep, every 15-20 m, aligned with the facade piers), or a compression ring truss along the inner edge with a 3 m deep box section. Add rooftop walkways and a few plant boxes.",
+   "Underside: deepen the trusses (2-3 m) with diagonal lacing, a catwalk gantry along the inner edge carrying a continuous ring of floodlights and PA speakers.",
+   "Add rain streaks and dirt to the roof top surface (albedo about 0.75 grey-white, roughness 0.5) so it isn't pure white."
+  ],
+  "renderer_notes": "The roof top looks over-bright because of the flat white albedo with sun and sky only. Lower its albedo toward 0.7."},
+
+ {"asset": "stadium_mega_overall:exterior/facade", "score": 42, "pass": false,
+  "summary": "Bold gold-fin cladding between concrete piers gives a clear identity, but the facade is one uniform cylinder with no entrances, glazing, levels or ground-floor life.",
+  "critique": "The vertical gold fins and the rhythm of tall concrete piers read as a contemporary bowl facade and give a strong silhouette from the air. However, the facade is one continuous screen at one height with no base. There are no turnstile banks, entrance canopies, glazed concourse bands, signage, stair cores, ticket offices or service doors. A few tiny dark rectangles at the base are the only openings. The fins are uniform with no variation in angle or spacing, so the surface looks like corrugated foil. The piers are plain extruded boxes, with no capping and no attachment showing how they carry the roof. The surrounding apron is a flat grey plinth with no landscaping, crowd barriers, lighting columns, bollards or approach steps, so the building sits like a model on a base board.",
+  "suggestions": [
+   "Add a 4-6 m tall ground storey set back behind the fin screen: glazed concourse frontage, turnstile blocks with roller shutters every 20-30 m, numbered entrance gates with signage, and a club shop or ticket office.",
+   "Break the fin screen into vertical bands with fin angle and density varying slowly (e.g. 0-30 degree twist across a bay), and leave gaps where stair cores and glazed bands show through. Use a normal map for distant fins, real geometry only in the first 10 m of height.",
+   "Piers: add caps, roof-bearing brackets that visibly pick up the roof edge, and weathering streaks below them.",
+   "Apron: add hard landscaping (paving pattern), bollards, lighting columns, crowd barriers, tree pits and a podium step change to the street. Instancing the existing kit props works here.",
+   "Lighting and signage: club name lettering on the facade, wayfinding totems, and an emissive LED band for night views."
+  ],
+  "renderer_notes": "The gold fins look flat because there is no reflection or SSR. A metallic cladding would look richer with an environment probe."},
+
+ {"asset": "stadium_mega_overall:floodlights", "score": 20, "pass": false,
+  "summary": "No floodlighting is visible: no roof-edge lamp ring, no gantry fixtures, no pylons.",
+  "critique": "A stadium of this size lights the pitch from a continuous ring of floodlights along the roof leading edge or a gantry under it, usually 300-500 fixtures in long rows, all aimed at the pitch. None of the four views shows any fixtures. The inner roof edge is a plain soffit, and the truss underside carries no luminaires. This is a missing feature as far as the judging can see. The standalone halide fixture asset judged in this batch is also broken, so even if it is placed, it would not hold up.",
+  "suggestions": [
+   "Add a floodlight gantry or catwalk along the inner roof edge, with fixtures instanced every 0.8-1.2 m in 1-2 rows, aimed at points on the pitch (aim vectors from a grid). Each fixture is about 300 tris, plus a 12-tri LOD card past 60 m.",
+   "Fix the floodlight_fixture asset first (box housing, glass, yoke) so the ring reads correctly in close-ups.",
+   "Add an emissive 'on' state and a mild bloom-friendly glass value for evening scenes. Add access ladders and cable trays along the gantry for close-up credibility."
+  ],
+  "renderer_notes": "If the lamps exist but sit hidden in the soffit, raise or angle them so they show from pitch level, as they do in real bowls."},
+
+ {"asset": "stadium_mega_overall:pitch & goals & nets", "score": 62, "pass": false,
+  "summary": "Good pitch with mowing bands, crisp markings and goalmouth wear, and goals with hex netting. The goal frames are slightly thin and plain, and the turf edge and surrounds are simple.",
+  "critique": "The pitch is the strongest part: concentric or straight mowing stripes, clean line markings, worn and scuffed goalmouth patches, and a believable grass colour. The goals have correct proportions, round white frames, rear stanchions and hexagonal nets that read well. Weak points: the goal posts look thin for 120 mm elliptical stadium posts, and they lack the net hooks and clips, ground sockets, and back bar or anchor detail. The net hangs very straight and taut, with no sag or bunching at the base. The penalty-spot area and the six-yard box show no divots or foot traffic. The grass at the edge of the pitch meets a dark run-off strip and a red or flat track edge abruptly, with no sprinkler heads, drainage channels, camera tracks or touchline technical-area markings. A big branded mat behind the goal (bottom-right view) looks flat.",
+  "suggestions": [
+   "Goal frame: use a 120 x 100 mm elliptical post section with 8-12 segments and a slight bevel, add white net clips every 150 mm, and add ground sockets with grass trim rings. Add a curved rear support and a weighted base bar.",
+   "Net: add a gravity sag of 50-150 mm on the roof panel, gather on the ground with a bunched bottom edge, and add slight per-cord colour variance. Keep the hex pattern.",
+   "Turf: add subtle divot scars and foot-traffic darkening along the touchlines and in the warm-up areas behind the goals. Add pop-up sprinkler heads (small discs) around the perimeter and a drainage channel at the pitch edge.",
+   "Run-off: use artificial turf with a different hue and sheen, plus camera tracks, photographer mats and a technical-area box marked with dashed white lines."
+  ],
+  "renderer_notes": "The hard rectangular roof shadow on the pitch is from the shadow map. The flat dark shade on the far stand is due to no GI."},
+
+ {"asset": "stadium_mega_overall:dugouts & tunnel", "score": 48, "pass": false,
+  "summary": "Correct layout (two perspex dugouts flanking a concertina tunnel), but the pieces are small, generic and box-like, with a dark slab where the tunnel mouth meets the stand.",
+  "critique": "The dugouts have clear curved-front perspex with rows of black seats and the extendable green tunnel sits between them, which is the right arrangement. However, the dugout seats are generic black blocks rather than padded bucket or car-style seats, and the perspex has no frame profile, no tint and no reflection. The tunnel mouth meets the stand through a solid black box with no doors, signage or lit interior, so it reads as a hole. Missing: fourth-official table, technical-area markings, a pitchside mat or walkway, team name boards on the dugout backs, and the cable trays and cameras that cluster here. Scale looks small against the stand; a top-flight dugout is often 10-15 m long with two rows.",
+  "suggestions": [
+   "Dugout: aluminium frame profile around the perspex (40 mm), a tinted perspex material with low roughness, padded car-style seats with headrests in team colours (about 200 tris each), two rows, and team name panels.",
+   "Tunnel: replace the black box with a recessed portal (frame, double doors, lit interior with emissive ceiling strips) and add a branded fascia over the mouth.",
+   "Add a fourth-official desk with a board, technical-area dashed lines, a rubber walkway mat to the touchline, and a pitchside camera position next to the tunnel.",
+   "Scale dugouts to 10-12 m long at top-flight sizes (the dimensions note gives 6-10 m for lower leagues)."
+  ],
+  "renderer_notes": "The pure-black tunnel mouth may be partly an unlit interior with no GI. Even so, it needs geometry and emissive lighting."},
+
+ {"asset": "stadium_mega_overall:advertising boards & screens", "score": 55, "pass": false,
+  "summary": "Readable LED ribbon fascias with varied fictional sponsors and a crisp scoreboard graphic, but the board housings are thin flat strips and the hanging screen box has a flat black underside.",
+  "critique": "Tier-front LED ribbons with distinct sponsor names (Kestrel Bank, Meridian Tyres, Halcyon and others), and a legible scoreboard showing teams, score and match clock, give the bowl strong broadcast character. The pitch-level boards and 3D carpet behind the goal are present. Weaknesses: the ribbons are flat textures stuck to the fascia with no housing depth, bezel or panel joints, and every ribbon shows the same sponsor sequence, so the repetition is obvious. The scoreboard graphic is clean but too flat and simple (no pixel-grid texture, no bezel, rear structure or hanging cables). The large hanging screen (view 3) is a black slab with no frame, cables, catwalk or panel modules, so it reads as a void. Perimeter LED boards at pitch level are partly dark or flat-coloured and lack the angled cabinet profile, rear supports and padding top of real ones.",
+  "suggestions": [
+   "LED ribbon: a 100-150 mm deep housing with a dark bezel, module joints every 960 mm (normal map), and an emissive pixel-grid texture (subtle RGB subpixel pattern at close range). Offset the sponsor sequence per tier and add animated scroll states.",
+   "Scoreboard and hanging screen: a frame and bezel, a rear truss and suspension cables to the roof, maintenance catwalk rails, and screen modules visible on the dark faces. Give the black underside a structural grid and warning lights.",
+   "Pitchside boards: angled cabinets (about 0.9-1.0 m high, 10-15 degree rake back), rear legs, a padded top edge, and cable runs. Make both the emissive faces and the dark rear housings match real ones.",
+   "Vary brightness and colour temperature slightly per board so they don't read as one flat texture."
+  ],
+  "renderer_notes": "With no bloom or emissive glow the LED boards read as printed vinyl. A bloom pass would help, but that is a renderer change."},
+
+ {"asset": "tree_birch", "score": 42, "pass": false,
+  "summary": "The white trunk says birch, but the crown is a dense, lumpy, broad-leaf mass on a bare pole, with no visible branching or the fine weeping twig habit of a silver birch.",
+  "critique": "A silver birch (Betula pendula) has an open, airy, narrowly oval crown with clearly visible ascending main branches and fine, pendulous outer twigs hanging in curtains, and small triangular-diamond leaves (30-60 mm) that let lots of sky through. The bark is white with black diamond-shaped lenticel marks and fissures, darkening to black, rough plates at the base. This asset has a perfectly straight, uniform white pole with no taper, no base flare, no black markings and no branches visible below a clump of leaf cards. The crown is a dense, overlapping stack of leaf blobs that reads more like a young lime or field maple. Leaf size looks too large and the leaf mass too opaque. Crown width against height is plausible for a young tree, but there is no hanging-twig silhouette, and the top-view close-up shows very few branches inside the crown. The leaf colour is a uniform bright yellow-green with no translucency variation.",
+  "suggestions": [
+   "Trunk: taper from about 0.35 m to 0.1 m at crown height, flare the base, and add slight sinuous bends. Use a bark texture of white (albedo about 0.8) with horizontal black lenticel dashes and diamond marks, and rough black plates over the bottom 1-1.5 m. About 300-500 tris.",
+   "Branching: 6-10 visible ascending main limbs starting about 3-5 m up, and second-order branches arching out and down. Use weeping twig cards (long thin strands 0.5-1.5 m hanging) on the outer crown to give the pendulous curtain silhouette.",
+   "Leaves: smaller diamond leaf texture, less density (aim for 30-40% sky visible through the crown), and leaf clusters on the drooping twigs rather than spherical blobs. Use mid green (0.25, 0.4, 0.12) with yellow-green highlights and some leaf back-face translucency.",
+   "Silhouette: narrow oval crown with an irregular, slightly lopsided outline. Height 15-25 m mature, spread 6-8 m; provide young and mature variants.",
+   "LODs: about 6-10k tris for the hero version, a 2-4k card crown at mid distance, and an impostor beyond 100 m."
+  ],
+  "renderer_notes": "The shadow shows the crown as a dense blob as well, so the opacity is in the asset, not the renderer."}
+]

@@ -111,13 +111,23 @@ thin Blender wrappers for materials and lights (`kit/assets/roof.py`, `facade.py
   fascia) on posts standing in the front rows, with rafters back to the rear wall. With posts in
   every bay it is the small covered stand. The solver raises the leading edge until (a) the back
   row can see a ball 15 m above the far touchline and (b) every covered tread keeps 2.5 m of
-  headroom. Curved runs give a continuous ring roof. Sockets: `roof_edge` per bay.
+  headroom. Curved runs give a continuous ring roof. Both systems get rooflight bands across metal
+  decks, a maintenance walkway, a box gutter with downpipes at the back, and cantilevers a deep
+  leading-edge fascia, rafter ribs expressed above the sheeting, and purlins and secondary
+  rafters under it. Sockets: `roof_edge` per bay.
 - **Facades** sit behind the deepest structure *and* the roof's back-span tie, so the roof
   structure is enclosed. Six systems: `concrete_frame`, `brick`, `metal_bands`, `glass`, `etfe`
   (bulging diamond cushions that can glow at night), `fins`. Plus ground-floor entrances, stair
-  cores, gable walls on exposed stand ends, and a paved plaza. Sockets: `facade_sign` per bay.
+  cores (glazed stair towers), turnstile kiosks beside the entrances, a glazed ground floor under a
+  canopy (bands and fins) and, on tall facades, a glazed concourse zone with floor slabs below the
+  skin, gable walls on exposed stand ends, and (grounds of 5000+) a paved plaza with lamp posts,
+  bins, trees and bollards from the prop library (`facades.plaza_props`). A sponsor sign hangs high
+  on each straight side (ads). Sockets: `facade_sign` per bay.
 - **Floodlights.** `corner_pylons` (lattice or tube masts on the diagonals, lamps at least 25 deg
-  above the centre spot), `roof` (an LED ribbon on the roof edge) and `poles` (grassroots). Every
+  above the centre spot, on a plinth with a caged ladder, rest platforms and a service walkway
+  behind the head), `roof` (a 1.9 m catwalk truss slung under the roof edge, with PA clusters, carrying large
+  fixtures in 2 x 2 clusters on two lamp bars) and `poles` (grassroots: sectional poles with footing, door and control gear). Shared
+  detail generators: `floodlights.roof_gantry`, `mast_parts`, `pole_parts`. Every
   fixture is aimed by a greedy optimiser, as lighting designers do: it repeatedly re-aims the
   fixture that most improves Emin/Emax at the darkest point. Lamp power is then set so the
   analytically computed average hits the lux target. Elite designs meet UEFA uniformity
@@ -203,6 +213,40 @@ It draws generated geometry with materials and props from an asset library that 
 once (`tools/export_library.py` → `out/library/library.game.glb`): the same baked PBR materials
 and LOD props as the game export, recoloured at runtime through `tint_gain` / `base_hex`.
 
+What the viewer adds to plain PBR, so its renders stand in for an engine's:
+
+- **Grass blades near the camera.** Once per scene the viewer renders a top-down ground map: where
+  the topmost surface is grass, the turf's height there, its blade length, colour and mowing lean.
+  Paths, kerbs, floors and props mask it automatically. Each frame, a world-anchored grid of blades
+  (2–4 mm ryegrass leaves, about 1.5 mm 3G fibres) grows from the map within about 6.5 m of where
+  the camera looks, thinning into the parallax canopy beyond. Blades lean gently with the mowing
+  stripes, have a midrib crease, a pale sheath and cut tips, and glow when backlit. A blade is never
+  drawn thinner than about a pixel (sub-pixel fibres break into speckle); widened and fading blades
+  are shaded flatter, so the field melts into the turf around it. Nothing is
+  drawn from more than 14 m above the turf. Further out, the turf carries tuft-scale grain
+  (5–15 cm) between the metre-scale tone and the blade streaks.
+- **Sky light in shade.** The light surfaces get from the sky is the sky colour with about half its
+  saturation taken out (haze, clouds and sunlit surroundings fill the hemisphere too), so shade
+  reads as a cool grey rather than the zenith's blue. The drawn sky and reflections keep full colour.
+- **Environment reflection.** Glossy surfaces mirror a sky graded to a bright hazy horizon, an
+  uneven dark band of distant trees and buildings just above it, and the ground below. Rough
+  surfaces see this blurred. Glazing and polycarbonate reflect as double-glazed units (about 8 % head on).
+  Vehicle paint (`TINT_car_paint*`, `TINT_van_paint*`) has a clear coat: a soft base sheen under a
+  mirror-smooth lacquer that reflects the sky, clouds, horizon and ground, plus a pin-point sun highlight.
+- **Per-instance variation.** Each instance gets a stable random value from its position. Trees
+  and hedges drift in hue and depth of green; other props vary about ±4 % in brightness, like weathering.
+- **Shadows.** Goal nets cast an alpha-tested lattice shadow, and foliage looks up its shadow a few
+  centimetres towards the sun so leaf cards don't darken the layer beneath them.
+- **Level of detail by size.** An instanced prop draws its fine mesh within about 30 bounding
+  radii of the camera (at least 12 m, at most 45 m) and its coarse `.lod2` mesh beyond. A seat
+  switches at about 15 m, a tree or a car at 45 m. At the premier layout's broadcast camera about
+  1,200 of 61,000 seats draw fine, about 70 ms a frame at 1080p with 4x MSAA on the development Mac.
+- **Ground occlusion.** The same ground map dims skylight on upward-facing ground and grass
+  blades beside anything standing taller nearby (eight directions, three radii up to about 1.3 m),
+  so props sit in a soft contact shade. Overhead structure is left to the sky-visibility volume.
+- **Far field.** Beyond the scene, a procedural patchwork of fields with gappy hedgerows and tree
+  clumps fades to plain pasture next to the scene, so no straight hedge line runs up to the ground.
+
 ## Layout file
 
 A stadium is one JSON document (`schema: stadium-layout/1`), e.g. `layouts/sunday_league.json`.
@@ -214,17 +258,175 @@ A mosaic is text (`"text"`) or a picture (`"image": "layouts/mosaics/crest_12.pn
 the repository root, one pixel per block of seats, transparent pixels left alone); the editor
 writes such images under `layouts/mosaics/` with an `image_master` copy for resizing.
 
-## Animated props (`tools/animate/`)
+## Training grounds (`site-layout/1`)
 
-The living props generated from prompts (`genprop.*`: pigeons, gulls) are rigged and given looping cycles:
+A training ground is a club-owned site on fixed land: a template from `catalog/sites.json`
+(`edge_of_town`, `riverside`, or `academy_campus` for a youth academy) with roads, paths, surroundings and a set of plots of fixed sizes
+(pitch, strip, large, medium, small, and merges such as `B1+B2` into a double plot). Every plot
+is in one state, which is how a game moves it on:
+
+| state | what stands there |
+|---|---|
+| `occupied` | something the club inherited (`catalog/occupants.json`): old car park, warehouse, derelict mill, offices, container yard, farm barns, scrubland, disused courts, bowling green, rubble |
+| `demolition` | the occupant half knocked down inside Heras fencing, with an excavator and skips |
+| `cleared` | levelled topsoil, survey pegs and a site board |
+| `construction` | hoardings, stacked cabins and the works for the facility being built: a frame in scaffolding with a tower crane, pitch earthworks with drains, or a car-park sub-base |
+| `built` | a facility at a tier (`catalog/facilities.json`): training pitch (4 tiers, rough grass to a match replica), youth pitches (FA formats 5v5, 7v7, 9v9 and U13 11v11 at FA sizes with matching youth goals and markings, packed as many to a plot as fit, alternate pitches mirrored so parents share one railed walkway and teams the next; grassroots, club and academy tiers), academy building (the training building's tiers with classrooms, sports science, parents' lounge and a scholars' lodge), showpiece pitch (a railed full-size match pitch up to a 60 m covered seated stand with dugouts, floodlights behind it and a filming tower), small-sided 3G cages (rebound boards, chain-link, youth goals), arrival and drop-off (a parents' lay-by, a one-way loop with minibus bays, zebra crossings and lane arrows, up to a security hut, barrier and CCTV), artificial pitch, goalkeeper area, training building (portacabins to a flagship, with gym, rehab, canteen and media modules), indoor hall, recovery, car park, maintenance |
+
+### Buildings with interiors (`kit/site/interior.py`)
+
+The medical centre, the scouting building, the commercial and hospitality building and the media
+centre are planned from their rooms outwards: a corridor along the building, clinical rooms,
+offices, the store and café or the press room in the front band (6 m deep), the large rooms (rehab
+gym, hydrotherapy pool, match centre, sports bar, function suite, TV studio) in the back, the entrance (the room glazed as one: a reception or the
+store) mid-front, stairs and a lift at one end once there is an upper floor. The
+quality tier's programme lists rooms per band and floor in priority order; each is built if it still
+fits (`min_w` along the band, `min_d` into it), then the band's rooms stretch to fill it. A room
+kind with a `max_d` (WC, changing room, store, offices) that lands in a deeper band is closed off at
+that depth by a cross wall, with a plant room (air-handling unit and duct) in the space behind it.
+Size and quality are independent, so a building can be large and basic or small and elite.
+
+The shell is built so it can be opened: an outer leaf in the style's wall material on a plinth, a
+20 mm lining in each room's finish (an accent room has one feature wall in the club colour, its
+right-hand side wall seen from the door), 120 mm partitions finished each side for the room they face,
+doors (leaves hinged open, lead-lined X-ray doors with warning lights, lift doors), windows to each
+room's glazing type, floors (safety vinyl, gym rubber, ceramic tile, carpet tiles, timber), suspended
+ceilings with LED panels, a hydrotherapy pool sunk in its floor, a stair with a stairwell above. Cut
+wall tops are drawn as a dark section. In the cutaway view door geometry is clipped to the cut and
+fixtures marked `"cut": false` (wall-hung units, overhead curtain tracks) are left out. Each room is
+furnished from `catalog/rooms.json`: props placed against a wall (with an offset, along it or
+repeated) or at a point in the room, gated by room size and quality tier (`min_tier`, `max_tier`:
+a TV unit gives way to a video wall). Rooms are reported as `room` sockets with their size and
+storey.
+
+An academy site is graded (`kit/site/academy.py`, `report.academy`): the best academy category its
+built facilities reach (4, the entry level, to 1) and what the next category still needs. The
+requirements are modelled on the facility criteria of the Premier League's academy categories,
+simplified to what the kit builds, and each category needs everything below it.
+
+Each built plot also takes a style (`catalog/styles.json`: ultra-modern, classic, industrial,
+nordic, mediterranean) and options (floodlights, ball-stop nets, filming tower, viewing deck,
+shelters, training equipment, car-park fill). The site takes a boundary (chain-link, palisade,
+railings, brick wall, hedge), screening (trees or a berm), a gate tier, club colours and
+day or night lighting.
+
+The generator is plain Python (`kit/site/`, no Blender) with a Rust twin (`viewer/gen/src/site/`)
+in parity: `tools/dump_site_reference.py` writes reference outputs for the layouts in
+`viewer/gen/tests/sites/` and `viewer/gen/tests/site_parity.rs` compares them (counts, names and
+warnings exactly; coordinates to ~1e-9). The output is renderer-neutral: parts (meshes with
+per-face material tags, or tube sets) with material references, instanced props grouped by asset
+and recolour, pitches handed to the pitch generator with their goals and flags, spot lights,
+sockets and a report (pitches by surface, floodlit pitches, parking spaces, area developed,
+walking distance from the building to the furthest pitch, warnings).
+
+`kit/assets/site.py` realises a site in Blender and `tools/export_site.py` exports it. With
+`--game`, each pitch and lawn is baked like the stadium pitch, recoloured materials are tinted
+after the bake, and props ship as one node per asset with `EXT_mesh_gpu_instancing` arrays
+(position, yaw then tilt, scale, and `_SEAT_COLOR` for recolourable assets) plus `MSFT_lod` links.
+The Rust viewer opens a `site-layout/1` file as a live editor (`viewer/src/editor/site_ui.rs`):
+site settings, every plot's state with the player's moves as buttons (knock down, clear, build,
+finish, upgrade) and readouts. Five presets live in `layouts/training_*.json`, from a Sunday-league
+ground to a superclub campus. `viewer/gen/tests/site_fuzz.rs` builds seeded random site layouts
+(junk values included) and checks that every number is finite, meshes are well formed, props stand
+on the ground inside the site and off every field of play (training gear laid out for a session
+excepted), pitches never overlap, the report matches what was built and builds are deterministic.
+
+Since the first version the training-ground generator also lays out the countryside as English
+farmland: field boundaries every 110–240 m with crooked hedgerows (oak standards in runs, copses
+in field corners) and fields of pasture, hay, stubble or ploughland. Screening is a planted belt,
+not a row. Each training pitch gets its own session (which half, cone colours, grid size, which
+drills are out). Car parks plant trees in kerbed beds at the row ends (shrubs under solar
+canopies, whose columns stand at the back of the bays), and cars carry one of five number plates
+per model. Building names are raised letters in a stroke font (`catalog/font_strokes.json`,
+shared by both generators): on a flat roof's parapet, on a portico's entablature or on a canopy
+fascia. Spoil and sand heaps are slumped, smooth cones.
+
+## Generated props (text-to-3D, `tools/text_to_3d/`)
+
+The one exception to principle 1. Organic, sculpted and soft props that procedural code models
+badly (statues, trophies, kit, birds, litter) are generated from prompts instead, and leave the
+precise, repeated things (goals, seats, fences, floodlights) to the generators.
+`catalog/generated_props.json` holds each prop's prompt, real size in metres, triangle budget,
+Hi3D grid and surface hints. Everything is fictional: no real players, managers, clubs, trophies or
+lettering.
+
+| stage | where | what |
+|---|---|---|
+| `gen_images.py` | Colab GPU (MOSS env) | MOSS-Image-SFT, one 1024 px reference per prop, a fixed style suffix and negative prompt, seed 7 |
+| `make_cutouts.py` | Colab CPU (Hi3D env) | BiRefNet background removal, reviewed as contact sheets before any 3D |
+| `make_props.py` | Colab GPU (Hi3D env) | Hunyuan3D-2mini turbo coarse shape, Hi3D 1.0 refinement (512 or 1024 grid), then Hunyuan3D-Paint on a 40k-face copy: `high.glb` (400k faces) + `paint.glb` (2048 px texture) |
+| `finish_props.py` | local Blender | front to +Y, real size, origin on the ground; decimate to budget, Smart UV, bake 1024 px base colour (from `paint.glb`), tangent normals (from `high.glb`) and a metallic-roughness map; export `out/assets/genprop.<id>.glb`; plus `.lod1` (35% of the triangles, 512 px) and `.lod2` (12%, 256 px), each cut from the sources and baked on its own, without a normal map |
+| `review_props.py` | local Blender | Cycles renders, front and back three-quarter, with a 1.8 m post for scale |
+
+Setup is the text_to_3d Colab notebook's two venvs plus `colab_setup.sh` (a CUDA 12.4 toolkit to
+build the paint rasteriser against the Hi3D env's torch 2.5; Colab ships CUDA 13). Lessons that
+are now in the code: the HF cache's symlinks trip Hi3D's loader at the 512 grid, so its weights are
+downloaded as plain files; torch 2.5's cuDNN attention fails in the paint UNet; the painted glTF
+leaves metallic unset (1.0), which bakes black; the default u2net remover eats white and silver
+objects and pale stone, so cut-outs use BiRefNet and prompts give plinths dark stone. The painted glTF is split at its UV seams, so decimating it as is opens hairline cracks along every seam; `make_low` welds first, checks the result against the source (triangle budget met, 93% of faces facing the same way), and falls back to the unwelded mesh for the hard surfaces where welding tangles. Diffusion is
+not bitwise deterministic, so a rerun gives a close but not identical prop.
+
+In the kit a finished prop is the library prop `genprop.<id>` (`kit/assets/genprops.py`; the
+library export imports every `out/assets/genprop.*.glb` there is). They are made off-line, so any
+may be missing: a placement of one that is not in the library draws its manifest `fallback` (a
+code prop, e.g. `prop.framed_shirt`), or nothing and no warning when it has none, in the editor
+(`Library::resolve`) and in Blender (`props.build`). The editor's tests check every exported one
+against the conventions above (baked colour, normal and metallic-roughness maps, triangle budget,
+real size, on the ground, centred).
+
+Where they go (each generator in both languages, or `catalog/rooms.json`):
+
+| place | generated props |
+|---|---|
+| stadium plaza (`plaza_props`) | the legend's statue with a memorial stone and flowers, the manager's statue, a fountain, the shop's stall with flags and a pillar box in front of the main stand (south; none on curved corners); the crest sculpture (north), a clock pillar (east), a bronze ball (west); a food van or coffee cart, pigeons by benches, gulls, litter by bins, leaves under trees, a bicycle at each entrance's cycle stands |
+| training sessions (`drills`) | a bag of balls, bibs, water carriers, the coaches' easel, a kit bag, goalkeeper gloves; one ball in three muddy; gulls on the grass |
+| groundsman's yard | line marker, wheelbarrow, hose reel, divot bucket; a cylinder mower and a sprinkler from tier 2 |
+| training building front | pigeons by the bench, a bicycle; a bust (an academy: a bronze ball) from tier 3 |
+| buildings with interiors (forecourt) | a bicycle, leaves at quality 1, pigeons from 2, the tier's `statue` |
+| rooms | gym gear in the rehab gym; a kit hamper, boots and a kit bag in changing rooms; trophies in display cases (a fixture's `z` raises it onto the plinth), a bust and a match ball in the trophy room |
+
+Licences: MOSS-Image is Apache-2.0; Hi3D 1.0 is the Hi3D Open License (commercial use allowed,
+"Powered by Hi3D 1.0" in commercial integrations); Hunyuan3D-2 and 2mini (coarse shape and paint)
+are under the Tencent Hunyuan 3D 2.0 Community License, which excludes the EU, UK and South Korea
+and caps monthly active users. Check these before shipping the props in a product.
+
+### Animated props (`tools/animate/`)
+
+The living generated props (pigeons, gulls, the urban fox) are rigged and given looping cycles:
 
 | step | where | what |
 |---|---|---|
 | `colab_setup_anim.sh`, `run_unirig.sh` | Colab L4 | UniRig (MIT) predicts a skeleton and skin weights for a texture-free copy of each prop |
 | `rig_inspect.py` | local Blender | copies the weights onto the textured prop, dumps the bones (`out/animate/rigs/<id>.bones.json`) and renders them numbered, for labelling |
 | `catalog/creature_anims.json` | data | per creature: which bones are root, spine, neck, head, tail, legs and wings; facing; the actions and their timing |
-| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks plant the feet with IK targets on a stance/swing path and bake to bone keys, in place, with `root_speed` (m/s) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action) |
+| `animate_creatures.py` | local Blender | builds each action from periodic functions of the loop phase, so the last frame meets the first; walks and trots plant the feet with IK targets on a stance/swing path (per-leg phase, so a trot moves diagonal pairs together) and bake to bone keys, in place, with `root_speed` (m/s, stride over stance time) on the action; exports `out/assets/genprop.<id>.anim.glb` (one glTF animation per action; glTF has no per-animation properties, so the armature node's extras carry `actions`: frames, seconds, loop and `root_speed` per action, plus `fps`) |
 | `review_anims.py` | local Blender | film strips and looping MP4s per action in `out/review/anims/` |
+| `check_anims.py` | any Python with numpy | reads the exported GLBs: every looping action ends where it starts (0.5°, 1 mm), every action in the table is exported, and both LODs carry the same actions |
+
+What each creature can do (`catalog/creature_anims.json`):
+
+| creature | loops | one shots | plumages (`KHR_materials_variants`) |
+|---|---|---|---|
+| `urban_fox` | idle, trot (0.71 m/s), gallop (3.4 m/s), sniff | alert, turn_left, turn_right | - |
+| `pigeon_standing` | idle, walk (0.17 m/s), run (0.57 m/s) | startle, turn_left, turn_right | blue_bar, dark, ash_red, pale |
+| `pigeon_pecking` | peck, walk (0.11 m/s, foraging) | turn_left, turn_right | blue_bar, dark, ash_red, pale |
+| `seagull_standing` | idle, walk (0.17 m/s), call | startle, turn_left, turn_right | herring, lesser_black_backed, juvenile |
+| `seagull_wings_up` | idle, flap | takeoff, land | herring, lesser_black_backed, juvenile |
+
+Reading an animated prop in a game: the armature node's extras hold `fps` and an `actions` table,
+one entry per glTF animation, with `frames`, `seconds`, `loop`, `root_speed` and, for one shots,
+`root_motion` and (turns) `root_yaw`.
+- `loop: true`: a cycle that plays in place; move the prop at `root_speed` m/s while it plays.
+- `loop: false, root_motion: false` (startle, alert): plays once and ends where it began.
+- `loop: false, root_motion: true`: the clip carries its own movement on the root bone (take-off
+  climbs 1.4 m and travels 1.6 m; landing ends at the origin), or turns the prop by `root_yaw`
+  degrees (left positive); afterwards place the prop where the clip left it.
+- Each animated prop also ships `.anim.lod1` and `.anim.lod2` (the static LOD meshes skinned to the
+  same skeleton, same actions), so a game can switch level at any frame without a pop.
+- Plumages are glTF material variants: pick one per instance; meshes and animations are shared.
+
+Textures in all generated props (static and animated) are JPEG at quality 90, about a quarter of
+PNG with no visible loss in side-by-side renders.
 
 UniRig bones carry no names and arbitrary roll, so rotations are given about kit-space axes with
 the sign read from the rest geometry ("turn the neck so the head goes down"). UniRig sometimes
@@ -254,6 +456,28 @@ reviewed labels and facing pairs are in `creature_anims.json` (`unimate`), turne
 - `tools/review.py` renders each asset with Cycles under a physical sky from fixed review cameras
   (broadcast, close-up, macro) into `out/review/`. "Lifelike" is judged on these renders.
 
+### Independent review of every asset
+
+Every asset was judged three times by independent art-director agents. The judges were blind to
+earlier scores and worked from a brief (`docs/qa/judge_brief.md`, with real dimensions in
+`docs/qa/dimensions.md`) on a 1–100 scale: 60 is a realistic model, 80 is one of the best game
+assets ever made (the pass mark) and 100 is a photograph. Each judge saw four-view sheets rendered
+by the viewer (`stadium-viewer props:<key> --orbit az,el[,zoom]`).
+
+Fixer agents acted on the critiques between rounds, one per asset family, each owning its own
+modules. Props averaged 38.6 in round 1, 51.4 in round 2 and 54.8 in round 3; stadium and
+training-ground parts averaged 50 in round 3. No asset reached 80. The owner's rule for that case
+is to fix the remaining suggestions and move on, which a final pass did. Scores per asset and
+round: `docs/qa/scores.md`; every verdict, with its critique and suggestions:
+`docs/qa/verdicts/judge_r<round>_b<batch>.json`.
+
+The judges' recurring limits were mostly beyond this kit's flat-shaded, normal-map-free props:
+- texture atlases with per-edge wear masks;
+- normal maps for shut lines, dents and lettering;
+- real translucency and fabric movement;
+- per-instance wear seeds;
+- screen-space reflections.
+
 ## Roadmap
 
 1. **Pitch level:** pitch (grass types, mowing, lines, wear), goals, corner flags. *(done)*
@@ -270,4 +494,8 @@ reviewed labels and facing pairs are in `creature_anims.json` (`unimate`), turne
    stadium editor (egui) with readouts and save/load, an exported asset library, sky-visibility
    shading, and a realism pass on grass (canopy shading, blades, parallax) and painted/plastic
    materials (satin, weathered). *(done)*
+7. **Training grounds:** plot-based sites with five plot states, eight facilities by tier, five
+   styles, inherited occupants, demolition and construction stages, Python and Rust generators
+   in parity, a live site editor, fuzzing, and a library of street, amenity, training, site,
+   machine, vehicle and vegetation props. *(done)*
 

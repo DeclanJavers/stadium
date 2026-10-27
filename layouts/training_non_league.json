@@ -1,0 +1,15 @@
+{"schema": "site-layout/1", "name": "Non-league training ground", "template": "edge_of_town", "style": "industrial", "seed": 23,
+ "club": {"name": "TOWN FC", "primary": "#f2a900", "secondary": "#111111"},
+ "boundary": {"type": "palisade", "screening": "trees"}, "gate": {"tier": 2},
+ "plots": {
+  "P1": {"state": "built", "facility": "pitch", "tier": 2, "options": {"floodlights": true, "equipment": true}},
+  "P2": {"state": "built", "facility": "pitch", "tier": 1},
+  "P3": {"state": "built", "facility": "artificial_pitch", "tier": 1, "options": {"floodlights": true}},
+  "P4": {"state": "cleared"},
+  "C1": {"state": "built", "facility": "car_park", "tier": 2, "options": {"fill": 0.6}},
+  "B1": {"state": "built", "facility": "training_building", "tier": 1},
+  "M1": {"state": "built", "facility": "maintenance", "tier": 1},
+  "M2": {"state": "built", "facility": "goalkeeper_area", "tier": 1},
+  "S2": {"state": "occupied", "occupant": "container_yard"},
+  "B2": {"state": "occupied", "occupant": "old_warehouse"}
+ }}

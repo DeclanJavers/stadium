@@ -2,6 +2,7 @@
 //! kit/assets/floodlight.py): corner pylons, roof ribbons, grassroots poles; greedy aim
 //! optimisation for uniformity; lamp power from the target lux.
 
+use crate::mesh::{offset_line, outward, MeshAcc};
 use crate::py::{clip, interp, linspace};
 use crate::stands::Polyline;
 use glam::{DVec2, DVec3};
@@ -103,6 +104,11 @@ pub fn roof_ribbon(edge_lines: &[Vec<DVec3>], spacing: f64) -> Vec<DVec3> {
 }
 
 pub fn poles(l: f64, w: f64, per_side: usize, height: f64, offset: f64) -> Vec<Mast> {
+    poles_clear(l, w, per_side, height, offset, POLE_CLEAR_X)
+}
+
+/// Poles with the main-stand side kept `clear` metres from halfway (past the main stand's ends).
+pub fn poles_clear(l: f64, w: f64, per_side: usize, height: f64, offset: f64, clear: f64) -> Vec<Mast> {
     let xs = if per_side > 1 {
         let v = linspace(-l / 2.0, l / 2.0, per_side + 2);
         v[1..v.len() - 1].to_vec()
@@ -113,7 +119,7 @@ pub fn poles(l: f64, w: f64, per_side: usize, height: f64, offset: f64) -> Vec<M
     for sy in [1.0, -1.0] {
         for &x in &xs {
             // the main-stand side keeps halfway clear for the dugouts, tunnel and TV camera
-            let x = if sy < 0.0 && x.abs() < POLE_CLEAR_X { if x < 0.0 { -POLE_CLEAR_X } else { POLE_CLEAR_X } } else { x };
+            let x = if sy < 0.0 && x.abs() < clear { if x < 0.0 { -clear } else { clear } } else { x };
             out.push(Mast { base: DVec2::new(x, sy * (w / 2.0 + offset)), height });
         }
     }
@@ -325,7 +331,13 @@ pub struct Design {
     pub fixture: String,
     pub kelvin: f64,
     pub fixtures: Vec<(DVec3, DVec3)>, // position, aim target
+    /// the luminaires drawn: a roof fixture is a 2 x 2 cluster on the catwalk's lamp bars
+    pub lamps: Vec<(DVec3, DVec3)>,
+    /// scale the luminaires are drawn at (roof floods are larger than the library fixture)
+    pub lamp_scale: f64,
     pub mounts: Vec<Mount>,
+    /// plates, plinths and cabinets (tags TAG_STEEL, TAG_CONCRETE, TAG_DARK)
+    pub mesh: MeshAcc,
     /// steel: lattice / tube masts, head frames, poles and bars
     pub steel: Vec<Polyline>,
     pub tube_masts: Vec<(DVec3, DVec3, f64)>,
@@ -346,7 +358,7 @@ fn lattice(base: DVec2, h: f64) -> Vec<Polyline> {
     let corners = [(1.0, 1.0), (-1.0, 1.0), (-1.0, -1.0), (1.0, -1.0)];
     let mut lines = Vec::new();
     for (cx, cy) in corners {
-        lines.push((zs.iter().map(|&z| DVec3::new(bx + cx * half(z), by + cy * half(z), z)).collect(), 0.09));
+        lines.push((zs.iter().map(|&z| DVec3::new(bx + cx * half(z), by + cy * half(z), z)).collect(), 0.11));
     }
     for w in zs.windows(2) {
         let (a, b) = (w[0], w[1]);
@@ -356,9 +368,9 @@ fn lattice(base: DVec2, h: f64) -> Vec<Polyline> {
             let p2b = DVec3::new(bx + c2x * half(b), by + c2y * half(b), b);
             let p2a = DVec3::new(bx + c2x * half(a), by + c2y * half(a), a);
             let p1b = DVec3::new(bx + c1x * half(b), by + c1y * half(b), b);
-            lines.push((vec![p1a, p2b], 0.035));
-            lines.push((vec![p2a, p1b], 0.035));
-            lines.push((vec![p1b, p2b], 0.04));
+            lines.push((vec![p1a, p2b], 0.03));
+            lines.push((vec![p2a, p1b], 0.03));
+            lines.push((vec![p1b, p2b], 0.035));
         }
     }
     lines
@@ -374,6 +386,8 @@ pub struct StandInfo {
     pub roof_edges: Vec<Vec<DVec3>>,
     /// Some(radius) for a curved bowl
     pub corner_r: Option<f64>,
+    /// how far the main (south) stand reaches either side of halfway (0 = none)
+    pub main_half: f64,
 }
 
 fn n(spec: &Value, k: &str, d: f64) -> f64 {
@@ -395,6 +409,8 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
         lux_target: n(spec, "lux", d_lux),
         ..Default::default()
     };
+    // roof fixtures are clusters of lamps; elsewhere every fixture is one lamp
+    let mut clusters: Vec<Vec<DVec3>> = Vec::new();
     match kind.as_str() {
         "corner_pylons" => {
             let rows = n(spec, "rows", 5.0) as usize;
@@ -409,6 +425,9 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
                     d.tube_masts.push((DVec3::new(m.base.x, m.base.y, 0.0), DVec3::new(m.base.x, m.base.y, m.height - 1.0), 0.55));
                 }
                 let (pts, _, _) = head_layout(&m, rows, cols);
+                let (st, mesh) = mast_parts(&m, &pts, cols, lattice_mast);
+                d.steel.extend(st);
+                d.mesh.append(&mesh, 0);
                 for i in 0..pts.len() - 1 {
                     if (i + 1) % cols != 0 {
                         d.steel.push((vec![pts[i], pts[i + 1]], 0.05));
@@ -432,34 +451,31 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
             if lines.is_empty() {
                 return Err("roof floodlights need roofs on the stands".into());
             }
-            // a rail under the roof edge, braced back to the edge girder, carries the fixtures on
-            // short hangers
-            for line in &lines {
-                d.steel.push((line.iter().map(|q| *q - DVec3::new(0.0, 0.0, 0.12)).collect(), 0.06));
-                for p in resample(line, n(spec, "spacing", 2.4), 1) {
-                    let rail = p - DVec3::new(0.0, 0.0, 0.12);
-                    let out = edge_normal(line, p);
-                    d.steel.push((vec![rail, rail + DVec3::new(out.x * 0.4, out.y * 0.4, 0.47)], 0.04));
-                    d.steel.push((vec![rail, p - DVec3::new(0.0, 0.0, 0.32)], 0.035));
-                    d.fixtures.push((p - DVec3::new(0.0, 0.0, 0.45), DVec3::ZERO));
-                    d.mounts.push(Mount::Roof);
-                }
+            // a catwalk slung under the roof edge carries the fixtures in clusters on its lamp bar
+            let (st, mesh, cl) = roof_gantry(&lines, n(spec, "spacing", 2.4));
+            d.steel.extend(st);
+            d.mesh.append(&mesh, 0);
+            for (c, members) in cl {
+                d.fixtures.push((c, DVec3::ZERO));
+                d.mounts.push(Mount::Roof);
+                clusters.push(members);
             }
         }
         "poles" => {
             let offset = runoff_side + 1.2;
             let lamps = n(spec, "lamps", 3.0) as usize;
-            for pole in poles(l, w, n(spec, "per_side", 3.0) as usize, n(spec, "height", 16.0), offset) {
+            // poles on the main-stand side also stand clear of the stand's ends
+            let clear = POLE_CLEAR_X.max(stands.map(|s| s.main_half + 4.0).unwrap_or(0.0));
+            for pole in poles_clear(l, w, n(spec, "per_side", 3.0) as usize, n(spec, "height", 16.0), offset, clear) {
                 let (bx, by, h) = (pole.base.x, pole.base.y, pole.height);
-                d.tube_masts.push((DVec3::new(bx, by, 0.0), DVec3::new(bx, by, h), 0.16));
+                let (tubes, mesh) = pole_parts(&pole, lamps);
+                d.tube_masts.extend(tubes);
+                d.mesh.append(&mesh, 0);
                 for j in 0..lamps {
                     let p = DVec3::new(bx, by, h + 0.3) + DVec3::X * (j as f64 - (lamps as f64 - 1.0) / 2.0) * 0.8;
                     d.fixtures.push((p - DVec3::new(0.0, by.signum() * 0.5, 0.0), DVec3::ZERO));
                     d.mounts.push(Mount::Pole);
                 }
-                // the crossbar spans every lamp
-                let bar = 1.2f64.max(0.4 * (lamps as f64 - 1.0) + 0.4);
-                d.tube_masts.push((DVec3::new(bx - bar, by, h), DVec3::new(bx + bar, by, h), 0.05));
             }
         }
         k => return Err(format!("unknown floodlight type {k:?}")),
@@ -499,6 +515,12 @@ pub fn design(spec: &Value, l: f64, w: f64, runoff_side: f64, stands: Option<&St
     for (f, t) in d.fixtures.iter_mut().zip(targets) {
         f.1 = t;
     }
+    d.lamp_scale = if kind == "roof" { LAMP_SCALE } else { 1.0 };
+    d.lamps = if clusters.is_empty() {
+        d.fixtures.clone()
+    } else {
+        d.fixtures.iter().zip(&clusters).flat_map(|(f, m)| m.iter().map(move |q| (*q, f.1))).collect()
+    };
     Ok(d)
 }
 
@@ -516,4 +538,246 @@ pub fn bowl_lights(roof_edges: &[Vec<DVec3>]) -> (Vec<(DVec3, DVec3)>, f64) {
     }
     let area_power = 150.0 / 683.0 * (12.0 * 30.0) * 2.0;
     (out, 4.0 * area_power)
+}
+
+/// Height of a fixture's trunnion axis (the housing centre) above its origin, the yoke's mounting
+/// plate (FIXTURE_PIVOT in kit/assets/floodlight.py).
+pub fn fixture_pivot(kind: &str) -> f64 {
+    match kind {
+        "halide" => 0.33,
+        "led" => 0.30,
+        _ => 0.0,
+    }
+}
+
+/// Where a fixture's origin goes so its housing centre sits at `pos` aimed at `target`: the pivot
+/// height back along its local -Z (local +Y aims, Blender's track-to Y with Z up).
+pub fn mount_point(pos: DVec3, target: DVec3, pivot: f64) -> DVec3 {
+    let d = (target - pos).normalize();
+    let yaw = (-d.x).atan2(d.y);
+    let (st, ct) = d.z.clamp(-1.0, 1.0).asin().sin_cos();
+    pos - DVec3::new(st * yaw.sin(), -st * yaw.cos(), ct) * pivot
+}
+
+// -- structure detail (catwalks, ladders, platforms, plinths): port of the same in floodlights.py
+
+pub const TAG_STEEL: i32 = 0;
+pub const TAG_CONCRETE: i32 = 1;
+pub const TAG_DARK: i32 = 2;
+/// catwalk deck (the truss's bottom chords) below the roof edge line (m)
+pub const GANTRY_DECK: f64 = -1.9;
+/// the two lamp bars, above the deck (m)
+pub const LAMP_ROWS: [f64; 2] = [1.4, 0.4];
+/// lamps hang this far in front of the catwalk's pitch-side face line (m)
+pub const LAMP_OUT: f64 = -0.3;
+/// roof luminaires are large LED floods (~1.05 x 0.8 m)
+pub const LAMP_SCALE: f64 = 1.7;
+/// lamps of a cluster sit this far either side of its centre (m)
+pub const LAMP_PAIR: f64 = 0.6;
+
+/// A cluster of lamps: (design point, lamp positions).
+pub type Cluster = (DVec3, Vec<DVec3>);
+
+/// A catwalk truss slung under the roof's leading edge: top chords under the edge, bottom chords
+/// carrying a grating deck with toe boards, a cable tray and handrails, verticals and diagonal
+/// lacing on both faces, hangers to the roof, a PA speaker cluster every tenth bay, and on the pitch
+/// side two lamp bars carrying the fixtures in 2 x 2 clusters.
+pub fn roof_gantry(lines: &[Vec<DVec3>], spacing: f64) -> (Vec<Polyline>, MeshAcc, Vec<Cluster>) {
+    let mut acc = MeshAcc::new();
+    let mut steel: Vec<Polyline> = Vec::new();
+    let mut clusters = Vec::new();
+    let v = DVec2::new;
+    let d = GANTRY_DECK;
+    for line in lines {
+        if line.len() < 2 {
+            continue;
+        }
+        let o = outward(line);
+        acc.sweep(line, &[v(0.3, d), v(1.5, d), v(1.5, d + 0.07), v(0.3, d + 0.07)], TAG_STEEL, Some(&o), true);
+        for s in [0.3, 1.48] {
+            acc.sweep(line, &[v(s, d + 0.07), v(s + 0.02, d + 0.07), v(s + 0.02, d + 0.22), v(s, d + 0.22)], TAG_STEEL, Some(&o), true);
+        }
+        acc.sweep(line, &[v(1.2, d + 0.07), v(1.45, d + 0.07), v(1.45, d + 0.17), v(1.2, d + 0.17)], TAG_DARK, Some(&o), true);
+        for (s, dz, r) in [
+            (0.3, -0.1, 0.06),
+            (1.5, -0.1, 0.06),
+            (0.3, d, 0.06),
+            (1.5, d, 0.06),
+            (0.3, d + 1.05, 0.024),
+            (1.5, d + 1.05, 0.024),
+            (0.3, d + 0.55, 0.018),
+            (1.5, d + 0.55, 0.018),
+            (0.0, d + LAMP_ROWS[0], 0.04),
+            (0.0, d + LAMP_ROWS[1], 0.04),
+        ] {
+            steel.push((offset_line(line, &o, s, dz), r));
+        }
+        for (k, p) in resample(line, spacing, 1).into_iter().enumerate() {
+            let n = edge_normal(line, p);
+            let tan = DVec3::new(-n.y, n.x, 0.0);
+            let at = |s: f64, dz: f64, dt: f64| DVec3::new(p.x + n.x * s, p.y + n.y * s, p.z + dz) + tan * dt;
+            for s in [0.3, 1.5] {
+                steel.push((vec![at(s, d, 0.0), at(s, -0.1, 0.0)], 0.04));
+                steel.push((vec![at(s, d, -0.5 * spacing), at(s, -0.1, 0.0)], 0.03));
+                steel.push((vec![at(s, -0.1, 0.0), at(s, d, 0.5 * spacing)], 0.03));
+            }
+            steel.push((vec![at(0.3, d, 0.0), at(1.5, d, 0.0)], 0.035));
+            steel.push((vec![at(0.3, -0.1, 0.0), at(1.5, -0.1, 0.0)], 0.035));
+            if k % 2 == 0 {
+                steel.push((vec![at(0.9, -0.1, 0.0), at(0.9, 0.35, 0.0)], 0.04));
+            }
+            if k % 10 == 5 {
+                acc.obox(at(0.9, d - 0.6, 0.0), tan, DVec3::new(n.x, n.y, 0.0), 0.3, 0.25, 0.45, TAG_DARK);
+            }
+            let c = at(LAMP_OUT, d + 0.5 * (LAMP_ROWS[0] + LAMP_ROWS[1]), 0.0);
+            let mut members = Vec::new();
+            for row in LAMP_ROWS {
+                for dt in [-LAMP_PAIR, LAMP_PAIR] {
+                    members.push(at(LAMP_OUT, d + row, dt));
+                }
+            }
+            for q in &members {
+                steel.push((vec![*q, *q + DVec3::new(n.x, n.y, 0.0) * -LAMP_OUT], 0.025));
+            }
+            clusters.push((c, members));
+        }
+    }
+    (steel, acc, clusters)
+}
+
+fn lattice_half(top: f64) -> impl Fn(f64) -> f64 {
+    let (w0, w1) = ((top / 14.0).max(2.2), 1.0);
+    move |z| (w0 + (w1 - w0) * z / top) / 2.0
+}
+
+/// A corner mast's plinth, caged access ladder (on the face away from the pitch), rest platforms,
+/// the service walkway behind the lamp head and a heavier frame round the head.
+pub fn mast_parts(m: &Mast, pts: &[DVec3], cols: usize, lattice: bool) -> (Vec<Polyline>, MeshAcc) {
+    let mut acc = MeshAcc::new();
+    let mut steel: Vec<Polyline> = Vec::new();
+    let (bx, by, h) = (m.base.x, m.base.y, m.height);
+    let top = h - 1.5;
+    let half = lattice_half(top);
+    let face = |z: f64| if lattice { half(z) } else { 0.55 };
+    if lattice {
+        let e = half(0.0) + 0.6;
+        acc.zbox(DVec3::new(bx - e, by - e, -0.04), DVec3::new(bx + e, by + e, 0.35), TAG_CONCRETE);
+    } else {
+        acc.zbox(DVec3::new(bx - 1.3, by - 1.3, -0.04), DVec3::new(bx + 1.3, by + 1.3, 0.3), TAG_CONCRETE);
+        acc.zbox(DVec3::new(bx - 0.85, by - 0.85, 0.3), DVec3::new(bx + 0.85, by + 0.85, 0.36), TAG_STEEL);
+    }
+    let yaw = (-by).atan2(-bx);
+    let tilt = h.atan2(bx.hypot(by));
+    let fwd = DVec3::new(yaw.cos(), yaw.sin(), 0.0);
+    let side = DVec3::new(-yaw.sin(), yaw.cos(), 0.0);
+    let up = DVec3::new(0.0, 0.0, tilt.cos()) + fwd * tilt.sin();
+    let z_walk = pts.iter().map(|p| p.z).fold(f64::MAX, f64::min) - 0.7;
+    let sx = if bx >= 0.0 { 1.0 } else { -1.0 };
+    let lx = |z: f64, d: f64| bx + sx * (face(z) + d);
+    let z0 = 0.35;
+    for dy in [-0.22, 0.22] {
+        steel.push((vec![DVec3::new(lx(z0, 0.3), by + dy, z0), DVec3::new(lx(z_walk, 0.3), by + dy, z_walk + 1.1)], 0.025));
+    }
+    let n_r = ((z_walk - z0) / 0.3) as i64;
+    for k in 1..=n_r {
+        let z = z0 + k as f64 * 0.3;
+        steel.push((vec![DVec3::new(lx(z, 0.3), by - 0.22, z), DVec3::new(lx(z, 0.3), by + 0.22, z)], 0.012));
+    }
+    let angles = linspace(-std::f64::consts::FRAC_PI_2, std::f64::consts::FRAC_PI_2, 7);
+    let mut hoops = Vec::new();
+    let mut z = 2.5;
+    while z < z_walk {
+        hoops.push(z);
+        z += 1.0;
+    }
+    let hoop_pt = |z: f64, a: f64| DVec3::new(lx(z, 0.3) + sx * 0.45 * a.cos(), by + 0.38 * a.sin(), z);
+    for &z in &hoops {
+        steel.push((angles.iter().map(|&a| hoop_pt(z, a)).collect(), 0.014));
+    }
+    if hoops.len() > 1 {
+        for &a in &angles[1..angles.len() - 1] {
+            steel.push((hoops.iter().map(|&z| hoop_pt(z, a)).collect(), 0.012));
+        }
+    }
+    let mut z = 12.0;
+    while z < z_walk - 4.0 {
+        let x0 = lx(z, 0.0);
+        acc.obox(DVec3::new(x0 + sx * 0.55, by, z - 0.03), DVec3::X, DVec3::Y, 0.55, 0.65, 0.03, TAG_STEEL);
+        let rail = vec![DVec3::new(x0, by - 0.65, z + 1.0), DVec3::new(x0 + sx * 1.1, by - 0.65, z + 1.0), DVec3::new(x0 + sx * 1.1, by + 0.65, z + 1.0), DVec3::new(x0, by + 0.65, z + 1.0)];
+        steel.push((rail.clone(), 0.022));
+        for q in &rail[1..3] {
+            steel.push((vec![DVec3::new(q.x, q.y, z), *q], 0.02));
+        }
+        z += 12.0;
+    }
+    let hs = (cols as f64 - 1.0) / 2.0 * 0.8 + 0.5;
+    let c = DVec3::new(bx, by, z_walk - 0.03) + fwd * 0.7;
+    acc.obox(c, side, fwd, hs, 0.9, 0.03, TAG_STEEL);
+    let ring: Vec<DVec3> = [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0), (-1.0, -1.0)].iter().map(|&(a, b)| c + side * a * hs + fwd * b * 0.9).collect();
+    steel.push((ring.iter().map(|q| *q + DVec3::new(0.0, 0.0, 1.1)).collect(), 0.022));
+    for q in &ring[..4] {
+        steel.push((vec![*q, *q + DVec3::new(0.0, 0.0, 1.1)], 0.02));
+    }
+    let n = pts.len();
+    let corners = [pts[0], pts[cols - 1], pts[n - 1], pts[n - cols]];
+    let mid = (corners[0] + corners[1] + corners[2] + corners[3]) / 4.0;
+    let mut frame = Vec::new();
+    for q in corners.iter().chain(corners.iter().take(1)) {
+        let d = *q - mid;
+        frame.push(*q + side * if d.dot(side) > 0.0 { 0.45 } else { -0.45 } + up * if d.dot(up) > 0.0 { 0.42 } else { -0.42 } - fwd * 0.1);
+    }
+    steel.push((frame, 0.07));
+    (steel, acc)
+}
+
+/// A grassroots pole: three telescoped sections with collars, the lamp crossbar, footing, base
+/// flange, access door, control gear at the head and a feeder pillar.
+pub fn pole_parts(pole: &Mast, lamps: usize) -> (Vec<(DVec3, DVec3, f64)>, MeshAcc) {
+    let mut acc = MeshAcc::new();
+    let (bx, by, h) = (pole.base.x, pole.base.y, pole.height);
+    let mut tubes = Vec::new();
+    let cuts = [0.0, 0.4 * h, 0.75 * h, h];
+    let radii = [0.2, 0.165, 0.13];
+    for k in 0..3 {
+        tubes.push((DVec3::new(bx, by, cuts[k]), DVec3::new(bx, by, cuts[k + 1]), radii[k]));
+    }
+    for k in [1, 2] {
+        tubes.push((DVec3::new(bx, by, cuts[k] - 0.1), DVec3::new(bx, by, cuts[k] + 0.06), radii[k - 1] + 0.012));
+    }
+    let bar = 1.2f64.max(0.4 * (lamps as f64 - 1.0) + 0.4);
+    tubes.push((DVec3::new(bx - bar, by, h), DVec3::new(bx + bar, by, h), 0.05));
+    tubes.push((DVec3::new(bx - bar, by, h - 0.45), DVec3::new(bx + bar, by, h - 0.45), 0.035));
+    for x in [bx - bar + 0.1, bx + bar - 0.1] {
+        tubes.push((DVec3::new(x, by, h - 0.45), DVec3::new(x, by, h), 0.03));
+    }
+    let sgn = if by >= 0.0 { 1.0 } else { -1.0 };
+    acc.zbox(DVec3::new(bx - 0.6, by - 0.6, -0.04), DVec3::new(bx + 0.6, by + 0.6, 0.15), TAG_CONCRETE);
+    acc.zbox(DVec3::new(bx - 0.32, by - 0.32, 0.15), DVec3::new(bx + 0.32, by + 0.32, 0.19), TAG_STEEL);
+    acc.obox(DVec3::new(bx, by + sgn * 0.2, 0.95), DVec3::X, DVec3::Y, 0.1, 0.025, 0.3, TAG_DARK);
+    acc.obox(DVec3::new(bx, by + sgn * 0.3, h - 1.1), DVec3::X, DVec3::Y, 0.22, 0.14, 0.3, TAG_DARK);
+    acc.obox(DVec3::new(bx + 0.9, by + sgn * 0.7, 0.6), DVec3::X, DVec3::Y, 0.3, 0.2, 0.6, TAG_DARK);
+    (tubes, acc)
+}
+
+/// half width, half height and forward offset (in front of the bezel, clear of the lens) of an LED lens
+pub const LENS_PANEL: (f64, f64, f64) = (0.27, 0.19, 0.076);
+
+/// The glowing diffuser panel over each LED fixture's lens (a quad just in front of the lens,
+/// facing the aim): what makes a roof ring read as lit luminaires from across the ground.
+/// lamps: (housing centre, aim target).
+pub fn lens_panels(lamps: &[(DVec3, DVec3)], scale: f64) -> MeshAcc {
+    let mut acc = MeshAcc::new();
+    let (hx, hz, fy) = (LENS_PANEL.0 * scale, LENS_PANEL.1 * scale, LENS_PANEL.2 * scale);
+    for (q, t) in lamps {
+        let d = (*t - *q).normalize();
+        let yaw = (-d.x).atan2(d.y);
+        let (st, ct) = d.z.clamp(-1.0, 1.0).asin().sin_cos();
+        let ax = DVec3::new(yaw.cos(), yaw.sin(), 0.0);
+        let az = DVec3::new(st * yaw.sin(), -st * yaw.cos(), ct);
+        let c = *q + d * fy;
+        let base = acc.verts.len() as u32;
+        acc.verts.extend([c - ax * hx - az * hz, c + ax * hx - az * hz, c + ax * hx + az * hz, c - ax * hx + az * hz]);
+        acc.add_face(vec![base, base + 3, base + 2, base + 1], 0, Some(vec![DVec2::new(0.0, 0.0), DVec2::new(0.0, 1.0), DVec2::new(1.0, 1.0), DVec2::new(1.0, 0.0)]));
+    }
+    acc
 }

@@ -11,6 +11,10 @@ pub const HALF_AISLE: f64 = 0.5;
 pub const AISLE_RISER_MAX: f64 = 0.19;
 pub const VOM_WIDTH: f64 = 2.2;
 pub const VOM_HEADROOM: f64 = 2.2;
+/// vomitory side walls stand this thick beside the mouth
+pub const VOM_WALL: f64 = 0.1;
+/// aisles get centre handrails where riser / tread exceeds this
+pub const AISLE_RAIL_RAKE: f64 = 0.33;
 
 pub const TAG_CONCRETE: i32 = 0;
 pub const TAG_FASCIA: i32 = 1;
@@ -105,6 +109,19 @@ pub fn vom_sections(tier: &Tier, r0: usize, k: usize) -> [Section; 2] {
     upper.extend([v2(sb, hb + 1.1), v2(sb + WALL, hb + 1.1), v2(sb + WALL, ceil)]);
     let utags = vec![TAG_CONCRETE; upper.len()];
     [clean(lower, ltags), clean(upper, utags)]
+}
+
+/// Side wall of a vomitory mouth: from the treads beside it up to under the side rail.
+pub fn vom_wall(tier: &Tier, r0: usize, k: usize) -> Section {
+    let (s, h, tr) = (&tier.s, &tier.h, tier.tread);
+    let mut pts = Vec::new();
+    for i in r0..r0 + k {
+        pts.push(v2(s[i], h[i]));
+        pts.push(v2(s[i] + tr, h[i]));
+    }
+    pts.extend([v2(s[r0 + k], h[r0 + k]), v2(s[r0 + k] + 0.05, h[r0 + k] + 0.95), v2(s[r0], h[r0] + 0.95)]);
+    let n = pts.len();
+    clean(pts, vec![TAG_CONCRETE; n])
 }
 
 /// Row where the vomitory opens and how many rows it removes.
@@ -214,6 +231,11 @@ pub fn build_run(run: &Run, run_index: usize, tiers: &[Tier]) -> RunOut {
                 for sec in vom_sec.as_ref().unwrap() {
                     o.mesh.add_prism(run, tm - hv, tm + hv, sec, TAG_CONCRETE);
                 }
+                // side walls standing up beside the mouth, under the rails
+                let wall = vom_wall(tier, r0, k);
+                let d = VOM_WALL / run.metric(tier.s[r0]);
+                o.mesh.add_prism(run, tm - hv - d, tm - hv, &wall, TAG_CONCRETE);
+                o.mesh.add_prism(run, tm + hv, tm + hv + d, &wall, TAG_CONCRETE);
                 o.rails.extend(vom_rails(run, tier, (r0, k), tm, hv));
             } else {
                 o.mesh.add_prism(run, ta + ha, tb - ha, &full, TAG_CONCRETE);
@@ -237,10 +259,20 @@ pub fn build_run(run: &Run, run_index: usize, tiers: &[Tier]) -> RunOut {
             });
         }
         let max_riser = tier.h.windows(2).map(|w| w[1] - w[0]).fold(f64::MIN, f64::max);
-        if tier.h.len() > 1 && max_riser / tier.tread > 0.45 {
+        if tier.h.len() > 1 && max_riser / tier.tread > AISLE_RAIL_RAKE {
             for &(ta, _) in &bay_list[1..] {
                 o.rails.push((row_line(run, ta, tier, 0.9, 1..tier.rows), 0.022));
+                for i in (1..tier.rows).step_by(3) {
+                    let (si, hi) = (tier.s[i] + 0.05, tier.h[i]);
+                    o.rails.push((vec![run.world(ta, si, hi), run.world(ta, si, hi + 0.9)], 0.02));
+                }
             }
+        }
+        // a capping rail along the top of a tier-front balustrade
+        if tier.glass != 0.0 {
+            let sr = tier.s0 - WALL + 0.13;
+            let zr = tier.h[0] + tier.parapet + tier.glass + 0.03;
+            o.rails.push((run.samples(run.t0, run.t1, sr).iter().map(|&t| run.world(t, sr, zr)).collect(), 0.03));
         }
         if ti == tiers.len() - 1 {
             for (b, &(ta, tb)) in bay_list.iter().enumerate() {

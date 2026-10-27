@@ -1,0 +1,17 @@
+{"schema": "site-layout/1", "name": "Championship training ground", "template": "edge_of_town", "style": "classic", "seed": 37,
+ "club": {"name": "CITY FC", "primary": "#c8102e", "secondary": "#f2f2f2"},
+ "boundary": {"type": "palisade", "screening": "trees"}, "gate": {"tier": 3},
+ "plots": {
+  "P1": {"state": "built", "facility": "pitch", "tier": 3, "options": {"floodlights": true, "filming_tower": true, "equipment": true, "shelters": true}},
+  "P2": {"state": "built", "facility": "pitch", "tier": 2, "options": {"equipment": true}},
+  "P3": {"state": "built", "facility": "pitch", "tier": 2},
+  "P4": {"state": "built", "facility": "artificial_pitch", "tier": 2, "options": {"floodlights": true}},
+  "P5": {"state": "construction", "facility": "pitch", "tier": 3},
+  "C1": {"state": "built", "facility": "car_park", "tier": 3, "options": {"fill": 0.7}},
+  "B1": {"state": "built", "facility": "training_building", "tier": 3, "options": {"modules": ["gym", "canteen", "media"]}},
+  "B2": {"state": "occupied", "occupant": "bowling_green"},
+  "M1": {"state": "built", "facility": "recovery", "tier": 2},
+  "M2": {"state": "built", "facility": "goalkeeper_area", "tier": 2},
+  "M3": {"state": "built", "facility": "maintenance", "tier": 2},
+  "S1": {"state": "occupied", "occupant": "scrubland"}
+ }}

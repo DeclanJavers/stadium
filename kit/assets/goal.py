@@ -10,6 +10,7 @@ import numpy as np
 from .. import catalog
 from ..core import materials as MAT
 from ..core import mesh as M
+from ..core.nodes import srgb
 from ..core.scene import collection, empty, link, mesh_object, set_params
 
 DEFAULTS = {
@@ -21,10 +22,12 @@ DEFAULTS = {
     "mesh": "hex",               # hex | square
     "mesh_size": 0.12,
     "cord_mm": 4.0,
+    "width": 7.32,               # inside the posts, metres (youth goals: catalog/goals.json)
+    "height": 2.44,
     "seed": 1,
 }
 
-W, H = 7.32, 2.44
+W, H = 7.32, 2.44               # the goal being built (build() sets them from its params)
 
 
 def resolve(params):
@@ -64,30 +67,41 @@ def _tube(name, pts, radius, col, root, mat, fillet=0.0):
     return mesh_object(name, V, F, col, root, smooth=True, materials=[mat], uvs=UV)
 
 
+def _box_tube(name, pts, size, col, root, mat):
+    """A square box-section tube (portable goals' ground frame)."""
+    pts = M.densify(np.asarray(pts, float), 0.3)
+    V, F, UV = M.sweep(pts, M.profile_rounded_rect(size, size, 0.006, 3), (0, 0, 1))
+    return mesh_object(name, V, F, col, root, smooth=False, materials=[mat], uvs=UV)
+
+
 def _supports(p, s, col, root, mat, sand):
+    """The rear structure. classic: white bent stanchions (48 mm), ground bars and back bar. box: a
+    full rectangular rear frame in 50 mm tube (thinner than the posts). portable: stanchions and a
+    rear top bar on a 60 x 60 box-section ground frame."""
+    from .seat import flat
     sup = p["support"]
     xN, yF, zT = s["xN"], s["yF"], s["zT"]
     FT, BT, BB = s["FT"], s["BT"], s["BB"]
     objs = []
-    if sup in ("stanchions", "rear_frame"):
-        r = 0.026 if sup == "stanchions" else 0.025
-        bend = 0.32 if sup == "stanchions" else 0.08
-        for side in (-1, 1):
-            x = side * (xN + 0.035)
-            path = [(x, FT[0] + 0.02, zT), (x, BT[0], zT), (x, BB[0], r)]
-            objs.append(_tube(f"Stanchion_{side:+d}", path, r, col, root, mat, fillet=bend))
-            objs.append(_tube(f"GroundBar_{side:+d}", [(x, yF + 0.03, r), (x, BB[0], r)], r * 0.9, col, root, mat))
-        objs.append(_tube("BackBar", [(-(xN + 0.035), BB[0], r), (xN + 0.035, BB[0], r)], r * 0.9, col, root, mat))
+    rmat = mat                                   # the whole frame in the one white paint
+    r = {"stanchions": 0.024, "rear_frame": 0.025, "rear_poles": 0.025}[sup]
+    bend = {"stanchions": 0.32, "rear_frame": 0.08, "rear_poles": 0.06}[sup]
+    for side in (-1, 1):
+        x = side * (xN + 0.035)
+        path = [(x, FT[0] + 0.02, zT), (x, BT[0], zT), (x, BB[0], r)]
+        objs.append(_tube(f"Stanchion_{side:+d}", path, r, col, root, rmat, fillet=bend))
         if sup == "rear_frame":
-            for side in (-1, 1):
-                objs.append(_sandbag(f"Sandbag_{side:+d}", (side * (xN + 0.035), BB[0] + 0.45, 0.0), col, root, sand,
-                                     seed=p["seed"] + side))
-    elif sup == "rear_poles":
-        for side in (-1, 1):
-            x, y = side * (xN + 0.12), BB[0] - 0.12
-            objs.append(_tube(f"RearPole_{side:+d}", [(x, y, -0.4), (x, y, zT - 0.02)], 0.03, col, root, mat))
-            objs.append(_tube(f"RearArm_{side:+d}", [(x, y, zT - 0.05), (side * xN, BT[0], zT - 0.01)], 0.012,
+            objs.append(_box_tube(f"GroundBar_{side:+d}", [(x, yF + 0.03, 0.03), (x, BB[0] - 0.03, 0.03)], 0.06, col, root, mat))
+        else:
+            objs.append(_tube(f"GroundBar_{side:+d}", [(x, yF + 0.03, r), (x, BB[0], r)], r * 0.9, col, root, rmat))
+    if sup == "rear_frame":
+        objs.append(_box_tube("BackBar", [(-(xN + 0.035), BB[0] - 0.03, 0.03), (xN + 0.035, BB[0] - 0.03, 0.03)], 0.06,
                               col, root, mat))
+    else:
+        objs.append(_tube("BackBar", [(-(xN + 0.035), BB[0], r), (xN + 0.035, BB[0], r)], r * 0.9, col, root, rmat))
+    if sup in ("rear_frame", "rear_poles"):
+        # a rear top bar closes the box: the roof of the net is laced to it
+        objs.append(_tube("RearTopBar", [(-(xN + 0.035), BT[0], zT), (xN + 0.035, BT[0], zT)], r * 0.9, col, root, mat))
     return objs
 
 
@@ -95,7 +109,7 @@ def _sandbag(name, loc, col, root, mat, seed=0):
     """Squashed, lumpy sack draped over the ground bar."""
     rng = np.random.default_rng(seed)
     u, v = np.meshgrid(np.linspace(0, np.pi, 14), np.linspace(0, 2 * np.pi, 24, endpoint=False), indexing="ij")
-    rx, ry, rz = 0.22, 0.32, 0.09
+    rx, ry, rz = 0.17, 0.33, 0.1
     x = rx * np.sin(u) * np.cos(v)
     y = ry * np.sin(u) * np.sin(v)
     z = rz * np.cos(u)
@@ -112,20 +126,128 @@ def _sandbag(name, loc, col, root, mat, seed=0):
 
 
 def _clips(p, s, col, root, mat):
-    """Plastic net clips on the back of the posts and crossbar."""
+    """Net hooks: moulded C-hooks every 300 mm on the back of the posts and crossbar, and cord
+    ties round the ground bars (and the rear top bar) every 400 mm."""
+    from .props import PM
     pw, pd = p["post_size"]
-    pts = []
+    q = PM(0.0)
+    prof = [(0.0028 * math.cos(a), 0.0028 * math.sin(a)) for a in np.linspace(0, 2 * np.pi, 5, endpoint=False)]
+    y0 = -pd / 2 + 0.004
+    t = np.linspace(0, np.pi * 0.85, 6)
     for z in np.arange(0.25, H, 0.3):
         for side in (-1, 1):
-            pts.append((side * s["xN"], -pd / 2 - 0.006, z))
+            x = side * (W / 2 + pw / 2)
+            q.sweep([(x + side * 0.016 * np.cos(a) * 0.4, y0 - 0.017 * np.sin(a), z + 0.016 * np.cos(a)) for a in t], prof, mat)
     for x in np.arange(-W / 2 + 0.2, W / 2, 0.3):
-        pts.append((x, -pd / 2 - 0.006, s["zT"]))
-    cube = np.array([[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-                     [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]], float) * [0.012, 0.007, 0.012]
-    faces = np.array([[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]])
-    V = np.concatenate([cube + q for q in pts])
-    F = np.concatenate([faces + 8 * i for i in range(len(pts))])
-    return mesh_object("NetClips", V, F, col, root, materials=[mat])
+        q.sweep([(x, y0 - 0.017 * np.sin(a), s["zT"] + 0.016 * np.cos(a)) for a in t], prof, mat)
+    sup = p["support"]
+    xN, BB, BT, yF = s["xN"], s["BB"], s["BT"], s["yF"]
+    rr = {"stanchions": 0.026, "rear_frame": 0.025, "rear_poles": 0.03}[sup] * 0.9
+    tie = lambda a, b: q.cyl(a, b, rr + 0.0035, mat, sides=8)
+    for x in np.arange(-xN + 0.2, xN, 0.4):
+        tie((x - 0.006, BB[0], rr), (x + 0.006, BB[0], rr))
+        if sup in ("rear_frame", "rear_poles"):
+            tie((x - 0.006, BT[0], s["zT"]), (x + 0.006, BT[0], s["zT"]))
+    for side in (-1, 1):
+        for y in np.arange(yF - 0.25, BB[0], -0.4):
+            tie((side * (xN + 0.035), y - 0.006, rr), (side * (xN + 0.035), y + 0.006, rr))
+    o = q.obj("NetClips", col, bevel=False)
+    o.parent = root
+    return o
+
+
+def _goal_hardware(p, s, col, root, mat):
+    """Hardware on every goal: joint collars below the crossbar corners, ground sockets standing
+    30 mm proud of the turf, and per style: welded rear-corner gussets and ground anchor plates
+    (box), or the portable's running gear (200 mm wheels on rear-corner brackets with axle and
+    hub, steel counterweight bars bolted to the side ground frames, cast corner connectors) and a
+    maker's sticker on an upright."""
+    from . import kit_detail as KD
+    from .props import PM, tyre
+    from .seat import _bolt, flat
+    q = PM(0.003)
+    pw, pd = p["post_size"]
+    xN, BB, BT, zT, yF = s["xN"], s["BB"], s["BT"], s["zT"], s["yF"]
+    galv = flat("Goal_Galv", "#8e9396", rough=0.4, metallic=0.5)
+    sock = flat("GoalSocket", "#3b3c3a", rough=0.7)
+    for side in (-1, 1):
+        xs_ = side * (xN + 0.035)
+        q.r = 0.006                                                                       # stanchion corner castings
+        q.box((xs_ - 0.035, s["FT"][0] - 0.05, zT - 0.04), (xs_ + 0.035, s["FT"][0] + 0.04, zT + 0.04), mat)
+        q.box((xs_ - 0.032, BB[0] - 0.05, 0.0), (xs_ + 0.032, BB[0] + 0.05, 0.065), mat)
+        q.r = 0.003
+    for side in (-1, 1):
+        x = side * (W / 2 + pw / 2)
+        q.cyl((x, 0, H - 0.12), (x, 0, H - 0.05), pw / 2 + 0.006, mat, sides=20)        # joint collars
+        q.cyl((x - side * 0.12, 0, zT), (x - side * 0.05, 0, zT), pw / 2 + 0.006, mat, sides=20)
+        q.cyl((x, 0, -0.01), (x, 0, 0.03), pw / 2 + 0.022, sock, sides=24)              # ground socket
+    sup = p["support"]
+    if sup in ("rear_poles", "stanchions"):
+        peg = flat("Goal_Peg", "#2a2b2c", rough=0.6)
+        for x in np.linspace(-xN + 0.6, xN - 0.6, 4):                                   # net pegs behind the back bar
+            q.cyl((x, BB[0] - 0.22, -0.02), (x, BB[0] - 0.22, 0.03), 0.007, peg, sides=8)
+            q.box((x - 0.006, BB[0] - 0.235, 0.025), (x + 0.006, BB[0] - 0.18, 0.035), peg)
+    if sup == "rear_poles":
+        for side in (-1, 1):
+            x = side * (xN + 0.035)
+            q.r = 0.0
+            q.extrude_yz([(BB[0], zT - 0.16), (BB[0], zT - 0.02), (BB[0] + 0.16, zT - 0.02)], x - 0.003, x + 0.003, mat)
+            q.r = 0.002
+            q.box((x - 0.06, BB[0] - 0.06, 0.0), (x + 0.06, BB[0] + 0.06, 0.03), galv)       # anchor plate
+            for dx in (-0.04, 0.04):
+                _bolt(q, (x + dx, BB[0] + dx, 0.03), (0, 0, 1), 0.008, galv, h=0.006)
+    if sup == "rear_frame":
+        rubber = flat("Goal_Tyre", "#1a1a1a", rough=0.85)
+        hub = flat("Goal_Hub", "#a4a8ab", rough=0.4, metallic=0.6)
+        weight = flat("Goal_Weight", "#202122", rough=0.8)
+        for side in (-1, 1):
+            x = side * (xN + 0.035)
+            yb = BB[0] - 0.03
+            q.r = 0.003
+            q.box((x - 0.035, yb - 0.11, 0.02), (x + 0.035, yb + 0.02, 0.14), mat)                  # wheel bracket
+            tyre(q, (x + side * 0.075, yb - 0.08, 0.1), 0.1, 0.055, 0.06, rubber, hub, sides=20, axis="x")
+            q.cyl((x, yb - 0.08, 0.1), (x + side * 0.11, yb - 0.08, 0.1), 0.012, hub, sides=8)
+            q.r = 0.018                                                                          # moulded ballast
+            q.box((x - 0.1, BB[0] + 0.3, 0.06), (x + 0.1, BB[0] + 0.9, 0.2), weight)
+            q.r = 0.006
+            for yy in (BB[0] + 0.48, BB[0] + 0.72):                                              # carry handle
+                q.box((x - 0.012, yy - 0.012, 0.2), (x + 0.012, yy + 0.012, 0.245), weight)
+            q.box((x - 0.012, BB[0] + 0.468, 0.235), (x + 0.012, BB[0] + 0.732, 0.258), weight)
+            q.r = 0.004
+            q.box((x - 0.045, yF - 0.02, zT - 0.06), (x + 0.045, yF + 0.07, zT + 0.055), mat)        # corner connectors
+            q.box((x - 0.045, yF - 0.02, 0.0), (x + 0.045, yF + 0.09, 0.075), mat)
+            q.box((x - 0.045, BT[0] - 0.055, zT - 0.05), (x + 0.045, BT[0] + 0.055, zT + 0.05), mat)
+            q.box((x - 0.045, BB[0] - 0.08, 0.0), (x + 0.045, BB[0] + 0.03, 0.075), mat)
+        sticker = KD.image_material("Goal_Sticker", albedo=KD.plate_image("Goal_Sticker_img", "MATCH GOAL",
+                                                                          fg="#1d3f7a", bg="#efefea", px=(384, 72), border=4),
+                                    rough=0.4, extension="EXTEND")
+        x = -(W / 2 + pw / 2)
+        q.decal((x, pd / 2 + 0.0005, 1.75), (0, 1, 0), (0, 0, 1), 0.075, 0.016, sticker, lift=0.0)
+    o = q.obj("GoalHardware", col)
+    o.parent = root
+    return o
+
+
+def _finish_frame(objs, p):
+    """Occlusion and wear in the vertex colours (they survive the per-goal frame colour): grass
+    staining and mud up the bottom 300 mm, ball scuffs at the posts, dull dust on top."""
+    from . import kit_detail as KD
+    rng = np.random.default_rng(p["seed"] + 11)
+    ph = rng.uniform(0, 6.28, 4)
+
+    def wear(P, N):
+        z = P[:, 2]
+        g = np.clip(1 - z / 0.32, 0, 1) ** 1.6 * (0.75 + 0.25 * np.sin(P[:, 0] * 7 + ph[0]) * np.sin(P[:, 1] * 9 + ph[1]))
+        out = 1 - g[:, None] * (1 - np.array([0.7, 0.74, 0.55]))
+        scuff = (np.sin(P[:, 0] * 31 + ph[2]) * np.sin(z * 23 + ph[3]) > 0.82) & (z > 0.2) & (z < 1.8)
+        out[scuff] *= 0.9
+        top = np.clip(N[:, 2], 0, 1) ** 2 * 0.06
+        out *= (1 - top)[:, None]
+        return out
+    for o in objs:
+        if o and o.type == "MESH" and len(o.data.vertices):
+            KD.finish(o, distance=0.5, strength=0.6, floor=0.45)
+            KD.tint_vertices(o, wear)
 
 
 # -- net --------------------------------------------------------------------------------------
@@ -189,14 +311,11 @@ def _pins(p, panels):
     for sd in (L, R):
         pins |= set(sd["idx"][0, :].tolist())    # post
         pins |= set(sd["idx"][:, -1].tolist())   # ground
-    if p["support"] in ("stanchions", "rear_frame"):
-        for sd in (L, R):
-            pins |= set(sd["idx"][:, 0].tolist())   # along the top bar
-            pins |= set(sd["idx"][-1, :].tolist())  # down the rear stanchion
-    else:  # rear poles: tension cords to the pole tops, rear corners laced down the poles
-        for sd in (L, R):
-            pins |= set(sd["idx"][:, 0].tolist())
-            pins |= set(sd["idx"][-1, :].tolist())
+    for sd in (L, R):
+        pins |= set(sd["idx"][:, 0].tolist())   # along the top bar
+        pins |= set(sd["idx"][-1, :].tolist())  # down the rear stanchion / upright
+    if p["support"] in ("rear_frame", "rear_poles"):
+        pins |= set(main["idx"][main["n_top"]].tolist())   # laced along the rear top bar
     return sorted(pins)
 
 
@@ -234,7 +353,16 @@ def _simulate(p, verts, faces, pins, col):
     sc.frame_set(1)
     bpy.data.objects.remove(obj)
     bpy.data.objects.remove(ground)
-    return _relax(co.reshape(-1, 3).astype(float), faces, pins)
+    co = _relax(co.reshape(-1, 3).astype(float), faces, pins)
+    # hand-hung nets are never perfectly even: a little irregularity in the free mesh
+    rng = np.random.default_rng(p["seed"] + 7)
+    free = np.ones(len(co), bool)
+    free[pins] = False
+    jit = rng.normal(0, 0.012, co.shape)
+    jit[:, 2] = np.minimum(jit[:, 2], 0) * 0.5
+    co[free] += jit[free]
+    co[:, 2] = np.maximum(co[:, 2], 0.004)
+    return _relax(co, faces, pins, iters=2, w=0.4)
 
 
 def _relax(co, faces, pins, iters=6, w=0.5):
@@ -404,12 +532,53 @@ def _pattern_index(p, along, across, bw):
     return np.zeros(len(along), int)
 
 
+def _drape(p, panels, co):
+    """Gravity on the hung net beyond what the pinned solver gives: a catenary dip in the roof
+    between the crossbar and the rear bar, the back panel bellying out and bagging at the bottom,
+    the side panels sagging inwards between their ties."""
+    main = panels["main"]
+    idx = main["idx"]
+    n0, n1 = idx.shape
+    u = main["u"]
+    nt = main["n_top"]
+    xs = main["x"]
+    ax = np.sin(np.pi * (xs - xs[0]) / (xs[-1] - xs[0])) ** 0.6
+    roof = {"stanchions": 0.15, "rear_poles": 0.2, "rear_frame": 0.16}[p["support"]]
+    done = set()
+    for i in range(n0):
+        for j in range(n1):
+            v = idx[i, j]
+            if v in done:
+                continue
+            done.add(v)
+            if i <= nt and u[nt] > 0:
+                t = u[i] / u[nt]
+                co[v, 2] -= roof * 4 * t * (1 - t) * ax[j]
+            else:
+                t = (u[i] - u[nt]) / max(u[-1] - u[nt], 1e-6)
+                co[v, 1] -= (0.15 * np.sin(np.pi * t) ** 1.3 + 0.06 * t ** 3) * ax[j]
+                co[v, 2] -= 0.05 * np.sin(np.pi * t) * ax[j]
+    for key in ("left", "right"):
+        g = panels[key]["idx"]
+        a0, b0 = g.shape
+        for i in range(a0):
+            for j in range(b0):
+                v = g[i, j]
+                if v in done:
+                    continue
+                done.add(v)
+                k = np.sin(np.pi * i / (a0 - 1)) * np.sin(np.pi * j / (b0 - 1))
+                co[v, 0] -= np.sign(co[v, 0]) * 0.08 * k
+    co[:, 2] = np.maximum(co[:, 2], 0.004)
+
+
 def build_net(p, col, root, mats):
     s = _net_shape(p)
     panels = _panels(p, s)
     verts, faces = _weld(panels)
     pins = _pins(p, panels)
     co = _simulate(p, verts, faces, pins, col)
+    _drape(p, panels, co)
     V, F, mi, RV, RF = _cords(p, s, panels, co)
     net = mesh_object("Net", V, F, col, root, smooth=True, materials=mats[:2], mat_index=mi)
     rope = mesh_object("NetRope", RV, RF, col, root, smooth=True, materials=[mats[0]])
@@ -421,10 +590,15 @@ def build_net(p, col, root, mats):
     return net, rope, s
 
 
+def _net_tag(p):
+    """The cord pattern as a name: mesh, cell size in mm and cord in tenths of a mm (hex120c40)."""
+    return f"{p['mesh']}{int(round(p['mesh_size'] * 1000))}c{int(round(p['cord_mm'] * 10))}"
+
+
 def _pattern_image(p, px=128):
     """One repeat of the cord pattern with alpha: square cell (s x s) or hex cell (s x sqrt(3) s)."""
     size = p["mesh_size"]
-    r = p["cord_mm"] / 2000.0 * 1.6        # a touch thicker so the card holds up at distance
+    r = p["cord_mm"] / 2000.0 * 1.2        # a touch thicker so the card holds up at distance
     if p["mesh"] == "hex":
         W, H = size, math.sqrt(3) * size
         segs = _hex_segments(-W, 2 * W, -H, 2 * H, size)
@@ -442,14 +616,17 @@ def _pattern_image(p, px=128):
     alpha = np.clip((r - d) / (0.5 * W / w) + 0.5, 0, 1)
     rgba = np.ones((h, w, 4), np.float32)
     rgba[..., 3] = alpha
-    img = MAT.image_from_array(f"NetPattern_{p['mesh']}", rgba)
+    img = MAT.image_from_array(f"NetPattern_{_net_tag(p)}", rgba)
     return img, W, H
 
 
 def _net_card(p, panels, co, col, root):
     """LOD1: the simulated net surface as a card, textured with the cord pattern (alpha clip)."""
     img, pw, ph = _pattern_image(p)
-    name = "TINT_net_card"
+    # one card material per cord pattern (the senior hex net keeps the plain name): goals with a
+    # different net, such as the youth goals' square mesh, must not share the first goal's texture
+    tag = _net_tag(p)
+    name = "TINT_net_card" if tag == "hex120c40" else f"TINT_net_card_{tag}"
     mat = bpy.data.materials.get(name)
     if mat is None:
         from ..core.nodes import material, srgb
@@ -458,8 +635,11 @@ def _net_card(p, panels, co, col, root):
         tex = nb.node("ShaderNodeTexImage", image=img, extension="REPEAT")
         nb.connect(uv, tex.inputs["Vector"])
         clip = nb.math("ROUND", tex.outputs["Alpha"])     # glTF exporter reads ROUND as alpha MASK
-        nb.output(nb.principled(Base_Color=srgb(p["net_colors"][0]), Roughness=0.7, Alpha=clip))
+        c = np.minimum(np.array(srgb(p["net_colors"][0])[:3]), 0.74)    # polyester cord, not paper white
+        nb.output(nb.principled(Base_Color=(*c, 1.0), Roughness=0.8, Alpha=clip))
     vs, fs, uvs, off = [], [], [], 0
+    f = 3                                                     # finer than the solver grid
+    pwid = p["post_size"][0]
     for key, pn in panels.items():
         G = co[pn["idx"]]
         n0, n1 = G.shape[:2]
@@ -469,17 +649,62 @@ def _net_card(p, panels, co, col, root):
         else:
             rest = pn["grid"][..., 1:]
             U, Vv = rest[..., 0], rest[..., 1]
-        vs.append(G.reshape(-1, 3))
-        uvv = np.stack([U / pw, Vv / ph], -1).reshape(-1, 2)
-        i, j = np.meshgrid(np.arange(n0 - 1), np.arange(n1 - 1), indexing="ij")
-        a = i * n1 + j
-        F = np.stack([a, a + n1, a + n1 + 1, a + 1], -1).reshape(-1, 4)
+        m0, m1 = f * (n0 - 1) + 1, f * (n1 - 1) + 1
+        fi, fj = np.meshgrid(np.linspace(0, n0 - 1, m0), np.linspace(0, n1 - 1, m1), indexing="ij")
+        Gr = _bilinear(G, fi.ravel(), fj.ravel()).reshape(m0, m1, 3)
+        UV0 = np.stack([U, Vv], -1).astype(float)
+        UVr = _bilinear(UV0, fi.ravel(), fj.ravel()).reshape(m0, m1, 2)
+        if key == "main":
+            # scallops: the net pulls in at every clip on the crossbar (every 300 mm)
+            x = Gr[0, :, 0]
+            dip = 0.035 * np.abs(np.sin(np.pi * (x - (-W / 2 + 0.2)) / 0.3))
+            Gr[0, :, 2] -= dip
+            Gr[1, :, 2] -= dip * 0.45
+            # the bottom of the back lies on the grass for 160 mm
+            last, uvl = Gr[-1], UVr[-1]
+            ds = (0.1, 0.2, 0.3)
+            ext = [last + np.array([0.0, -d, 0.0]) for d in ds]
+            rng = np.random.default_rng(p["seed"] + 3)
+            for k, e in enumerate(ext):
+                e[:, 2] = 0.006 + 0.012 * (k == 0)
+                e[:, 1] += 0.03 * np.sin(e[:, 0] * 2.1 + rng.uniform(0, 6))   # bunched, not ruled
+            Gr = np.concatenate([Gr, np.stack(ext)])
+            UVr = np.concatenate([UVr, np.stack([uvl + np.array([0.0, d]) for d in ds])])
+        else:
+            # scallops down the post (row 0 runs along the post: the clips are on its back)
+            z = Gr[0, :, 2]
+            dip = 0.02 * np.abs(np.sin(np.pi * (z - 0.25) / 0.3))
+            Gr[0, :, 1] -= dip
+            Gr[1, :, 1] -= dip * 0.45
+            # the bottom of each side panel lies on the grass, turned outwards
+            last, uvl = Gr[:, -1], UVr[:, -1]
+            sgn = np.sign(last[:, 0:1])
+            ds = (0.1, 0.2, 0.3)
+            ext = [last + np.concatenate([sgn * d, np.zeros_like(sgn), np.zeros_like(sgn)], 1) for d in ds]
+            for k, e in enumerate(ext):
+                e[:, 2] = 0.006 + 0.012 * (k == 0)
+            Gr = np.concatenate([Gr, np.stack(ext, 1)], 1)
+            UVr = np.concatenate([UVr, np.stack([uvl + np.array([0.0, d]) for d in ds], 1)], 1)
+        m0, m1 = Gr.shape[:2]
+        vs.append(Gr.reshape(-1, 3))
+        uvv = np.stack([UVr[..., 0] / pw, UVr[..., 1] / ph], -1).reshape(-1, 2)
+        i, j = np.meshgrid(np.arange(m0 - 1), np.arange(m1 - 1), indexing="ij")
+        a = i * m1 + j
+        F = np.stack([a, a + m1, a + m1 + 1, a + 1], -1).reshape(-1, 4)
         fs.append(F + off)
         uvs.append(uvv[F.ravel()])
-        off += n0 * n1
+        off += m0 * m1
     o = mesh_object("Net_LOD1", np.concatenate(vs), np.concatenate(fs), col, root, smooth=True,
                     materials=[mat], uvs=np.concatenate(uvs))
     o["lod"] = 1
+    # cord grime: greyer and dirtier towards the ground (vertex colours)
+    Vt = np.concatenate(vs)
+    g = np.clip(1 - Vt[:, 2] / 0.45, 0, 1) ** 1.5
+    c = np.ones((len(Vt), 4), np.float32)
+    c[:, :3] = (1 - g[:, None] * (1 - np.array([0.7, 0.69, 0.6])))
+    attr = o.data.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    attr.data.foreach_set("color", c.ravel())
+    o.data.color_attributes.active_color = attr
     return o
 
 
@@ -504,22 +729,22 @@ def build(params=None, col=None, template=None):
     if template is not None:
         return duplicate(template, col)
     p = resolve(params)
+    global W, H
+    W, H = float(p["width"]), float(p["height"])
     root = empty("Goal", col, display="ARROWS", size=1.0)
     set_params(root, f"goal.{p['style']}", "goal", "goal", p)
-    frame_mat = (MAT.aluminium("TINT_frame") if p["frame_finish"] == "worn_aluminium"
-                 else MAT.painted_metal("TINT_frame", p["frame_color"]))
+    from .seat import flat
+    c = np.minimum(np.array(srgb(p["frame_color"])[:3]), 0.62)       # powder coat white, albedo ~0.8
+    frame_mat = flat("TINT_frame", "#" + "".join(f"{int(round(255 * (1.055 * v ** (1 / 2.4) - 0.055))):02x}" for v in c),
+                     rough=0.4)
     net_mats = [MAT.net_cord("TINT_net_a", p["net_colors"][0]),
                 MAT.net_cord("TINT_net_b", p["net_colors"][1 % len(p["net_colors"])])]
-    _frame(p, col, root, frame_mat)
+    fr = _frame(p, col, root, frame_mat)
     s = _net_shape(p)
-    _supports(p, s, col, root, frame_mat, MAT.canvas("Sandbag"))
-    _clips(p, s, col, root, MAT.plastic("NetClip", "#e9e9e4", 0.4))
-    sleeve = MAT.rubber("GroundSleeve", "#1c1c1a")
-    pw, pd = p["post_size"]
-    for side in (-1, 1):
-        V, F, _ = M.sweep([(side * s["xN"], 0, -0.02), (side * s["xN"], 0, 0.006)],
-                          M.profile_ellipse(pw + 0.05, pd + 0.05, 24), (0, 1, 0))
-        mesh_object(f"Sleeve_{side:+d}", V, F, col, root, materials=[sleeve])
+    sups = _supports(p, s, col, root, frame_mat, None)
+    _clips(p, s, col, root, flat("NetClip", "#e2e2dc", rough=0.5))
+    sups.append(_goal_hardware(p, s, col, root, frame_mat))
+    _finish_frame([fr] + sups, p)
     build_net(p, col, root, net_mats)
     root["inner_width"] = W
     root["inner_height"] = H

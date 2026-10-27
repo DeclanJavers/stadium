@@ -156,7 +156,10 @@ def main():
             facades[f"{fname}/{rr.name}"] = {"mesh": mesh_dump(out["mesh"]), "line_s": out["line_s"],
                                              "height": out["height"], "tubes": len(out["tubes"]),
                                              "tube_points": sum(len(t[0]) for t in out["tubes"]),
-                                             "sockets": len(out["sockets"])}
+                                             "sockets": len(out["sockets"]),
+                                             "props": {"keys": [k for k, _, _ in out["props"]],
+                                                       "psum": np.sum([q for _, q, _ in out["props"]], 0).tolist(),
+                                                       "yawsum": float(sum(y for _, _, y in out["props"]))}}
     write("facades", facades)
 
     # floodlights
@@ -173,7 +176,25 @@ def main():
     cands = np.column_stack([cx.ravel(), cy.ravel(), np.zeros(cx.size)])
     small = np.array([(x, s * (W / 2 + 7.2), 20.3) for s in (1, -1) for x in (-30.0, 0.0, 30.0)])
     targets, E = FL.optimise_aims(small, cands, grid, 90)
+    def lines_dump(lines):
+        return {"count": len(lines), "points": sum(len(x[0]) for x in lines),
+                "psum": np.sum([np.asarray(x[0]).sum(0) for x in lines], 0).tolist() if lines else [0, 0, 0],
+                "rsum": float(sum(x[1] for x in lines))}
+    edge = [np.array([[-50.0, -42.0, 30.0], [0.0, -42.0, 30.0], [50.0, -42.0, 30.0]]),
+            np.array([[50.0 + 14 * math.sin(a), -28.0 - 14 * math.cos(a), 30.0] for a in np.linspace(0, math.pi / 2, 9)])]
+    g_steel, g_acc, g_cl = FL.roof_gantry(edge, 2.4)
+    details = {"gantry": {"steel": lines_dump(g_steel), "mesh": mesh_dump(g_acc.arrays()),
+                          "clusters": len(g_cl), "csum": np.sum([c for c, _ in g_cl], 0).tolist(),
+                          "lsum": np.sum([q for _, m in g_cl for q in m], 0).tolist()}}
+    details["lens"] = mesh_dump(FL.lens_panels([(q, np.array([5.0, 3.0, 0.0])) for _, m in g_cl for q in m], 1.7).arrays())
+    for k, lattice in ((0, True), (1, False)):
+        m_steel, m_acc = FL.mast_parts(masts[k], heads[k], 7, lattice)
+        details[f"mast{k}"] = {"steel": lines_dump(m_steel), "mesh": mesh_dump(m_acc.arrays())}
+    p_tubes, p_acc = FL.pole_parts(pole_list[0], 4)
+    details["pole"] = {"tubes": [list(map(float, a)) + list(map(float, b)) + [r] for a, b, r in p_tubes],
+                       "mesh": mesh_dump(p_acc.arrays())}
     write("floodlights", {
+        "details": details,
         "pylons": masts, "heads": heads, "poles": pole_list,
         "illuminance": FL.illuminance(fx, tg, 1000.0, 40.0, 0.9, pts),
         "ribbon": FL.roof_ribbon([np.array([[0, 0, 30.0], [10, 0, 30.0], [10, 25, 31.0]])], 2.4),
@@ -200,7 +221,10 @@ def main():
     # pitch markings
     out = {}
     for label, params in (("default", {}), ("sunday", {"length": 98, "width": 62, "optional_marks": False,
-                                                       "hand_painted": 1.0, "crown": 0.12})):
+                                                       "hand_painted": 1.0, "crown": 0.12}),
+                          ("5v5", {"length": 36.6, "width": 27.4, "markings": "5v5", "line_width": 0.1}),
+                          ("7v7", {"length": 54.9, "width": 36.6, "markings": "7v7", "line_width": 0.1, "hand_painted": 0.6}),
+                          ("9v9", {"length": 73.2, "width": 45.7, "markings": "9v9", "line_width": 0.1})):
         pp = PITCH.resolve(params)
         lines, discs = PITCH.marking_paths(pp)
         wob = [PITCH._wobble(pts_, closed, 0.035 * pp["hand_painted"], pp["seed"] * 100 + i)

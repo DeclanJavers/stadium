@@ -21,17 +21,22 @@ import numpy as np
 from . import bake as BK
 from .scene import OUT
 
+# wall finishes baked on a vertical plane: their weathering (dust settling on upward faces) would
+# otherwise cover the whole tile, blotching dark paint
+VERTICAL = {"TINT_fascia", "TINT_facade", "TINT_facade_b", "TINT_roof_fascia", "TINT_dugout", "TINT_door"}
+
 TILEABLE = {
-    "Stand_Concrete": (4.0, False), "Stand_Block": (4.0, False), "Stand_Soffit": (4.0, False),
+    "Stand_Concrete": (4.0, False), "Stand_Block": (3.6, True), "Stand_Soffit": (4.0, False),
     "Facade_Concrete": (4.0, False), "Facade_Core": (4.0, False), "Facade_Stone": (4.0, False),
-    "Facade_Brick": (3.6, True), "Dugout_Brick": (3.6, True), "Plaza_Paving": (3.6, True),
+    "Facade_Brick": (3.6, True), "Dugout_Brick": (3.6, True), "Plaza_Paving": (3.6, True), "Plaza_Band": (3.6, True),
     "Apron_Concrete": (4.0, False), "Apron_Track": (4.0, False), "Apron_Turf": (4.0, False),
     "Roof_Underside": (4.0, False), "TINT_roof": (4.0, False), "TINT_roof_membrane": (4.0, False),
     "TINT_fascia": (4.0, False), "TINT_facade": (4.0, False), "TINT_facade_b": (4.0, False),
     "Dugout_Slab": (4.0, False), "Tunnel_Building": (4.0, False),
 }
-KEEP = ("Ads_", "Carpet_", "Screen_LED", "TINT_flag", "FlagPattern", "Balustrade_Glass",
-        "Roof_Polycarbonate", "Dugout_Polycarbonate", "Facade_DarkGlass", "Fixture_Lens", "TINT_net_card")
+KEEP = ("Ads_", "Prop_GlassClear", "Carpet_", "Screen_LED", "TINT_flag", "FlagPattern", "Balustrade_Glass",
+        "Roof_Polycarbonate", "Dugout_Polycarbonate", "Facade_DarkGlass", "Fixture_Lens", "TINT_net_card",
+        "Med_BagVinyl", "Hos_MirrorGlass")
 
 
 def fingerprint(mat):
@@ -53,8 +58,18 @@ def _cache():
 
 
 def _save_cache(c):
+    """Merge into the cache on disk and replace it atomically (several exports may run at once)."""
+    import os
     BK.TEX.mkdir(parents=True, exist_ok=True)
-    (BK.TEX / "cache.json").write_text(json.dumps(c, indent=2))
+    p = BK.TEX / "cache.json"
+    try:
+        merged = json.loads(p.read_text()) if p.exists() else {}
+    except ValueError:
+        merged = {}
+    merged.update(c)
+    tmp = p.with_suffix(f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(merged, indent=2))
+    os.replace(tmp, p)
 
 
 def _principled_defaults(mat):
@@ -167,8 +182,13 @@ def box_uv(obj, scale=1.0):
     layer.data.foreach_set("uv", uv.ravel())
 
 
-def prepare(pitch_params=None, log=print):
-    """Convert every material in the scene to game PBR. Returns a report dict."""
+def prepare(pitch_params=None, log=print, pitches=None, extra_tileable=None):
+    """Convert every material in the scene to game PBR. Returns a report dict.
+    pitches: {grass material name: pitch params} when a scene has several pitches (training
+    grounds); extra_tileable: more {material: (size_m, exact)} to bake as tileable sets."""
+    from ..assets import site_materials as SM
+    tileable = dict(TILEABLE, **SM.TILEABLE, **(extra_tileable or {}))
+    keep = KEEP + SM.KEEP
     cache = _cache()
     report = {}
     users = {}
@@ -179,20 +199,23 @@ def prepare(pitch_params=None, log=print):
                     users.setdefault(m.name, []).append(o)
     for name, objs in sorted(users.items()):
         mat = bpy.data.materials[name]
-        if mat.get("game_material") or any(name.startswith(k) for k in KEEP):
+        if mat.get("game_material") or any(name.startswith(k) for k in keep):
             continue
         has_img = any(n.bl_idname == "ShaderNodeTexImage" for n in mat.node_tree.nodes)
         if has_img:
             continue
         fp = fingerprint(mat)
-        key = f"{name}:{fp}"
         met, trans, _ = _principled_defaults(mat)
-        if name == "TINT_Pitch_Paint":
+        # metals: albedo baked as a dielectric since the fix that stopped them baking black
+        key = f"{name}:{fp}" + (":m2" if met > 0 else "")
+        if pitches and name in pitches:
+            pitch_params = pitches[name]
+        if name.startswith("TINT_Pitch_Paint"):
             # line paint: white (the coverage breakup is a render-scale detail)
             _rebuild(mat, (0.82, 0.83, 0.8), 0.6, 0.0)
             report[name] = "factor"
             continue
-        if name == "Pitch_Grass" and pitch_params:
+        if name.startswith("Pitch_Grass") and pitch_params and (not pitches or name in pitches):
             sx = pitch_params["length"] + 2 * pitch_params["runoff_end"]
             sy = pitch_params["width"] + 2 * pitch_params["runoff_side"]
             info = cache.get(key) or BK.bake_pitch(mat, sx, sy)
@@ -215,9 +238,14 @@ def prepare(pitch_params=None, log=print):
             nt.links.new(nm.outputs[0], p.inputs["Normal"])
             mat["stripe_shader"] = "docs/SPECS.md#grass"
             report[name] = "pitch"
-        elif name in TILEABLE:
-            size, exact = TILEABLE[name]
-            info = cache.get(key) or BK.bake_tileable(mat, size, 1024, exact=exact)
+        elif name in tileable:
+            size, exact = tileable[name]
+            if not exact:
+                key += ":seam2"         # made tileable in two passes (no centre-line seams)
+            vertical = name in VERTICAL
+            if vertical:
+                key += ":wall"
+            info = cache.get(key) or BK.bake_tileable(mat, size, 1024, exact=exact, vertical=vertical)
             cache[key] = info
             maps = dict(info["maps"])
             gain = None

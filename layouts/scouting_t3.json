@@ -1,0 +1,36 @@
+{
+ "schema": "site-layout/1",
+ "name": "Recruitment centre",
+ "template": "building_lot",
+ "style": "nordic",
+ "seed": 43,
+ "club": {
+  "name": "UNITED",
+  "primary": "#1d4f91",
+  "secondary": "#ffffff"
+ },
+ "boundary": {
+  "type": "railings"
+ },
+ "gate": {
+  "tier": 3
+ },
+ "plots": {
+  "B1": {
+   "state": "built",
+   "facility": "scouting_centre",
+   "tier": 3,
+   "options": {
+    "size": 3
+   }
+  },
+  "C1": {
+   "state": "built",
+   "facility": "car_park",
+   "tier": 4,
+   "options": {
+    "fill": 0.55
+   }
+  }
+ }
+}
